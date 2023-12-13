@@ -93,7 +93,7 @@ function cacheTheBookJSONAndImages(data) {
       }).catch((error) => {
         // console.log("Error while caching an asset: ", cachableAssets[i], error);
         // Identify missing audio files
-        cachableAssets[i] = cachableAssets[i] + " ERROR WHILE CACHING!";
+        // cachableAssets[i] = cachableAssets[i] + " ERROR WHILE CACHING!";
       });
     }
     // console.log("After caching: ", cachableAssets);
@@ -111,6 +111,8 @@ self.addEventListener("fetch", function (event) {
             return response;
           }
           return fetch(event.request);
+      }).catch(function (error) {
+          console.log("Error while fetching: ", event.request.url, error);
       })
   );
 });
