@@ -13,7 +13,7 @@ var allimages = {};
 var durl = "";
 
 var fdbksnd = new Audio();
-fdbksnd.src = "audio/Correct.wav";
+fdbksnd.src = "dist/audio/Correct.wav";
 var correctsnd = new Audio();
 
 
