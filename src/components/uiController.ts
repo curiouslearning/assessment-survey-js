@@ -10,7 +10,6 @@ export default class UIController {
 const landingCont = document.getElementById("landWrap");
 const gameCont = document.getElementById("gameWrap");
 const endCont = document.getElementById("endWrap");
-const playBtn = document.getElementById("startButton");
 const sD = document.getElementById("starWrapper");
 const qT = document.getElementById("qWrap");
 const pB = document.getElementById("pbutton");
@@ -87,7 +86,7 @@ b6.addEventListener("click", function () {
 	buttonPress(6);
 });
 
-playBtn.addEventListener("click", function () {
+landingCont.addEventListener("click", function () {
 	if (localStorage.getItem(getDataFile())) {
 		showGame();
 	}
