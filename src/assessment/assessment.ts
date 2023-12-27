@@ -96,9 +96,9 @@ export class Assessment extends BaseQuiz {
 	}
 
 	public onQuestionEnd = () => {
-		setFeedbackVisibile(false);
+		
 		setTimeout(() => {
-
+            setFeedbackVisibile(false);
 			if (this.HasQuestionsLeft()) {
 				readyForNext(this.getNextQuestion());
 			}
@@ -113,6 +113,7 @@ export class Assessment extends BaseQuiz {
 	public getNextQuestion = () => {
 		var targetItem, foil1, foil2, foil3;
 		do {
+			
 			targetItem = randFrom(this.curBucket.items);
 		} while (this.curBucket.usedItems.includes(targetItem));
 		this.curBucket.usedItems.push(targetItem);
