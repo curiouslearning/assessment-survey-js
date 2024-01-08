@@ -92,6 +92,9 @@ landingCont.addEventListener("click", function () {
 	}
 })
 
+endCont.addEventListener("click", function () {
+	showLanding();
+})
 
 
 
