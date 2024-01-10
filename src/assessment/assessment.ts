@@ -6,20 +6,21 @@ import { qData, answerData } from '../components/questionData';
 import { sendAnswered, sendFinished, sendBucket } from '../components/analyticsEvents'
 import { App } from '../App';
 import { bucket, bucketItem } from './bucketData';
-import { baseQuiz } from '../baseQuiz';
+import { BaseQuiz } from '../baseQuiz';
 import { fetchAssessmentBuckets } from '../components/jsonUtils';
 import { TNode, sortedArrayToBST } from '../components/tNode';
-import {randFrom, shuffleArray } from '../components/mathUtils';
-import {preloadBucket} from '../components/audioLoader';
+import { randFrom, shuffleArray } from '../components/mathUtils';
+import { preloadBucket } from '../components/audioLoader';
+
 enum searchStage {
 	BinarySearch,
 	LinearSearchUp,
 	LinearSearchDown
 }
 
-export class Assessment extends baseQuiz {
+export class Assessment extends BaseQuiz {
 
-	public unity;
+	public unityBridge;
 	public curNode: TNode;
 	public curQ: qData;
 	public buckets: bucket[];
@@ -33,18 +34,18 @@ export class Assessment extends baseQuiz {
 	constructor(durl: string, nunity) {
 		super();
 		this.dataURL = durl;
-		this.unity = nunity;
+		this.unityBridge = nunity;
 		this.questionNum = 0;
 		console.log("app initialized");
-		setButtonAction(this.tryAnswer);
+		setButtonAction(this.TryAnswer);
 		setStartAction(this.startAssessment);
 	}
 
-	public run(applink: App): void {
-		this.aLink = applink;
+	public Run(applink: App): void {
+		this.app = applink;
 		this.buildBuckets().then(result => {
 			console.log(this.curBucket);
-			this.unity.sendLoaded();
+			this.unityBridge.SendLoaded();
 		});
 	}
 
@@ -53,7 +54,7 @@ export class Assessment extends baseQuiz {
 	}
 
 	public buildBuckets = () => {
-		var res = fetchAssessmentBuckets(this.aLink.dataURL).then(result => {
+		var res = fetchAssessmentBuckets(this.app.GetDataURL()).then(result => {
 			this.buckets = result;
 			this.numBuckets = result.length;
 			console.log("buckets: " + this.buckets);
@@ -78,29 +79,27 @@ export class Assessment extends baseQuiz {
 		this.curBucket.tested = true;
 	}
 
-	public tryAnswer = (ans: number, elapsed: number) => {
-
-			sendAnswered(this.curQ, ans, elapsed)
-			this.curBucket.numTried += 1;
-			if (this.curQ.answers[ans-1].answerName == this.curQ.correct){
-				this.curBucket.numCorrect += 1;
-				this.curBucket.numConsecutiveWrong = 0;
-				console.log("answered correctly");
-			}else{
-				this.curBucket.numConsecutiveWrong += 1;
-				console.log("answered incorrectly, " + this.curBucket.numConsecutiveWrong);
-			}
-			addStar();
-			setFeedbackVisibile(true);
-			setTimeout(() => { this.onQuestionEnd() }, 2000);
+	public TryAnswer = (ans: number, elapsed: number) => {
+		sendAnswered(this.curQ, ans, elapsed)
+		this.curBucket.numTried += 1;
+		if (this.curQ.answers[ans-1].answerName == this.curQ.correct){
+			this.curBucket.numCorrect += 1;
+			this.curBucket.numConsecutiveWrong = 0;
+			console.log("answered correctly");
+		}else{
+			this.curBucket.numConsecutiveWrong += 1;
+			console.log("answered incorrectly, " + this.curBucket.numConsecutiveWrong);
+		}
+		addStar();
+		setFeedbackVisibile(true);
+		setTimeout(() => { this.onQuestionEnd() }, 2000);
 	}
 
 	public onQuestionEnd = () => {
-
-		setFeedbackVisibile(false);
+		
 		setTimeout(() => {
-
-			if (this.hasAnotherQueston()) {
+            setFeedbackVisibile(false);
+			if (this.HasQuestionsLeft()) {
 				readyForNext(this.getNextQuestion());
 			}
 			else {
@@ -109,12 +108,12 @@ export class Assessment extends baseQuiz {
 			}
 
 		}, 500);
-
 	}
 
 	public getNextQuestion = () => {
 		var targetItem, foil1, foil2, foil3;
 		do {
+			
 			targetItem = randFrom(this.curBucket.items);
 		} while (this.curBucket.usedItems.includes(targetItem));
 		this.curBucket.usedItems.push(targetItem);
@@ -166,14 +165,13 @@ export class Assessment extends baseQuiz {
 		if (this.curBucket != null)
 			sendBucket(this.curBucket, passed);
 		console.log("new  bucket is " + nbucket.bucketID);
-		preloadBucket(nbucket, this.aLink.dataURL);
+		preloadBucket(nbucket, this.app.GetDataURL());
 		this.initBucket(nbucket);
 	}
 
-	public hasAnotherQueston = () => {
+	public HasQuestionsLeft = () => {
 		//// TODO: check buckets, check if done
 		var stillMore = true;
-
 
 		if (this.curBucket.numCorrect >= 4) {
 			//passed this bucket

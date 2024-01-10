@@ -5,33 +5,33 @@ import { addStar, showQuestion, readyForNext, showGame, showEnd, setButtonAction
 import { qData, answerData } from '../components/questionData';
 import { sendAnswered, sendFinished } from '../components/analyticsEvents'
 import { App } from '../App';
-import { baseQuiz } from '../baseQuiz';
+import { BaseQuiz } from '../baseQuiz';
 import { fetchSurveyQuestions } from '../components/jsonUtils';
 import { prepareAudios, playAudio } from '../components/audioLoader';
+import { UnityBridge } from '../components/unityBridge';
 
-export class Survey extends baseQuiz {
+export class Survey extends BaseQuiz {
 
-	public qList: qData[];
-	public unity;
-	public qNum: number;
+	public questionsData: qData[];
+	public currentQuestionIndex: number;
 
-	constructor(durl: string, nunity) {
+	constructor(dataURL: string, unityBridge) {
 		super();
-		this.dataURL = durl;
-		this.unity = nunity;
-		console.log("survey initialized");
-		this.qNum = 0;
-		setButtonAction(this.tryAnswer);
+		console.log("Survey initialized");
+
+		this.dataURL = dataURL;
+		this.unityBridge = unityBridge;
+		this.currentQuestionIndex = 0;
+		setButtonAction(this.TryAnswer);
 		setStartAction(this.startSurvey);
 	}
 
-	public async run(applink: App) {
-		this.aLink = applink;
+	public async Run(app: App) {
+		this.app = app;
 		this.buildQuestionList().then(result => {
-			this.qList = result;
-			prepareAudios(this.qList, this.aLink.dataURL);
-			this.unity.sendLoaded();
-
+			this.questionsData = result;
+			prepareAudios(this.questionsData, this.app.GetDataURL());
+			this.unityBridge.SendLoaded();
 		});
 	}
 
@@ -39,46 +39,39 @@ export class Survey extends baseQuiz {
 		readyForNext(this.getNextQuestion());
 	}
 
-
-
 	public onQuestionEnd = () => {
 		setFeedbackVisibile(false);
 
-		this.qNum += 1;
-				setTimeout(() => {
-		if (this.hasAnotherQueston()) {
-			readyForNext(this.getNextQuestion());
-		}
-		else {
-			console.log("no questions left");
-			this.onEnd();
-		}
-	}, 500);
+		this.currentQuestionIndex += 1;
+
+		setTimeout(() => {
+			if (this.HasQuestionsLeft()) {
+				readyForNext(this.getNextQuestion());
+			} else {
+				console.log("There are no questions left.");
+				this.onEnd();
+			}
+		}, 500);
 	}
 
-
-	public tryAnswer = (ans: number, elapsed: number) => {
-		sendAnswered(this.qList[this.qNum], ans, elapsed)
+	public TryAnswer = (ans: number, elapsed: number) => {
+		sendAnswered(this.questionsData[this.currentQuestionIndex], ans, elapsed)
 		setFeedbackVisibile(true);
 		addStar();
 		setTimeout(() => { this.onQuestionEnd() }, 2000);
 	}
 
 	public buildQuestionList = () => {
-		var qs = fetchSurveyQuestions(this.aLink.dataURL);
-		return qs;
+		const surveyQuestions = fetchSurveyQuestions(this.app.dataURL);
+		return surveyQuestions;
 	}
 
-	public hasAnotherQueston(): boolean {
-		if ((this.qList.length - 1) >= this.qNum) {
-			return true;
-		} else {
-			return false;
-		}
+	public HasQuestionsLeft(): boolean {
+		return this.currentQuestionIndex <= (this.questionsData.length - 1);
 	}
 
 	public getNextQuestion(): qData {
-		var res = this.qList[this.qNum];
-		return res;
+		var questionData = this.questionsData[this.currentQuestionIndex];
+		return questionData;
 	}
 }

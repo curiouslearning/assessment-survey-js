@@ -13,7 +13,7 @@ var allimages = {};
 var durl = "";
 
 var fdbksnd = new Audio();
-fdbksnd.src = "audio/Correct.wav";
+fdbksnd.src = "dist/audio/Correct.wav";
 var correctsnd = new Audio();
 
 
@@ -21,7 +21,7 @@ export async function prepareAudios(qsdata, ndurl)  {
 	var qd;
 	var ad;
 	durl = ndurl;
-	var fdsnd =  "audio/" + durl + "/answer_feedback.wav";
+	var fdsnd =  "audio/" + durl + "/answer_feedback.mp3";
 	wavtocache.push(fdsnd);
 	correctsnd.src = fdsnd;
 
@@ -55,51 +55,57 @@ export async function preimg( newimgurl ){
 	allimages[imgsrc] = newimg;
 }
 
-export async function preaudio( newaudiourl ){
-	console.log("looking for " + newaudiourl);
-	var audiosource = newaudiourl;
-	var newaudio = new Audio();
-	newaudio.src = "audio/" + durl + "/" + audiosource;
-	console.log(newaudio.src);
-	allaudios[audiosource] = newaudio;
+export async function preaudio( newAudioURL ){
+	console.log("looking for " + newAudioURL);
+	if (newAudioURL.includes(".wav")){
+		newAudioURL = newAudioURL.replace(".wav", ".mp3");
+	} else if (newAudioURL.includes(".mp3")) {
+		// Already contains .mp3 not doing anything
+	} else {
+		newAudioURL = newAudioURL + ".mp3";
+	}
+	console.log("Filtered: " + newAudioURL);
+	let newAudio = new Audio();
+	newAudio.src = "audio/" + durl + "/" + newAudioURL;
+	allaudios[newAudioURL] = newAudio;
+	console.log(newAudio.src);
 }
 
 export async function preloadBucket(newb: bucket, ndurl){
 	durl = ndurl;
-	correctsnd.src = "audio/" + durl + "/answer_feedback.wav";
+	correctsnd.src = "audio/" + durl + "/answer_feedback.mp3";
 	for (var aa in newb.items){
 		var naa = newb.items[aa];
-		preaudio(naa.itemName + ".wav");
+		preaudio(naa.itemName);
 	}
 }
-
-
-
-
-export function getImg(name){
-	return allimages[name];
-}
-
 
 export function playAudio(name: string, apcb?: Function){
 	console.log("trying to play " + name);
-	//console.log(allaudios[name].src);
-	if (name.slice(-4)!=".wav"){
-		name = name + ".wav";
+	
+	if (name.includes(".mp3")){
+		if (name.slice(-4) != ".mp3"){
+			name = name + ".mp3";
+		}
+	} else {
+		name = name + ".mp3";
 	}
 
+	console.log(allaudios);
 
 	if (typeof(apcb)!='undefined'){
 		allaudios[name].addEventListener("ended", () => {
 			apcb();
-
 		})
-
 	}
+
 	if (name in allaudios){
 		allaudios[name].play();
 	}
+}
 
+export function getImg(name){
+	return allimages[name];
 }
 
 export function playDing(){

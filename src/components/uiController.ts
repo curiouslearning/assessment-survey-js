@@ -1,7 +1,11 @@
 import { qData, answerData } from './questionData';
-import { playAudio, playDing, playCorrect, getImg} from './audioLoader';
-import { randFrom, shuffleArray } from '../components/mathUtils';
+import { playAudio, playDing, playCorrect, getImg } from './audioLoader';
+import { randFrom, shuffleArray } from './mathUtils';
+import { getDataFile } from './urlUtils';
 
+export default class UIController {
+	
+}
 
 const landingCont = document.getElementById("landWrap");
 const gameCont = document.getElementById("gameWrap");
@@ -26,7 +30,13 @@ var shown = false;
 var allstars = [];
 var qansnum = 0;
 
-for (var xi = 0; xi < 20; xi += 1){
+let contentLoaded = false;
+
+export function setContentLoaded(value: boolean) {
+	contentLoaded = value;
+}
+
+for (var xi = 0; xi < 20; xi += 1) {
 	const newstar = document.createElement("img");
 	newstar.src = "img/star.png";
 	newstar.id = "star" + xi;
@@ -35,10 +45,10 @@ for (var xi = 0; xi < 20; xi += 1){
 
 	sD.appendChild(newstar);
 	sD.innerHTML += "";
-	if (xi == 9){
+	if (xi == 9) {
 		sD.innerHTML += "<br>";
 	}
-allstars.push(xi)
+	allstars.push(xi)
 }
 
 shuffleArray(allstars);
@@ -52,7 +62,6 @@ var buttonsActive: boolean = true;
 
 
 //add button listeners
-
 b1.addEventListener("click", function () {
 	buttonPress(1);
 });
@@ -78,144 +87,126 @@ b6.addEventListener("click", function () {
 });
 
 landingCont.addEventListener("click", function () {
-	showGame();
+	if (localStorage.getItem(getDataFile())) {
+		showGame();
+	}
 })
+
+endCont.addEventListener("click", function () {
+	showLanding();
+})
+
 
 
 export function readyForNext(newQ: qData): void {
 	console.log("ready for next!");
-	aC.style.display = "none";
+	aC.style.visibility = "hidden";
+	for (var b in buttons) {
+		buttons[b].style.visibility = "hidden";
+	}
 	shown = false;
 	nextquest = newQ;
 	qT.innerHTML = "";
-	pB.innerHTML = "<button id='nextqButton'><svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M9 18L15 12L9 6V18Z' fill='currentColor' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'></path></svg></button>";
+	qT.style.display = "none";
+	// pB.innerHTML = "<button id='nextqButton'><svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M9 18L15 12L9 6V18Z' fill='currentColor' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'></path></svg></button>";
+	pB.innerHTML = "<button id='nextqButton'><img width='85px' height='85px' src='/img/sound-play-button.svg' type='image/svg+xml'> </img></button>";
 	var nqb = document.getElementById("nextqButton");
-	nqb.addEventListener("click", function (){
-
-	showQuestion();
-			playAudio(newQ.promptAudio, showOptions);
-
-
+	nqb.addEventListener("click", function () {
+		showQuestion();
 		//playquestionaudio
+		playAudio(newQ.promptAudio, showOptions);
 	})
 }
 
-
-
-
-
-//function to display a new question
-
+// function to display a new question
 export function showQuestion(newQ?: qData): void {
 
-	pB.innerHTML = "<button id='nextqButton'><svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M9 18L15 12L9 6V18Z' fill='currentColor' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'></path></svg></button>";
+	// pB.innerHTML = "<button id='nextqButton'><svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M9 18L15 12L9 6V18Z' fill='currentColor' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'></path></svg></button>";
+	pB.innerHTML = "<button id='nextqButton'><img width='85px' height='85px' src='/img/sound-play-button.svg' type='image/svg+xml'> </img></button>";
 	var nqb = document.getElementById("nextqButton");
-	nqb.addEventListener("click", function (){
-		if ('promptAudio' in newQ){
-			playAudio(newQ.promptAudio);
+	nqb.addEventListener("click", function () {
+		console.log("next question button pressed");
+		console.log(newQ.promptAudio);
+		
+		if ('promptAudio' in newQ) {
+			playAudio(newQ.promptAudio, showOptions);
 		}
 	})
 
-	aC.style.display = "grid";
+	aC.style.visibility = "visible";
 
 	let qCode = "";
 	qT.innerHTML = "";
-	if (typeof(newQ)=='undefined'){
+	if (typeof (newQ) == 'undefined') {
 		newQ = nextquest;
 	}
 
 	if ('promptImg' in newQ) {
-
 		var tmpimg = getImg(newQ.promptImg);
 		qT.appendChild(tmpimg);
 	}
 	qCode += newQ.promptText;
 
-qCode += "<BR>";
+	qCode += "<BR>";
 
 	qT.innerHTML += qCode;
 
 
-	for (var b in buttons){
-		buttons[b].style.display = "none";
+	for (var b in buttons) {
+		buttons[b].style.visibility = "hidden";
+	}
+}
+
+
+export function showOptions(): void {
+	if (!shown) {
+		var newQ = nextquest;
+
+		//showing the answers on each button
+		let btnIndex = 0;
+		for (var aNum in newQ.answers) {
+			buttons[btnIndex++].style.visibility = "visible";
+			let curAnswer = newQ.answers[aNum];
+			let answerCode = "";
+			if ('answerText' in curAnswer) {
+				answerCode += curAnswer.answerText;
+			}
+			buttons[aNum].innerHTML = answerCode;
+			if ('answerImg' in curAnswer) {
+				var tmpimg = getImg(curAnswer.answerImg);
+				buttons[aNum].appendChild(tmpimg);
+			}
+		}
+
+		qstart = Date.now();
 	}
 
-
-
 }
 
-
-export function showOptions(): void{
-if (!shown){
-	var newQ = nextquest;
-
-
-			if (newQ.answers.length >= 1){
-				b1.style.display = "block"
-			}
-			if (newQ.answers.length >= 2){
-				b2.style.display = "block";
-			}
-			if (newQ.answers.length >= 3){
-				b3.style.display = "block";
-			}
-			if (newQ.answers.length >= 4){
-				b4.style.display = "block"
-			}
-			if (newQ.answers.length >= 5){
-				b5.style.display = "block";
-			}
-			if (newQ.answers.length >= 6){
-
-				b6.style.display = "block";
-			}
-
-
-				//showing the answers on each button
-				for (var aNum in newQ.answers) {
-					let curAnswer = newQ.answers[aNum];
-					let answerCode = "";
-					if ('answerText' in curAnswer) {
-						answerCode += curAnswer.answerText;
-					}
-					buttons[aNum].innerHTML = answerCode;
-					if ('answerImg' in curAnswer) {
-						var tmpimg = getImg(curAnswer.answerImg);
-						buttons[aNum].appendChild(tmpimg);
-					}
-
-				}
-
-			qstart = Date.now();
-}
-
-}
-
-export function setFeedbackText(nt: string): void{
+export function setFeedbackText(nt: string): void {
 	console.log("feedback text set to " + nt);
 	fT.innerHTML = nt;
 }
 
 //functions to show/hide the different containers
 export function showLanding(): void {
-	landingCont.style.display = "block";
+	landingCont.style.display = "flex";
 	gameCont.style.display = "none";
 	endCont.style.display = "none";
 }
 
 export function showGame(): void {
 	landingCont.style.display = "none";
-	gameCont.style.display = "block";
+	gameCont.style.display = "grid";
 	endCont.style.display = "none";
 	allstart = Date.now();
 	sCallback();
 }
 
 export function showEnd(): void {
-	
 	landingCont.style.display = "none";
 	gameCont.style.display = "none";
-	endCont.style.display = "block";
+	endCont.style.display = "flex";
 }
 
 export function setFeedbackVisibile(b: boolean) {
@@ -236,7 +227,6 @@ export function setFeedbackVisibile(b: boolean) {
 // add a star on question answer
 
 export function addStar(): void {
-
 	var startoshow = document.getElementById("star" + allstars[qansnum]);
 	startoshow.classList.add("topstarv");
 	startoshow.classList.remove("topstarh");
@@ -245,7 +235,7 @@ export function addStar(): void {
 
 //handle button press
 
-export function setStartAction(callback: Function): void{
+export function setStartAction(callback: Function): void {
 	sCallback = callback;
 }
 
