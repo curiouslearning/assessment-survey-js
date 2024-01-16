@@ -33,11 +33,11 @@ export class Assessment extends BaseQuiz {
 	public basalBucket: number;
 	public ceilingBucket: number;
 
-	constructor(durl: string, nunity) {
+	constructor(dataURL: string, unityBridge: any) {
 		super();
-		this.dataURL = durl;
-		this.unityBridge = nunity;
-		this.questionNum = 0;
+		this.dataURL = dataURL;
+		this.unityBridge = unityBridge;
+		this.questionNumber = 0;
 		console.log("app initialized");
 		UIController.SetButtonPressAction(this.TryAnswer);
 		UIController.SetStartAction(this.startAssessment);
