@@ -2,12 +2,12 @@
 //questions in a data.json file that identifies itself as a survey
 
 import { UIController } from '../components/uiController';
+import { AudioController } from '../components/audioLoader';
 import { qData, answerData } from '../components/questionData';
 import { sendAnswered, sendFinished } from '../components/analyticsEvents'
 import { App } from '../App';
-import { BaseQuiz } from '../baseQuiz';
+import { BaseQuiz } from '../BaseQuiz';
 import { fetchSurveyQuestions } from '../components/jsonUtils';
-import { prepareAudios, playAudio } from '../components/audioLoader';
 import { UnityBridge } from '../components/unityBridge';
 
 export class Survey extends BaseQuiz {
@@ -30,7 +30,7 @@ export class Survey extends BaseQuiz {
 		this.app = app;
 		this.buildQuestionList().then(result => {
 			this.questionsData = result;
-			prepareAudios(this.questionsData, this.app.GetDataURL());
+			AudioController.PrepareAudioAndImagesForSurvey(this.questionsData, this.app.GetDataURL());
 			this.unityBridge.SendLoaded();
 		});
 	}
