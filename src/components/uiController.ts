@@ -244,12 +244,21 @@ export default class UIController {
 	public static setContentLoaded(value: boolean): void {
 		UIController.getInstance().contentLoaded = value;
 	}
+
 	public static setButtonPressAction(callback: Function): void {
 		UIController.getInstance().buttonPressCallback = callback;
 	}
 
 	public static setStartAction(callback: Function): void {
 		UIController.getInstance().startPressCallback = callback;
+	}
+
+	public static getInstance(): UIController {
+		if (UIController.instance === null) {
+			UIController.instance = new UIController();
+		}
+
+		return UIController.instance;
 	}
 }
 
