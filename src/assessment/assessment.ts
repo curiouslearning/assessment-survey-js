@@ -161,10 +161,11 @@ export class Assessment extends BaseQuiz {
 	}
 
 	public tryMoveBucket = (nBucket, passed: boolean) => {
-		if (this.currentBucket != null)
+		if (this.currentBucket != null) {
 			sendBucket(this.currentBucket, passed);
+		}
 		console.log("new  bucket is " + nBucket.bucketID);
-		preloadBucket(nBucket, this.app.GetDataURL());
+		AudioController.PreloadBucket(nBucket, this.app.GetDataURL());
 		this.initBucket(nBucket);
 	}
 
