@@ -36,11 +36,11 @@ export class Survey extends BaseQuiz {
 	}
 
 	public startSurvey = () =>{
-		readyForNext(this.getNextQuestion());
+		UIController.ReadyForNext(this.getNextQuestion());
 	}
 
 	public onQuestionEnd = () => {
-		setFeedbackVisibile(false);
+		UIController.SetFeedbackVisibile(false);
 
 		this.currentQuestionIndex += 1;
 
