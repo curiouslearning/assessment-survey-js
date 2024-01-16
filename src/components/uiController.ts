@@ -186,15 +186,15 @@ export class UIController {
 
 	//functions to show/hide the different containers
 	private showLanding(): void {
-		landingCont.style.display = "flex";
-		gameCont.style.display = "none";
-		endCont.style.display = "none";
+		this.landingContainer.style.display = "flex";
+		this.gameContainer.style.display = "none";
+		this.endContainer.style.display = "none";
 	}
 
-	private showEnd(): void {
-		this.landingContainer.style.display = "none";
-		this.gameContainer.style.display = "none";
-		this.endContainer.style.display = "flex";
+	public static ShowEnd(): void {
+		UIController.getInstance().landingContainer.style.display = "none";
+		UIController.getInstance().gameContainer.style.display = "none";
+		UIController.getInstance().endContainer.style.display = "flex";
 	}
 
 	private showGame(): void {
