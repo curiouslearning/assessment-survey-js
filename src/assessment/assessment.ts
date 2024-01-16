@@ -1,7 +1,7 @@
 //this is where the logic for handling the buckets will go
 //
 //once we start adding in the assessment functionality
-import { addStar, showQuestion, readyForNext, showGame, showEnd, setButtonAction, setStartAction, setFeedbackVisibile } from '../components/uiController';
+import { UIController } from '../components/uiController';
 import { qData, answerData } from '../components/questionData';
 import { sendAnswered, sendFinished, sendBucket } from '../components/analyticsEvents'
 import { App } from '../App';
