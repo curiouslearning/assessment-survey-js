@@ -223,6 +223,13 @@ export default class UIController {
 			buttonsActive = true;
 		}
 	}
+
+	public static addStar(): void {
+		var startoshow = document.getElementById("star" + UIController.getInstance().stars[UIController.getInstance().qAnsNum]);
+		startoshow.classList.add("topstarv");
+		startoshow.classList.remove("topstarh");
+		UIController.getInstance().qAnsNum += 1;
+	}
 }
 
 const landingCont = document.getElementById("landWrap");
