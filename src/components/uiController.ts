@@ -200,6 +200,14 @@ export default class UIController {
 		this.gameContainer.style.display = "none";
 		this.endContainer.style.display = "flex";
 	}
+
+	private showGame(): void {
+		this.landingContainer.style.display = "none";
+		this.gameContainer.style.display = "grid";
+		this.endContainer.style.display = "none";
+		this.allStart = Date.now();
+		this.startPressCallback();
+	}
 }
 
 const landingCont = document.getElementById("landWrap");
