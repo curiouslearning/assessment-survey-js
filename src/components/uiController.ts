@@ -1,5 +1,5 @@
 import { qData, answerData } from './questionData';
-import { playAudio, playDing, playCorrect, getImg } from './audioLoader';
+import { AudioController } from './audioLoader';
 import { randFrom, shuffleArray } from './mathUtils';
 import { getDataFile } from './urlUtils';
 
