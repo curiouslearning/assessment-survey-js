@@ -314,6 +314,7 @@ export class UIController {
 	public static getInstance(): UIController {
 		if (UIController.instance === null) {
 			UIController.instance = new UIController();
+			UIController.instance.init();
 		}
 
 		return UIController.instance;
