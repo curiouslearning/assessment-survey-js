@@ -208,6 +208,21 @@ export default class UIController {
 		this.allStart = Date.now();
 		this.startPressCallback();
 	}
+
+	private setFeedbackVisibile(visible: boolean) {
+		if (visible) {
+			this.feedbackContainer.classList.remove("hidden");
+			this.feedbackContainer.classList.add("visible");
+			playCorrect();
+
+			buttonsActive = false;
+		} else {
+			this.feedbackContainer.classList.remove("visible");
+			this.feedbackContainer.classList.add("hidden");
+
+			buttonsActive = true;
+		}
+	}
 }
 
 const landingCont = document.getElementById("landWrap");
