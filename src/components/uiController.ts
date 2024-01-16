@@ -5,6 +5,67 @@ import { getDataFile } from './urlUtils';
 
 export default class UIController {
 	
+	private static instance: UIController | null = null;
+
+	private landingContainerId = "landWrap";
+	private landingContainer: HTMLElement;
+
+	private gameContainerId = "gameWrap";
+	private gameContainer: HTMLElement;
+
+	private endContainerId = "endWrap";
+	private endContainer: HTMLElement;
+
+	private starContainerId = "starWrapper";
+	private starContainer: HTMLElement;
+
+	private questionsContainerId = "qWrap";
+	private questionsContainer: HTMLElement;
+
+	private feedbackContainerId = "feedbackWrap";
+	private feedbackContainer: HTMLElement;
+
+	private answersContainerId = "aWrap";
+	private answersContainer: HTMLElement;
+
+	private answerButton1Id = "answerButton1";
+	private answerButton1: HTMLElement;
+	private answerButton2Id = "answerButton2";
+	private answerButton2: HTMLElement;
+	private answerButton3Id = "answerButton3";
+	private answerButton3: HTMLElement;
+	private answerButton4Id = "answerButton4";
+	private answerButton4: HTMLElement;
+	private answerButton5Id = "answerButton5";
+	private answerButton5: HTMLElement;
+	private answerButton6Id = "answerButton6";
+	private answerButton6: HTMLElement;
+
+	private playButtonId = "pbutton";
+	private playButton: HTMLElement;
+
+	private nextQuestion = null;
+
+	private contentLoaded = false;
+
+	private qStart;
+	private shown = false;
+
+	public stars = [];
+	public qAnsNum = 0;
+
+	private allStart: number;
+
+	private buttons = [];
+
+	private buttonPressCallback: Function;
+	private startPressCallback: Function;
+
+	private buttonsActive: boolean = true;
+
+	private constructor() {
+		this.init();
+	}
 }
 
 const landingCont = document.getElementById("landWrap");
