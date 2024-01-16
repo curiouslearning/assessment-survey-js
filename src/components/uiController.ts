@@ -3,7 +3,7 @@ import { playAudio, playDing, playCorrect, getImg } from './audioLoader';
 import { randFrom, shuffleArray } from './mathUtils';
 import { getDataFile } from './urlUtils';
 
-export default class UIController {
+export class UIController {
 	
 	private static instance: UIController | null = null;
 
