@@ -54,8 +54,8 @@ export class Survey extends BaseQuiz {
 		}, 500);
 	}
 
-	public TryAnswer = (ans: number, elapsed: number) => {
-		sendAnswered(this.questionsData[this.currentQuestionIndex], ans, elapsed)
+	public TryAnswer = (answer: number, elapsed: number) => {
+		sendAnswered(this.questionsData[this.currentQuestionIndex], answer, elapsed)
 		UIController.SetFeedbackVisibile(true);
 		UIController.AddStar();
 		setTimeout(() => { this.onQuestionEnd() }, 2000);
