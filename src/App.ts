@@ -7,15 +7,15 @@ import { Survey } from './survey/survey';
 import { Assessment } from './assessment/assessment';
 import { UnityBridge } from './components/unityBridge';
 import { setUuid, linkAnalytics, sendInit } from './components/analyticsEvents';
-import { BaseQuiz } from './baseQuiz';
+import { BaseQuiz } from './BaseQuiz';
 import { fetchAppData, getDataURL } from './components/jsonUtils';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics, logEvent } from 'firebase/analytics';
 import { Workbox } from 'workbox-window';
 import CacheModel from './components/cacheModel';
-import { setFeedbackText, setContentLoaded } from './components/uiController';
+import { UIController } from './components/uiController';
 
-const appVersion = "v0.1.3";
+const appVersion = "v0.1.4";
 
 let loadingScreen = document.getElementById("loadingScreen");
 
@@ -82,7 +82,7 @@ export class App {
 			this.cacheModel.setContentFilePath(getDataURL(this.dataURL));
 
 			// TODO: Why do we need to set the feedback text here?
-			setFeedbackText(data["feedbackText"]);
+			UIController.SetFeedbackText(data["feedbackText"]);
 
 			let appType = data["appType"];
 
@@ -207,7 +207,7 @@ function handleLoadingMessage(event, progressValue): void {
         progressBar!.style.width = progressValue + "%";
     } else if (progressValue >= 100) {
         loadingScreen!.style.display = "none";
-		setContentLoaded(true);
+		UIController.SetContentLoaded(true);
         readLanguageDataFromCacheAndNotifyAndroidApp(event.data.data.bookName);
         // add book with a name to local storage as cached
         localStorage.setItem(event.data.data.bookName, "true");
