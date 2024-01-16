@@ -194,6 +194,12 @@ export default class UIController {
 		gameCont.style.display = "none";
 		endCont.style.display = "none";
 	}
+
+	private showEnd(): void {
+		this.landingContainer.style.display = "none";
+		this.gameContainer.style.display = "none";
+		this.endContainer.style.display = "flex";
+	}
 }
 
 const landingCont = document.getElementById("landWrap");
