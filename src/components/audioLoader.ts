@@ -3,119 +3,255 @@
 import { qData } from './questionData';
 import { bucket, bucketItem } from '../assessment/bucketData';
 
+export class AudioController {
 
-var imgtocache = [];
-var wavtocache = [];
+	private static instance: AudioController | null = null;
 
+	public imageToCache: string[] = [];
+	public wavToCache: string[] = [];
 
-var allaudios = {};
-var allimages = {};
-var durl = "";
+	public allAudios: any = {};
+	public allImages: any = {};
+	public dataURL: string = "";
 
-var fdbksnd = new Audio();
-fdbksnd.src = "dist/audio/Correct.wav";
-var correctsnd = new Audio();
+	private correctSoundPath = "dist/audio/Correct.wav";
 
+	private feedbackAudio: any = null;
+	private correctAudio: any = null;
 
-export async function prepareAudios(qsdata, ndurl)  {
-	var qd;
-	var ad;
-	durl = ndurl;
-	var fdsnd =  "audio/" + durl + "/answer_feedback.mp3";
-	wavtocache.push(fdsnd);
-	correctsnd.src = fdsnd;
+	private init(): void {
+		this.feedbackAudio = new Audio();
+		this.feedbackAudio.src = this.correctSoundPath;
+		this.correctAudio = new Audio();
+	}
 
+	public static PrepareAudioAndImagesForSurvey(questionsData: qData[], dataURL: string): void {
+		AudioController.getInstance().dataURL = dataURL;
+		const feedbackSoundPath =  "audio/" + AudioController.getInstance().dataURL + "/answer_feedback.mp3";
 
-	for (var qn in qsdata){
-		qd = qsdata[qn];
-		if (qd.promptAudio != null){
-			preaudio (qd.promptAudio);
+		AudioController.getInstance().wavToCache.push(feedbackSoundPath);
+		AudioController.getInstance().correctAudio.src = feedbackSoundPath;
 
-		}
-		if (qd.promptImg != null ){
-			preimg (qd.promptImg);
-		}
-		for (var an in qd.answers){
-			ad = qd.answers[an];
-			if (ad.answerImg != null){
-				preimg(ad.answerImg);
+		for (var questionIndex in questionsData){
+			let questionData = questionsData[questionIndex];
+
+			if (questionData.promptAudio != null) {
+				AudioController.FilterAndAddAudioToAllAudios(questionData.promptAudio);
+			}
+
+			if (questionData.promptImg != null ) {
+				AudioController.AddImageToAllImages(questionData.promptImg);
+			}
+
+			for (var answerIndex in questionData.answers) {
+				let answerData = questionData.answers[answerIndex];
+				if (answerData.answerImg != null){
+					AudioController.AddImageToAllImages(answerData.answerImg);
+				}
 			}
 		}
+		console.log(AudioController.getInstance().allAudios);
+		console.log(AudioController.getInstance().allImages);
 	}
-	console.log(allaudios);
-	console.log(allimages);
 
-}
-
-export async function preimg( newimgurl ){
-	console.log("looking for " + newimgurl);
-	var imgsrc = newimgurl;
-	var newimg = new Image();
-	newimg.src = imgsrc;
-	allimages[imgsrc] = newimg;
-}
-
-export async function preaudio( newAudioURL ){
-	console.log("looking for " + newAudioURL);
-	if (newAudioURL.includes(".wav")){
-		newAudioURL = newAudioURL.replace(".wav", ".mp3");
-	} else if (newAudioURL.includes(".mp3")) {
-		// Already contains .mp3 not doing anything
-	} else {
-		newAudioURL = newAudioURL + ".mp3";
+	public static AddImageToAllImages(newImageURL: string): void {
+		console.log("Add image: " + newImageURL);
+		let newImage = new Image();
+		newImage.src = newImageURL;
+		AudioController.getInstance().allImages[newImageURL] = newImage;
 	}
-	console.log("Filtered: " + newAudioURL);
-	let newAudio = new Audio();
-	newAudio.src = "audio/" + durl + "/" + newAudioURL;
-	allaudios[newAudioURL] = newAudio;
-	console.log(newAudio.src);
-}
 
-export async function preloadBucket(newb: bucket, ndurl){
-	durl = ndurl;
-	correctsnd.src = "audio/" + durl + "/answer_feedback.mp3";
-	for (var aa in newb.items){
-		var naa = newb.items[aa];
-		preaudio(naa.itemName);
-	}
-}
+	public static FilterAndAddAudioToAllAudios(newAudioURL: string): void {
+		console.log("Adding audio: " + newAudioURL);
 
-export function playAudio(name: string, apcb?: Function){
-	console.log("trying to play " + name);
-	
-	if (name.includes(".mp3")){
-		if (name.slice(-4) != ".mp3"){
-			name = name + ".mp3";
+		if (newAudioURL.includes(".wav")){
+			newAudioURL = newAudioURL.replace(".wav", ".mp3");
+		} else if (newAudioURL.includes(".mp3")) {
+			// Already contains .mp3 not doing anything
+		} else {
+			newAudioURL = newAudioURL + ".mp3";
 		}
-	} else {
-		name = name + ".mp3";
+
+		console.log("Filtered: " + newAudioURL);
+
+		let newAudio = new Audio();
+		newAudio.src = "audio/" + AudioController.getInstance().dataURL + "/" + newAudioURL;
+		AudioController.getInstance().allAudios[newAudioURL] = newAudio;
+		
+		console.log(newAudio.src);
 	}
 
-	console.log(allaudios);
-
-	if (typeof(apcb)!='undefined'){
-		allaudios[name].addEventListener("ended", () => {
-			apcb();
-		})
+	public static PreloadBucket(newBucket: bucket, dataURL) {
+		AudioController.getInstance().dataURL = dataURL;
+		AudioController.getInstance().correctAudio.src = "audio/" + AudioController.getInstance().dataURL + "/answer_feedback.mp3";
+		for (var itemIndex in newBucket.items){
+			var item = newBucket.items[itemIndex];
+			AudioController.FilterAndAddAudioToAllAudios(item.itemName);
+		}
 	}
 
-	if (name in allaudios){
-		allaudios[name].play();
+	public static PlayAudio(audioName: string, finishedCallback?: Function): void {
+		console.log("trying to play " + audioName);
+	
+		if (audioName.includes(".mp3")){
+			if (audioName.slice(-4) != ".mp3"){
+				audioName = audioName + ".mp3";
+			}
+		} else {
+			audioName = audioName + ".mp3";
+		}
+
+		console.log("Pre play all audios: " + AudioController.getInstance().allAudios);
+
+		if (typeof(finishedCallback) != 'undefined'){
+			AudioController.getInstance().allAudios[audioName].addEventListener("ended", () => {
+				finishedCallback();
+			})
+		}
+
+		if (audioName in AudioController.getInstance().allAudios){
+			AudioController.getInstance().allAudios[audioName].play();
+		}
+		else if(audioName.toLowerCase() in AudioController.getInstance().allAudios)
+		{
+			AudioController.getInstance().allAudios[audioName.toLowerCase()].play();
+		}
 	}
-	else if(name.toLowerCase() in allaudios)
-	{
-		allaudios[name.toLowerCase()].play();
+
+	public static GetImage(imageName: string): any {
+		return AudioController.getInstance().allImages[imageName];
+	}
+
+	public static PlayDing(): void {
+		AudioController.getInstance().feedbackAudio.play();
+	}
+
+	public static PlayCorrect(): void {
+		AudioController.getInstance().correctAudio.play();
+	}
+
+	public static getInstance(): AudioController {
+		if (AudioController.instance == null) {
+			AudioController.instance = new AudioController();
+			AudioController.instance.init();
+		}
+
+		return AudioController.instance;
 	}
 }
 
-export function getImg(name){
-	return allimages[name];
-}
 
-export function playDing(){
-	fdbksnd.play();
-}
+// var imgtocache = [];
+// var wavtocache = [];
 
-export function playCorrect(){
-	correctsnd.play();
-}
+
+// var allimages = {};
+// var durl = "";
+
+// var fdbksnd = new Audio();
+// fdbksnd.src = "dist/audio/Correct.wav";
+// var correctsnd = new Audio();
+
+
+// export async function prepareAudios(qsdata, ndurl)  {
+// 	var qd;
+// 	var ad;
+// 	durl = ndurl;
+// 	var fdsnd =  "audio/" + durl + "/answer_feedback.mp3";
+// 	wavtocache.push(fdsnd);
+// 	correctsnd.src = fdsnd;
+
+
+// 	for (var qn in qsdata){
+// 		qd = qsdata[qn];
+// 		if (qd.promptAudio != null){
+// 			preaudio (qd.promptAudio);
+
+// 		}
+// 		if (qd.promptImg != null ){
+// 			preimg (qd.promptImg);
+// 		}
+// 		for (var an in qd.answers){
+// 			ad = qd.answers[an];
+// 			if (ad.answerImg != null){
+// 				preimg(ad.answerImg);
+// 			}
+// 		}
+// 	}
+// 	console.log(AudioController.getInstance().allAudios);
+// 	console.log(allimages);
+
+// }
+
+// export async function preimg( newimgurl ){
+// 	console.log("looking for " + newimgurl);
+// 	var imgsrc = newimgurl;
+// 	var newimg = new Image();
+// 	newimg.src = imgsrc;
+// 	allimages[imgsrc] = newimg;
+// }
+
+// export async function preaudio( newAudioURL ){
+// 	console.log("looking for " + newAudioURL);
+// 	if (newAudioURL.includes(".wav")){
+// 		newAudioURL = newAudioURL.replace(".wav", ".mp3");
+// 	} else if (newAudioURL.includes(".mp3")) {
+// 		// Already contains .mp3 not doing anything
+// 	} else {
+// 		newAudioURL = newAudioURL + ".mp3";
+// 	}
+// 	console.log("Filtered: " + newAudioURL);
+// 	let newAudio = new Audio();
+// 	newAudio.src = "audio/" + durl + "/" + newAudioURL;
+// 	AudioController.getInstance().allAudios[newAudioURL] = newAudio;
+// 	console.log(newAudio.src);
+// }
+
+// export async function preloadBucket(newb: bucket, ndurl){
+// 	durl = ndurl;
+// 	correctsnd.src = "audio/" + durl + "/answer_feedback.mp3";
+// 	for (var aa in newb.items){
+// 		var naa = newb.items[aa];
+// 		preaudio(naa.itemName);
+// 	}
+// }
+
+// export function playAudio(name: string, apcb?: Function){
+// 	console.log("trying to play " + name);
+	
+// 	if (name.includes(".mp3")){
+// 		if (name.slice(-4) != ".mp3"){
+// 			name = name + ".mp3";
+// 		}
+// 	} else {
+// 		name = name + ".mp3";
+// 	}
+
+// 	console.log(AudioController.getInstance().allAudios);
+
+// 	if (typeof(apcb)!='undefined'){
+// 		AudioController.getInstance().allAudios[name].addEventListener("ended", () => {
+// 			apcb();
+// 		})
+// 	}
+
+// 	if (name in AudioController.getInstance().allAudios){
+// 		AudioController.getInstance().allAudios[name].play();
+// 	}
+// 	else if(name.toLowerCase() in AudioController.getInstance().allAudios)
+// 	{
+// 		AudioController.getInstance().allAudios[name.toLowerCase()].play();
+// 	}
+// }
+
+// export function getImg(name){
+// 	return allimages[name];
+// }
+
+// export function playDing(){
+// 	fdbksnd.play();
+// }
+
+// export function playCorrect(){
+// 	correctsnd.play();
+// }
