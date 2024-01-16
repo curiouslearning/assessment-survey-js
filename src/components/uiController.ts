@@ -277,21 +277,21 @@ export class UIController {
 		UIController.getInstance().questionsContainer.innerHTML += qCode;
 
 
-		for (var b in UIController.getInstance().buttons) {
-			UIController.getInstance().buttons[b].style.visibility = "hidden";
+		for (var buttonIndex in UIController.getInstance().buttons) {
+			UIController.getInstance().buttons[buttonIndex].style.visibility = "hidden";
 		}
 	}
 
 	public static AddStar(): void {
-		var startoshow = document.getElementById("star" + UIController.getInstance().stars[UIController.getInstance().qAnsNum]);
-		startoshow.classList.add("topstarv");
-		startoshow.classList.remove("topstarh");
+		var starToShow = document.getElementById("star" + UIController.getInstance().stars[UIController.getInstance().qAnsNum]);
+		starToShow.classList.add("topstarv");
+		starToShow.classList.remove("topstarh");
 		UIController.getInstance().qAnsNum += 1;
 	}
 
 	private answerButtonPress(buttonNum: number): void {
 		if (this.buttonsActive) {
-			playDing();
+			AudioController.PlayDing();
 			const nPressed = Date.now();
 			const dTime = nPressed - this.qStart;
 			console.log("answered in " + dTime);
