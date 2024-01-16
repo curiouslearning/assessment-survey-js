@@ -239,6 +239,50 @@ export class UIController {
 			playAudio(newQ.promptAudio, UIController.getInstance().showOptions);
 		});
 	}
+
+	public static ShowQuestion(newQ?: qData): void {
+
+		// pB.innerHTML = "<button id='nextqButton'><svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M9 18L15 12L9 6V18Z' fill='currentColor' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'></path></svg></button>";
+		UIController.getInstance().playButton.innerHTML = "<button id='nextqButton'><img width='85px' height='85px' src='/img/sound-play-button.svg' type='image/svg+xml'> </img></button>";
+
+		var nqb = document.getElementById("nextqButton");
+		nqb.addEventListener("click", function () {
+			console.log("next question button pressed");
+			console.log(newQ.promptAudio);
+			
+			if ('promptAudio' in newQ) {
+				playAudio(newQ.promptAudio, UIController.getInstance().showOptions);
+			}
+		})
+
+		UIController.getInstance().answersContainer.style.visibility = "visible";
+
+		let qCode = "";
+
+		UIController.getInstance().questionsContainer.innerHTML = "";
+
+		if (typeof (newQ) == 'undefined') {
+			newQ = UIController.getInstance().nextQuestion;
+		}
+
+		if ('promptImg' in newQ) {
+			var tmpimg = getImg(newQ.promptImg);
+			UIController.getInstance().questionsContainer.appendChild(tmpimg);
+		}
+
+		qCode += newQ.promptText;
+
+		qCode += "<BR>";
+
+		UIController.getInstance().questionsContainer.innerHTML += qCode;
+
+
+		for (var b in UIController.getInstance().buttons) {
+			UIController.getInstance().buttons[b].style.visibility = "hidden";
+		}
+	}
+
+	public static AddStar(): void {
 		var startoshow = document.getElementById("star" + UIController.getInstance().stars[UIController.getInstance().qAnsNum]);
 		startoshow.classList.add("topstarv");
 		startoshow.classList.remove("topstarh");
