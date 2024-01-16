@@ -2,7 +2,6 @@
  * Contains utils for working with URL strings.
  */
 
-
 export function getAppType(): string {
 	const pathParams = getPathName();
 	const appType = pathParams.get('appType');
@@ -18,7 +17,6 @@ export function getUUID(): string {
 	}
 	return nuuid;
 }
-
 
 export function getUserSource(): string {
 	const pathParams = getPathName();
