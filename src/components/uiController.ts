@@ -230,6 +230,7 @@ export default class UIController {
 		startoshow.classList.remove("topstarh");
 		UIController.getInstance().qAnsNum += 1;
 	}
+
 	private answerButtonPress(buttonNum: number): void {
 		if (this.buttonsActive) {
 			playDing();
@@ -238,6 +239,10 @@ export default class UIController {
 			console.log("answered in " + dTime);
 			this.buttonPressCallback(buttonNum, dTime);
 		}
+	}
+
+	public static setContentLoaded(value: boolean): void {
+		UIController.getInstance().contentLoaded = value;
 	}
 }
 
