@@ -157,6 +157,30 @@ export default class UIController {
 			}
 		});
 	}
+	private showOptions(): void {
+		if (!this.shown) {
+			var newQ = this.nextQuestion;
+
+			//showing the answers on each button
+			let btnIndex = 0;
+			for (var aNum in newQ.answers) {
+				this.buttons[btnIndex++].style.visibility = "visible";
+				let curAnswer = newQ.answers[aNum];
+				let answerCode = "";
+				if ('answerText' in curAnswer) {
+					answerCode += curAnswer.answerText;
+				}
+				this.buttons[aNum].innerHTML = answerCode;
+				if ('answerImg' in curAnswer) {
+					var tmpimg = getImg(curAnswer.answerImg);
+					this.buttons[aNum].appendChild(tmpimg);
+				}
+			}
+
+			this.qStart = Date.now();
+		}
+
+	}
 }
 
 const landingCont = document.getElementById("landWrap");
