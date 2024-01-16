@@ -37,8 +37,10 @@ export class Assessment extends BaseQuiz {
 		this.unityBridge = nunity;
 		this.questionNum = 0;
 		console.log("app initialized");
-		setButtonAction(this.TryAnswer);
-		setStartAction(this.startAssessment);
+		// setButtonAction(this.TryAnswer);
+		UIController.SetButtonPressAction(this.TryAnswer);
+		// setStartAction(this.startAssessment);
+		UIController.SetStartAction(this.startAssessment);
 	}
 
 	public Run(applink: App): void {
