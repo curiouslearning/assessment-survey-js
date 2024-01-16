@@ -179,9 +179,9 @@ export class UIController {
 
 	}
 
-	private setFeedbackText(nt: string): void {
+	public static SetFeedbackText(nt: string): void {
 		console.log("Feedback text set to " + nt);
-		this.feedbackContainer.innerHTML = nt;
+		UIController.getInstance().feedbackContainer.innerHTML = nt;
 	}
 
 	//functions to show/hide the different containers
