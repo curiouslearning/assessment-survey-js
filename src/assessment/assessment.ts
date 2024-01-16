@@ -10,7 +10,7 @@ import { BaseQuiz } from '../BaseQuiz';
 import { fetchAssessmentBuckets } from '../components/jsonUtils';
 import { TNode, sortedArrayToBST } from '../components/tNode';
 import { randFrom, shuffleArray } from '../components/mathUtils';
-import { AudioController } from '../components/audioLoader';
+import { AudioController } from '../components/audioController';
 
 enum searchStage {
 	BinarySearch,

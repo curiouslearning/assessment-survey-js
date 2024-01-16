@@ -1,5 +1,5 @@
 import { qData, answerData } from './questionData';
-import { AudioController } from './audioLoader';
+import { AudioController } from './audioController';
 import { randFrom, shuffleArray } from './mathUtils';
 import { getDataFile } from './urlUtils';
 
