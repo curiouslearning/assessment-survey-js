@@ -220,7 +220,25 @@ export class UIController {
 		}
 	}
 
-	public static addStar(): void {
+	public static ReadyForNext(newQ: qData): void {
+		console.log("ready for next!");
+		UIController.getInstance().answersContainer.style.visibility = "hidden";
+		for (var b in UIController.getInstance().buttons) {
+			UIController.getInstance().buttons[b].style.visibility = "hidden";
+		}
+		UIController.getInstance().shown = false;
+		UIController.getInstance().nextQuestion = newQ;
+		UIController.getInstance().questionsContainer.innerHTML = "";
+		UIController.getInstance().questionsContainer.style.display = "none";
+		// pB.innerHTML = "<button id='nextqButton'><svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M9 18L15 12L9 6V18Z' fill='currentColor' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'></path></svg></button>";
+		UIController.getInstance().playButton.innerHTML = "<button id='nextqButton'><img width='85px' height='85px' src='/img/sound-play-button.svg' type='image/svg+xml'> </img></button>";
+		var nqb = document.getElementById("nextqButton");
+		nqb.addEventListener("click", function () {
+			UIController.ShowQuestion();
+			//playquestionaudio
+			playAudio(newQ.promptAudio, UIController.getInstance().showOptions);
+		});
+	}
 		var startoshow = document.getElementById("star" + UIController.getInstance().stars[UIController.getInstance().qAnsNum]);
 		startoshow.classList.add("topstarv");
 		startoshow.classList.remove("topstarh");
