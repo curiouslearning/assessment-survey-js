@@ -261,16 +261,16 @@ export class UIController {
 
 		UIController.getInstance().questionsContainer.innerHTML = "";
 
-		if (typeof (newQ) == 'undefined') {
-			newQ = UIController.getInstance().nextQuestion;
+		if (typeof (newQuestion) == 'undefined') {
+			newQuestion = UIController.getInstance().nextQuestion;
 		}
 
-		if ('promptImg' in newQ) {
-			var tmpimg = getImg(newQ.promptImg);
+		if ('promptImg' in newQuestion) {
+			var tmpimg = AudioController.GetImage(newQuestion.promptImg);
 			UIController.getInstance().questionsContainer.appendChild(tmpimg);
 		}
 
-		qCode += newQ.promptText;
+		qCode += newQuestion.promptText;
 
 		qCode += "<BR>";
 
