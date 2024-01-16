@@ -170,7 +170,7 @@ export class Assessment extends BaseQuiz {
 
 	public HasQuestionsLeft = () => {
 		//// TODO: check buckets, check if done
-		var stillMore = true;
+		var hasQuestionsLeft = true;
 
 		if (this.currentBucket.numCorrect >= 4) {
 			//passed this bucket
@@ -179,7 +179,7 @@ export class Assessment extends BaseQuiz {
 				//passed highest bucket
 				console.log("passed highest bucket");
 				sendBucket(this.currentBucket, true);
-				stillMore = false;
+				hasQuestionsLeft = false;
 			}
 			else {
 				//moved up to next bucket
@@ -193,7 +193,7 @@ export class Assessment extends BaseQuiz {
 					// reached root node!!!!
 						console.log("reached root node");
 						sendBucket(this.currentBucket, true);
-						stillMore = false;
+						hasQuestionsLeft = false;
 					// do something here
 				}
 			}
@@ -209,7 +209,7 @@ export class Assessment extends BaseQuiz {
 			if (this.currentBucket.bucketID <= 1) {
 				//failed the lowest bucket
 				console.log("failed lowest bucket");
-				stillMore = false;
+				hasQuestionsLeft = false;
 				sendBucket(this.currentBucket, false);
 			}
 			else {
@@ -221,15 +221,15 @@ export class Assessment extends BaseQuiz {
 					this.tryMoveBucket(this.currentNode.data, false);
 				} else {
 					// reached root node!!!!
-							console.log("reached root node");
-							stillMore = false;
-							sendBucket(this.currentBucket, false);
+					console.log("reached root node");
+					hasQuestionsLeft = false;
+					sendBucket(this.currentBucket, false);
 					// do something here
 				}
 			}
 		}
 
-		return stillMore;
+		return hasQuestionsLeft;
 
 	}
 }
