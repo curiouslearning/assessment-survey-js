@@ -101,7 +101,8 @@ export class AudioController {
 			audioName = audioName + ".mp3";
 		}
 
-		console.log("Pre play all audios: " + AudioController.getInstance().allAudios);
+		console.log("Pre play all audios: ");
+		console.log(AudioController.getInstance().allAudios);
 
 		if (typeof(finishedCallback) != 'undefined'){
 			AudioController.getInstance().allAudios[audioName].addEventListener("ended", () => {
