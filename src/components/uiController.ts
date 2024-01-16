@@ -157,6 +157,7 @@ export default class UIController {
 			}
 		});
 	}
+
 	private showOptions(): void {
 		if (!this.shown) {
 			var newQ = this.nextQuestion;
