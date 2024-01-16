@@ -182,6 +182,10 @@ export default class UIController {
 		}
 
 	}
+	private setFeedbackText(nt: string): void {
+		console.log("Feedback text set to " + nt);
+		this.feedbackContainer.innerHTML = nt;
+	}
 }
 
 const landingCont = document.getElementById("landWrap");
