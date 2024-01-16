@@ -1,7 +1,7 @@
 //this is where the code will go for linearly iterating through the
 //questions in a data.json file that identifies itself as a survey
 
-import { addStar, showQuestion, readyForNext, showGame, showEnd, setButtonAction, setStartAction, setFeedbackVisibile } from '../components/uiController';
+import { UIController } from '../components/uiController';
 import { qData, answerData } from '../components/questionData';
 import { sendAnswered, sendFinished } from '../components/analyticsEvents'
 import { App } from '../App';
