@@ -44,19 +44,19 @@ export class UIController {
 	private playButtonId = "pbutton";
 	private playButton: HTMLElement;
 
-	private nextQuestion = null;
+	public nextQuestion = null;
 
 	private contentLoaded = false;
 
-	private qStart;
-	private shown = false;
+	public qStart;
+	public shown = false;
 
 	public stars = [];
 	public qAnsNum = 0;
 
-	private allStart: number;
+	public allStart: number;
 
-	private buttons = [];
+	public buttons = [];
 
 	private buttonPressCallback: Function;
 	private startPressCallback: Function;
