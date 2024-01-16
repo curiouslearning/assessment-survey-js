@@ -91,6 +91,28 @@ export default class UIController {
 
 		this.initEventListeners();
 	}
+
+	private initializeStars(): void {
+		for (let i = 0; i < 20; i++) {
+			const newStar = document.createElement("img");
+			newStar.src = "img/star.png";
+			newStar.id = "star" + i;
+
+			newStar.classList.add("topstarh");
+
+			this.starContainer.appendChild(newStar);
+
+			this.starContainer.innerHTML += "";
+
+			if (i == 9) {
+				this.starContainer.innerHTML += "<br>";
+			}
+
+			this.stars.push(i);
+		}
+
+		shuffleArray(this.stars);
+	}
 }
 
 const landingCont = document.getElementById("landWrap");
