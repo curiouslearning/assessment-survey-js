@@ -7,7 +7,7 @@ import { Survey } from './survey/survey';
 import { Assessment } from './assessment/assessment';
 import { UnityBridge } from './components/unityBridge';
 import { setUuid, linkAnalytics, sendInit } from './components/analyticsEvents';
-import { BaseQuiz } from './baseQuiz';
+import { BaseQuiz } from './BaseQuiz';
 import { fetchAppData, getDataURL } from './components/jsonUtils';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics, logEvent } from 'firebase/analytics';
