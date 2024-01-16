@@ -149,32 +149,32 @@ export class UIController {
 
 		this.landingContainer.addEventListener("click", () => {
 			if (localStorage.getItem(getDataFile())) {
-				showGame();
+				this.showGame();
 			}
 		});
 	}
 
 	private showOptions(): void {
-		if (!this.shown) {
-			var newQ = this.nextQuestion;
+		if (!UIController.getInstance().shown) {
+			var newQ = UIController.getInstance().nextQuestion;
 
 			//showing the answers on each button
 			let btnIndex = 0;
 			for (var aNum in newQ.answers) {
-				this.buttons[btnIndex++].style.visibility = "visible";
+				UIController.getInstance().buttons[btnIndex++].style.visibility = "visible";
 				let curAnswer = newQ.answers[aNum];
 				let answerCode = "";
 				if ('answerText' in curAnswer) {
 					answerCode += curAnswer.answerText;
 				}
-				this.buttons[aNum].innerHTML = answerCode;
+				UIController.getInstance().buttons[aNum].innerHTML = answerCode;
 				if ('answerImg' in curAnswer) {
 					var tmpimg = getImg(curAnswer.answerImg);
-					this.buttons[aNum].appendChild(tmpimg);
+					UIController.getInstance().buttons[aNum].appendChild(tmpimg);
 				}
 			}
 
-			this.qStart = Date.now();
+			UIController.getInstance().qStart = Date.now();
 		}
 
 	}
