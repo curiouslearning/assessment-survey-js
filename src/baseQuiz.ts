@@ -1,6 +1,6 @@
 import { App } from './App';
 import { sendFinished } from './components/analyticsEvents';
-import { showEnd } from './components/uiController';
+import { UIController } from './components/uiController';
 import { UnityBridge } from './components/unityBridge';
 
 export abstract class BaseQuiz {
@@ -14,7 +14,7 @@ export abstract class BaseQuiz {
 
 	public onEnd(): void {
 		sendFinished();
-		showEnd();
+		UIController.ShowEnd();
 		this.app.unityBridge.SendClose();
 	}
 }
