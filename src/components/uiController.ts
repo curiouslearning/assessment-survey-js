@@ -299,15 +299,15 @@ export class UIController {
 		}
 	}
 
-	public static setContentLoaded(value: boolean): void {
+	public static SetContentLoaded(value: boolean): void {
 		UIController.getInstance().contentLoaded = value;
 	}
 
-	public static setButtonPressAction(callback: Function): void {
+	public static SetButtonPressAction(callback: Function): void {
 		UIController.getInstance().buttonPressCallback = callback;
 	}
 
-	public static setStartAction(callback: Function): void {
+	public static SetStartAction(callback: Function): void {
 		UIController.getInstance().startPressCallback = callback;
 	}
 
