@@ -61,11 +61,7 @@ export class UIController {
 	private buttonPressCallback: Function;
 	private startPressCallback: Function;
 
-	private buttonsActive: boolean = true;
-
-	private constructor() {
-		this.init();
-	}
+	public buttonsActive: boolean = true;
 
 	private init(): void {
 		// Initialize required containers
