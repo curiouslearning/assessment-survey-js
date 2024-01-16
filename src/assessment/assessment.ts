@@ -46,7 +46,7 @@ export class Assessment extends BaseQuiz {
 	public Run(applink: App): void {
 		this.app = applink;
 		this.buildBuckets().then(result => {
-			console.log(this.curBucket);
+			console.log(this.currentBucket);
 			this.unityBridge.SendLoaded();
 		});
 	}
@@ -66,7 +66,7 @@ export class Assessment extends BaseQuiz {
 			console.log(root);
 			this.basalBucket = this.numBuckets + 1;
 			this.ceilingBucket = -1;
-			this.curNode = root;
+			this.currentNode = root;
 			this.tryMoveBucket(root.data, false);
 		});
 		return res;
