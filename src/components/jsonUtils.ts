@@ -1,13 +1,16 @@
 /** Json Utils */
 
-import { setFeedbackText } from './uiController';
+// import { setFeedbackText } from './uiController';
 
 export async function fetchAppData(url: string) {
 	return loadData(url).then(data => { return data; });
 }
 
 export async function fetchAppType(url: string) {
-	return loadData(url).then(data => { setFeedbackText(data["feedbackText"]); return data["appType"]; });
+	return loadData(url).then(data => { 
+		// setFeedbackText(data["feedbackText"]); 
+		return data["appType"]; 
+	});
 }
 
 export async function fetchFeedback(url: string) {
