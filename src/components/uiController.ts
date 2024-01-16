@@ -8,25 +8,25 @@ export class UIController {
 	private static instance: UIController | null = null;
 
 	private landingContainerId = "landWrap";
-	private landingContainer: HTMLElement;
+	public landingContainer: HTMLElement;
 
 	private gameContainerId = "gameWrap";
-	private gameContainer: HTMLElement;
+	public gameContainer: HTMLElement;
 
 	private endContainerId = "endWrap";
-	private endContainer: HTMLElement;
+	public endContainer: HTMLElement;
 
 	private starContainerId = "starWrapper";
-	private starContainer: HTMLElement;
+	public starContainer: HTMLElement;
 
 	private questionsContainerId = "qWrap";
-	private questionsContainer: HTMLElement;
+	public questionsContainer: HTMLElement;
 
 	private feedbackContainerId = "feedbackWrap";
-	private feedbackContainer: HTMLElement;
+	public feedbackContainer: HTMLElement;
 
 	private answersContainerId = "aWrap";
-	private answersContainer: HTMLElement;
+	public answersContainer: HTMLElement;
 
 	private answerButton1Id = "answerButton1";
 	private answerButton1: HTMLElement;
