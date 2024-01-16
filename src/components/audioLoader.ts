@@ -102,6 +102,10 @@ export function playAudio(name: string, apcb?: Function){
 	if (name in allaudios){
 		allaudios[name].play();
 	}
+	else if(name.toLowerCase() in allaudios)
+	{
+		allaudios[name.toLowerCase()].play();
+	}
 }
 
 export function getImg(name){
