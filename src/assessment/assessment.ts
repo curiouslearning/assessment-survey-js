@@ -103,12 +103,14 @@ export class Assessment extends BaseQuiz {
 	public onQuestionEnd = () => {
 		
 		setTimeout(() => {
-            setFeedbackVisibile(false);
+            // setFeedbackVisibile(false);
+			UIController.SetFeedbackVisibile(false);
 			if (this.HasQuestionsLeft()) {
-				readyForNext(this.getNextQuestion());
+				// readyForNext(this.getNextQuestion());
+				UIController.ReadyForNext(this.getNextQuestion());
 			}
 			else {
-				console.log("no questions left");
+				console.log("No questions left");
 				this.onEnd();
 			}
 
