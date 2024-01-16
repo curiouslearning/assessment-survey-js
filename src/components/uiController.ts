@@ -182,9 +182,17 @@ export default class UIController {
 		}
 
 	}
+
 	private setFeedbackText(nt: string): void {
 		console.log("Feedback text set to " + nt);
 		this.feedbackContainer.innerHTML = nt;
+	}
+
+	//functions to show/hide the different containers
+	private showLanding(): void {
+		landingCont.style.display = "flex";
+		gameCont.style.display = "none";
+		endCont.style.display = "none";
 	}
 }
 
