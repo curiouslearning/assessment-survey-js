@@ -22,8 +22,8 @@ export class Survey extends BaseQuiz {
 		this.dataURL = dataURL;
 		this.unityBridge = unityBridge;
 		this.currentQuestionIndex = 0;
-		setButtonAction(this.TryAnswer);
-		setStartAction(this.startSurvey);
+		UIController.SetButtonPressAction(this.TryAnswer);
+		UIController.SetStartAction(this.startSurvey);
 	}
 
 	public async Run(app: App) {
