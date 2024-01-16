@@ -66,6 +66,31 @@ export default class UIController {
 	private constructor() {
 		this.init();
 	}
+
+	private init(): void {
+		// Initialize required containers
+		this.landingContainer = document.getElementById(this.landingContainerId);
+		this.gameContainer = document.getElementById(this.gameContainerId);
+		this.endContainer = document.getElementById(this.endContainerId);
+		this.starContainer = document.getElementById(this.starContainerId);
+		this.questionsContainer = document.getElementById(this.questionsContainerId);
+		this.feedbackContainer = document.getElementById(this.feedbackContainerId);
+		this.answersContainer = document.getElementById(this.answersContainerId);
+
+		// Initialize required buttons
+		this.answerButton1 = document.getElementById(this.answerButton1Id);
+		this.answerButton2 = document.getElementById(this.answerButton2Id);
+		this.answerButton3 = document.getElementById(this.answerButton3Id);
+		this.answerButton4 = document.getElementById(this.answerButton4Id);
+		this.answerButton5 = document.getElementById(this.answerButton5Id);
+		this.answerButton6 = document.getElementById(this.answerButton6Id);
+
+		this.playButton = document.getElementById(this.playButtonId);
+
+		this.initializeStars();
+
+		this.initEventListeners();
+	}
 }
 
 const landingCont = document.getElementById("landWrap");
