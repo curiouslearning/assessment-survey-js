@@ -52,7 +52,8 @@ export class Assessment extends BaseQuiz {
 	}
 
 	public startAssessment = () => {
-		readyForNext(this.getNextQuestion());
+		// readyForNext(this.getNextQuestion());
+		UIController.ReadyForNext(this.getNextQuestion());
 	}
 
 	public buildBuckets = () => {
@@ -87,13 +88,15 @@ export class Assessment extends BaseQuiz {
 		if (this.curQ.answers[ans-1].answerName == this.curQ.correct){
 			this.curBucket.numCorrect += 1;
 			this.curBucket.numConsecutiveWrong = 0;
-			console.log("answered correctly");
+			console.log("Answered correctly");
 		}else{
 			this.curBucket.numConsecutiveWrong += 1;
-			console.log("answered incorrectly, " + this.curBucket.numConsecutiveWrong);
+			console.log("Answered incorrectly, " + this.curBucket.numConsecutiveWrong);
 		}
-		addStar();
-		setFeedbackVisibile(true);
+		// addStar();
+		UIController.AddStar();
+		// setFeedbackVisibile(true);
+		UIController.SetFeedbackVisibile(true);
 		setTimeout(() => { this.onQuestionEnd() }, 2000);
 	}
 
