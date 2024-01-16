@@ -205,18 +205,18 @@ export class UIController {
 		this.startPressCallback();
 	}
 
-	private setFeedbackVisibile(visible: boolean) {
+	public static SetFeedbackVisibile(visible: boolean) {
 		if (visible) {
-			this.feedbackContainer.classList.remove("hidden");
-			this.feedbackContainer.classList.add("visible");
+			UIController.getInstance().feedbackContainer.classList.remove("hidden");
+			UIController.getInstance().feedbackContainer.classList.add("visible");
 			playCorrect();
 
-			buttonsActive = false;
+			UIController.getInstance().buttonsActive = false;
 		} else {
-			this.feedbackContainer.classList.remove("visible");
-			this.feedbackContainer.classList.add("hidden");
+			UIController.getInstance().feedbackContainer.classList.remove("visible");
+			UIController.getInstance().feedbackContainer.classList.add("hidden");
 
-			buttonsActive = true;
+			UIController.getInstance().buttonsActive = true;
 		}
 	}
 
