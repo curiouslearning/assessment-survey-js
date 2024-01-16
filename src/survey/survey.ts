@@ -46,7 +46,7 @@ export class Survey extends BaseQuiz {
 
 		setTimeout(() => {
 			if (this.HasQuestionsLeft()) {
-				readyForNext(this.getNextQuestion());
+				UIController.ReadyForNext(this.getNextQuestion());
 			} else {
 				console.log("There are no questions left.");
 				this.onEnd();
@@ -56,8 +56,8 @@ export class Survey extends BaseQuiz {
 
 	public TryAnswer = (ans: number, elapsed: number) => {
 		sendAnswered(this.questionsData[this.currentQuestionIndex], ans, elapsed)
-		setFeedbackVisibile(true);
-		addStar();
+		UIController.SetFeedbackVisibile(true);
+		UIController.AddStar();
 		setTimeout(() => { this.onQuestionEnd() }, 2000);
 	}
 
