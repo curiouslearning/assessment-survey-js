@@ -230,6 +230,15 @@ export default class UIController {
 		startoshow.classList.remove("topstarh");
 		UIController.getInstance().qAnsNum += 1;
 	}
+	private answerButtonPress(buttonNum: number): void {
+		if (this.buttonsActive) {
+			playDing();
+			const nPressed = Date.now();
+			const dTime = nPressed - this.qStart;
+			console.log("answered in " + dTime);
+			this.buttonPressCallback(buttonNum, dTime);
+		}
+	}
 }
 
 const landingCont = document.getElementById("landWrap");
