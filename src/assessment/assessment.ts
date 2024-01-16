@@ -37,9 +37,7 @@ export class Assessment extends BaseQuiz {
 		this.unityBridge = nunity;
 		this.questionNum = 0;
 		console.log("app initialized");
-		// setButtonAction(this.TryAnswer);
 		UIController.SetButtonPressAction(this.TryAnswer);
-		// setStartAction(this.startAssessment);
 		UIController.SetStartAction(this.startAssessment);
 	}
 
@@ -52,7 +50,6 @@ export class Assessment extends BaseQuiz {
 	}
 
 	public startAssessment = () => {
-		// readyForNext(this.getNextQuestion());
 		UIController.ReadyForNext(this.getNextQuestion());
 	}
 
@@ -93,20 +90,15 @@ export class Assessment extends BaseQuiz {
 			this.curBucket.numConsecutiveWrong += 1;
 			console.log("Answered incorrectly, " + this.curBucket.numConsecutiveWrong);
 		}
-		// addStar();
 		UIController.AddStar();
-		// setFeedbackVisibile(true);
 		UIController.SetFeedbackVisibile(true);
 		setTimeout(() => { this.onQuestionEnd() }, 2000);
 	}
 
 	public onQuestionEnd = () => {
-		
 		setTimeout(() => {
-            // setFeedbackVisibile(false);
 			UIController.SetFeedbackVisibile(false);
 			if (this.HasQuestionsLeft()) {
-				// readyForNext(this.getNextQuestion());
 				UIController.ReadyForNext(this.getNextQuestion());
 			}
 			else {
