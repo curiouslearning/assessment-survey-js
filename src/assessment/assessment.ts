@@ -72,25 +72,25 @@ export class Assessment extends BaseQuiz {
 		return res;
 	}
 
-	public initBucket = (b: bucket) => {
-		this.curBucket = b;
-		this.curBucket.usedItems = [];
-		this.curBucket.numTried = 0;
-		this.curBucket.numCorrect = 0;
-		this.curBucket.numConsecutiveWrong = 0;
-		this.curBucket.tested = true;
+	public initBucket = (bucket: bucket) => {
+		this.currentBucket = bucket;
+		this.currentBucket.usedItems = [];
+		this.currentBucket.numTried = 0;
+		this.currentBucket.numCorrect = 0;
+		this.currentBucket.numConsecutiveWrong = 0;
+		this.currentBucket.tested = true;
 	}
 
-	public TryAnswer = (ans: number, elapsed: number) => {
-		sendAnswered(this.curQ, ans, elapsed)
-		this.curBucket.numTried += 1;
-		if (this.curQ.answers[ans-1].answerName == this.curQ.correct){
-			this.curBucket.numCorrect += 1;
-			this.curBucket.numConsecutiveWrong = 0;
+	public TryAnswer = (answer: number, elapsed: number) => {
+		sendAnswered(this.currentQuestion, answer, elapsed)
+		this.currentBucket.numTried += 1;
+		if (this.currentQuestion.answers[answer-1].answerName == this.currentQuestion.correct){
+			this.currentBucket.numCorrect += 1;
+			this.currentBucket.numConsecutiveWrong = 0;
 			console.log("Answered correctly");
 		}else{
-			this.curBucket.numConsecutiveWrong += 1;
-			console.log("Answered incorrectly, " + this.curBucket.numConsecutiveWrong);
+			this.currentBucket.numConsecutiveWrong += 1;
+			console.log("Answered incorrectly, " + this.currentBucket.numConsecutiveWrong);
 		}
 		UIController.AddStar();
 		UIController.SetFeedbackVisibile(true);
@@ -102,130 +102,128 @@ export class Assessment extends BaseQuiz {
 			UIController.SetFeedbackVisibile(false);
 			if (this.HasQuestionsLeft()) {
 				UIController.ReadyForNext(this.getNextQuestion());
-			}
-			else {
+			} else {
 				console.log("No questions left");
 				this.onEnd();
 			}
-
 		}, 500);
 	}
 
 	public getNextQuestion = () => {
 		var targetItem, foil1, foil2, foil3;
+
 		do {
-			
-			targetItem = randFrom(this.curBucket.items);
-		} while (this.curBucket.usedItems.includes(targetItem));
-		this.curBucket.usedItems.push(targetItem);
+			targetItem = randFrom(this.currentBucket.items);
+		} while (this.currentBucket.usedItems.includes(targetItem));
+			this.currentBucket.usedItems.push(targetItem);
 		do {
-			foil1 = randFrom(this.curBucket.items);
+			foil1 = randFrom(this.currentBucket.items);
 		} while (targetItem == foil1);
 		do {
-			foil2 = randFrom(this.curBucket.items);
+			foil2 = randFrom(this.currentBucket.items);
 		} while (targetItem == foil2 || foil1 == foil2);
 		do {
-			foil3 = randFrom(this.curBucket.items);
+			foil3 = randFrom(this.currentBucket.items);
 		} while (targetItem == foil3 || foil1 == foil3 || foil2 == foil3);
 
-		var opts = [targetItem, foil1, foil2, foil3];
-		shuffleArray(opts);
+		var answerOptions = [targetItem, foil1, foil2, foil3];
+		shuffleArray(answerOptions);
 
-		var res = {
-			qName: "question" + this.questionNum + "-" + targetItem.itemName,
+		var result = {
+			qName: "question" + this.questionNumber + "-" + targetItem.itemName,
 			promptText: "",
-			bucket: this.curBucket.bucketID,
+			bucket: this.currentBucket.bucketID,
 			promptAudio: targetItem.itemName,
 			correct: targetItem.itemText,
 			answers: [
 				{
-					answerName: opts[0].itemName,
-					answerText: opts[0].itemText
+					answerName: answerOptions[0].itemName,
+					answerText: answerOptions[0].itemText
 				},
 				{
-					answerName: opts[1].itemName,
-					answerText: opts[1].itemText
+					answerName: answerOptions[1].itemName,
+					answerText: answerOptions[1].itemText
 				},
 				{
-					answerName: opts[2].itemName,
-					answerText: opts[2].itemText
+					answerName: answerOptions[2].itemName,
+					answerText: answerOptions[2].itemText
 				},
 				{
-					answerName: opts[3].itemName,
-					answerText: opts[3].itemText
+					answerName: answerOptions[3].itemName,
+					answerText: answerOptions[3].itemText
 				}
 			]
 		};
 
-		this.curQ = res;
-		this.questionNum += 1;
-		return res;
+		this.currentQuestion = result;
+		this.questionNumber += 1;
+		return result;
 	}
 
-	public tryMoveBucket = (nbucket, passed: boolean) => {
-		if (this.curBucket != null)
-			sendBucket(this.curBucket, passed);
-		console.log("new  bucket is " + nbucket.bucketID);
-		preloadBucket(nbucket, this.app.GetDataURL());
-		this.initBucket(nbucket);
+	public tryMoveBucket = (nBucket, passed: boolean) => {
+		if (this.currentBucket != null)
+			sendBucket(this.currentBucket, passed);
+		console.log("new  bucket is " + nBucket.bucketID);
+		preloadBucket(nBucket, this.app.GetDataURL());
+		this.initBucket(nBucket);
 	}
 
 	public HasQuestionsLeft = () => {
 		//// TODO: check buckets, check if done
 		var stillMore = true;
 
-		if (this.curBucket.numCorrect >= 4) {
+		if (this.currentBucket.numCorrect >= 4) {
 			//passed this bucket
-			console.log("passed this bucket " + this.curBucket.bucketID);
-			if (this.curBucket.bucketID >= this.numBuckets) {
+			console.log("passed this bucket " + this.currentBucket.bucketID);
+			if (this.currentBucket.bucketID >= this.numBuckets) {
 				//passed highest bucket
 				console.log("passed highest bucket");
-				sendBucket(this.curBucket, true);
+				sendBucket(this.currentBucket, true);
 				stillMore = false;
 			}
 			else {
 				//moved up to next bucket
 				console.log("moving up bucket");
-				if (this.curNode.right != null){
+				if (this.currentNode.right != null){
 					//move down to right
 					console.log("moving to right node");
-					this.curNode = this.curNode.right;
-					this.tryMoveBucket(this.curNode.data, true);
+					this.currentNode = this.currentNode.right;
+					this.tryMoveBucket(this.currentNode.data, true);
 				}else{
 					// reached root node!!!!
 						console.log("reached root node");
-						sendBucket(this.curBucket, true);
+						sendBucket(this.currentBucket, true);
 						stillMore = false;
 					// do something here
 				}
-
 			}
 		}
-		if (this.curBucket.numConsecutiveWrong >= 2 || this.curBucket.numTried >= 5) {
+
+		if (this.currentBucket.numConsecutiveWrong >= 2 || this.currentBucket.numTried >= 5) {
 			//failed this bucket
-			console.log("failed this bucket " + this.curBucket.bucketID);
-			if (this.curBucket.bucketID < this.basalBucket) {
+			console.log("failed this bucket " + this.currentBucket.bucketID);
+			if (this.currentBucket.bucketID < this.basalBucket) {
 				//update basal bucket number
-				this.basalBucket = this.curBucket.bucketID;
+				this.basalBucket = this.currentBucket.bucketID;
 			}
-			if (this.curBucket.bucketID <= 1) {
+			if (this.currentBucket.bucketID <= 1) {
 				//failed the lowest bucket
 				console.log("failed lowest bucket");
 				stillMore = false;
-				sendBucket(this.curBucket, false);
+				sendBucket(this.currentBucket, false);
 			}
 			else {
 				console.log("moving down bucket");
-				if (this.curNode.left != null){
+				if (this.currentNode.left != null){
 					//move down to left
 					console.log("moving to left node");
-					this.curNode = this.curNode.left;
-					this.tryMoveBucket(this.curNode.data, false);
-				}else{
+					this.currentNode = this.currentNode.left;
+					this.tryMoveBucket(this.currentNode.data, false);
+				} else {
 					// reached root node!!!!
 							console.log("reached root node");
 							stillMore = false;
-							sendBucket(this.curBucket, false);
+							sendBucket(this.currentBucket, false);
 					// do something here
 				}
 			}
