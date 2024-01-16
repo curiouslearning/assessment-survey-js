@@ -113,6 +113,50 @@ export default class UIController {
 
 		shuffleArray(this.stars);
 	}
+
+	private initEventListeners(): void {
+		this.answerButton1.addEventListener("click", () => {
+			this.answerButtonPress(1);
+		});
+
+		this.buttons.push(this.answerButton1);
+
+		this.answerButton2.addEventListener("click", () => {
+			this.answerButtonPress(2);
+		});
+
+		this.buttons.push(this.answerButton2);
+
+		this.answerButton3.addEventListener("click", () => {
+			this.answerButtonPress(3);
+		});
+
+		this.buttons.push(this.answerButton3);
+
+		this.answerButton4.addEventListener("click", () => {
+			this.answerButtonPress(4);
+		});
+
+		this.buttons.push(this.answerButton4);
+
+		this.answerButton5.addEventListener("click", () => {
+			this.answerButtonPress(5);
+		});
+
+		this.buttons.push(this.answerButton5);
+
+		this.answerButton6.addEventListener("click", () => {
+			this.answerButtonPress(6);
+		});
+
+		this.buttons.push(this.answerButton6);
+
+		this.landingContainer.addEventListener("click", () => {
+			if (localStorage.getItem(getDataFile())) {
+				showGame();
+			}
+		});
+	}
 }
 
 const landingCont = document.getElementById("landWrap");
