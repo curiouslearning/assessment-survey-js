@@ -21,12 +21,14 @@ enum searchStage {
 export class Assessment extends BaseQuiz {
 
 	public unityBridge;
-	public curNode: TNode;
-	public curQ: qData;
-	public buckets: bucket[];
+
+	public currentNode: TNode;
+	public currentQuestion: qData;
 	public bucketArray: number[];
-	public curBucket: bucket;
-	public questionNum: number;
+	public questionNumber: number;
+	
+	public buckets: bucket[];
+	public currentBucket: bucket;
 	public numBuckets: number;
 	public basalBucket: number;
 	public ceilingBucket: number;
