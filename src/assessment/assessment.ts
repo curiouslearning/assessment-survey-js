@@ -172,10 +172,16 @@ export class Assessment extends BaseQuiz {
 	public HasQuestionsLeft = () => {
 		//// TODO: check buckets, check if done
 		var hasQuestionsLeft = true;
+		if(this.currentBucket.numCorrect%2==0)
+		{
+			UIController.ProgressChest();
+
+		}
 
 		if (this.currentBucket.numCorrect >= 4) {
 			//passed this bucket
 			console.log("passed this bucket " + this.currentBucket.bucketID);
+			
 			if (this.currentBucket.bucketID >= this.numBuckets) {
 				//passed highest bucket
 				console.log("passed highest bucket");
@@ -190,6 +196,7 @@ export class Assessment extends BaseQuiz {
 					console.log("moving to right node");
 					this.currentNode = this.currentNode.right;
 					this.tryMoveBucket(this.currentNode.data, true);
+					
 				}else{
 					// reached root node!!!!
 						console.log("reached root node");
