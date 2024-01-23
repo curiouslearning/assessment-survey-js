@@ -29,8 +29,14 @@ export function getDataURL(url: string) {
 	return "/data/" + url + ".json";
 }
 
+export function getCaseIndependentLangList() {
+	return ['luganda'];
+}
+
 async function loadData(url: string) {
 	var furl = getDataURL(url);
 	// console.log(furl);
 	return fetch(furl).then(response => response.json());
 }
+
+

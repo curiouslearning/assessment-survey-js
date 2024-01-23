@@ -94,10 +94,13 @@ export class Assessment extends BaseQuiz {
 		}
 		UIController.AddStar();
 		UIController.SetFeedbackVisibile(true);
-		setTimeout(() => { this.onQuestionEnd() }, 2000);
+		setTimeout(() => { 
+			console.log('Completed first Timeout');
+			this.onQuestionEnd() }, 2000);
 	}
 
 	public onQuestionEnd = () => {
+		let questionEndTimeout = (this.HasQuestionsLeft())?500:4000;
 		setTimeout(() => {
 			UIController.SetFeedbackVisibile(false);
 			if (this.HasQuestionsLeft()) {
@@ -106,7 +109,7 @@ export class Assessment extends BaseQuiz {
 				console.log("No questions left");
 				this.onEnd();
 			}
-		}, 500);
+		}, questionEndTimeout);
 	}
 
 	public getNextQuestion = () => {
@@ -172,28 +175,33 @@ export class Assessment extends BaseQuiz {
 	public HasQuestionsLeft = () => {
 		//// TODO: check buckets, check if done
 		var hasQuestionsLeft = true;
-
+			
 		if (this.currentBucket.numCorrect >= 4) {
 			//passed this bucket
 			console.log("passed this bucket " + this.currentBucket.bucketID);
+			
 			if (this.currentBucket.bucketID >= this.numBuckets) {
 				//passed highest bucket
 				console.log("passed highest bucket");
 				sendBucket(this.currentBucket, true);
-				hasQuestionsLeft = false;
+				UIController.ProgressChest();
+				hasQuestionsLeft = false;	
 			}
 			else {
 				//moved up to next bucket
 				console.log("moving up bucket");
 				if (this.currentNode.right != null){
 					//move down to right
+					UIController.ProgressChest();
 					console.log("moving to right node");
 					this.currentNode = this.currentNode.right;
 					this.tryMoveBucket(this.currentNode.data, true);
+					
 				}else{
 					// reached root node!!!!
 						console.log("reached root node");
 						sendBucket(this.currentBucket, true);
+						UIController.ProgressChest();
 						hasQuestionsLeft = false;
 					// do something here
 				}

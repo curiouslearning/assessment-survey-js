@@ -2,6 +2,7 @@
 
 import { qData } from './questionData';
 import { bucket, bucketItem } from '../assessment/bucketData';
+import { getCaseIndependentLangList } from './jsonUtils';
 
 export class AudioController {
 
@@ -34,7 +35,6 @@ export class AudioController {
 
 		for (var questionIndex in questionsData){
 			let questionData = questionsData[questionIndex];
-
 			if (questionData.promptAudio != null) {
 				AudioController.FilterAndAddAudioToAllAudios(questionData.promptAudio);
 			}
@@ -63,7 +63,6 @@ export class AudioController {
 
 	public static FilterAndAddAudioToAllAudios(newAudioURL: string): void {
 		console.log("Adding audio: " + newAudioURL);
-
 		if (newAudioURL.includes(".wav")){
 			newAudioURL = newAudioURL.replace(".wav", ".mp3");
 		} else if (newAudioURL.includes(".mp3")) {
@@ -73,9 +72,18 @@ export class AudioController {
 		}
 
 		console.log("Filtered: " + newAudioURL);
-
+       
 		let newAudio = new Audio();
-		newAudio.src = "audio/" + AudioController.getInstance().dataURL + "/" + newAudioURL;
+		if(getCaseIndependentLangList().includes(AudioController.getInstance().dataURL.split('-')[0])  )
+		{
+			newAudio.src = "audio/" + AudioController.getInstance().dataURL + "/" + newAudioURL.toLowerCase();
+			
+		}
+		else{
+			newAudio.src = "audio/" + AudioController.getInstance().dataURL + "/" + newAudioURL;
+
+		}
+		
 		AudioController.getInstance().allAudios[newAudioURL] = newAudio;
 		
 		console.log(newAudio.src);
@@ -100,7 +108,7 @@ export class AudioController {
 		} else {
 			audioName = audioName + ".mp3";
 		}
-
+        
 		console.log("Pre play all audios: ");
 		console.log(AudioController.getInstance().allAudios);
 
@@ -109,7 +117,6 @@ export class AudioController {
 				finishedCallback();
 			})
 		}
-
 		if (audioName in AudioController.getInstance().allAudios){
 			AudioController.getInstance().allAudios[audioName].play();
 		}

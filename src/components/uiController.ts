@@ -19,6 +19,9 @@ export class UIController {
 	private starContainerId = "starWrapper";
 	public starContainer: HTMLElement;
 
+	private chestContainerId = 'chestWrapper';
+	public chestContainer: HTMLElement;
+
 	private questionsContainerId = "qWrap";
 	public questionsContainer: HTMLElement;
 
@@ -40,9 +43,13 @@ export class UIController {
 	private answerButton5: HTMLElement;
 	private answerButton6Id = "answerButton6";
 	private answerButton6: HTMLElement;
+	
 
 	private playButtonId = "pbutton";
 	private playButton: HTMLElement;
+
+	private chestImgId = "chestImage";
+	private chestImg: HTMLElement;
 
 	public nextQuestion = null;
 
@@ -69,6 +76,7 @@ export class UIController {
 		this.gameContainer = document.getElementById(this.gameContainerId);
 		this.endContainer = document.getElementById(this.endContainerId);
 		this.starContainer = document.getElementById(this.starContainerId);
+		this.chestContainer = document.getElementById(this.chestContainerId);
 		this.questionsContainer = document.getElementById(this.questionsContainerId);
 		this.feedbackContainer = document.getElementById(this.feedbackContainerId);
 		this.answersContainer = document.getElementById(this.answersContainerId);
@@ -82,6 +90,8 @@ export class UIController {
 		this.answerButton6 = document.getElementById(this.answerButton6Id);
 
 		this.playButton = document.getElementById(this.playButtonId);
+
+		this.chestImg = document.getElementById(this.chestImgId);
 
 		this.initializeStars();
 
@@ -297,6 +307,21 @@ export class UIController {
 			console.log("answered in " + dTime);
 			this.buttonPressCallback(buttonNum, dTime);
 		}
+	}
+
+	public static ProgressChest(){
+		const chestImage = document.getElementById('chestImage') as HTMLImageElement;
+		let currentImgSrc = chestImage.src
+		console.log('Chest Progression-->',chestImage);
+		console.log('Chest Progression-->',chestImage.src);
+		const currentImageNumber = parseInt(currentImgSrc.slice(-6,-4),10);
+		console.log('Chest Progression number-->',currentImageNumber);
+		const nextImageNumber = currentImageNumber % 4 + 1;
+		const nextImageSrc = `img/chestprogression/TreasureChestOpen0${nextImageNumber}.svg`;
+		chestImage.src = nextImageSrc;
+		
+
+
 	}
 
 	public static SetContentLoaded(value: boolean): void {
