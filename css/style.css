@@ -270,6 +270,19 @@ button {
   background-color: orange;
 }
 
+
+@keyframes zoomIn {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+	
+}
+
 /* #answerButton1 {
 	background-color: rgb(255, 234, 205);
 	border-color: rgb(254, 217, 167);

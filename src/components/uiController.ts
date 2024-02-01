@@ -166,28 +166,36 @@ export class UIController {
 
 	private showOptions(): void {
 		if (!UIController.getInstance().shown) {
-			var newQ = UIController.getInstance().nextQuestion;
-
-			//showing the answers on each button
-			let btnIndex = 0;
-			for (var aNum in newQ.answers) {
-				UIController.getInstance().buttons[btnIndex++].style.visibility = "visible";
-				let curAnswer = newQ.answers[aNum];
-				let answerCode = "";
-				if ('answerText' in curAnswer) {
-					answerCode += curAnswer.answerText;
-				}
-				UIController.getInstance().buttons[aNum].innerHTML = answerCode;
-				if ('answerImg' in curAnswer) {
-					var tmpimg = AudioController.GetImage(curAnswer.answerImg);
-					UIController.getInstance().buttons[aNum].appendChild(tmpimg);
-				}
+			const newQ = UIController.getInstance().nextQuestion;
+			const buttons = UIController.getInstance().buttons;
+			const animationDuration = 1000; 
+	        UIController.getInstance().shown = true;
+			buttons.forEach(button => {
+				button.style.visibility = "hidden";
+				button.style.animation = "";
+			});
+			
+			for (let i = 0; i < newQ.answers.length; i++) {
+				const curAnswer = newQ.answers[i];
+				const button = buttons[i];
+	
+				button.innerHTML = 'answerText' in curAnswer ? curAnswer.answerText : '';
+				button.style.visibility = "hidden";
+				setTimeout(() => {
+					button.style.visibility = "visible";
+					button.style.animation = `zoomIn ${animationDuration}ms ease forwards`;
+					
+					if ('answerImg' in curAnswer) {
+						const tmpimg = AudioController.GetImage(curAnswer.answerImg);
+						button.appendChild(tmpimg);
+					}
+				}, i * animationDuration);
 			}
-
+	
 			UIController.getInstance().qStart = Date.now();
 		}
-
 	}
+	
 
 	public static SetFeedbackText(nt: string): void {
 		console.log("Feedback text set to " + nt);
