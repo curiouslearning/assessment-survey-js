@@ -269,7 +269,7 @@ export class UIController {
 			console.log(newQuestion.promptAudio);
 			
 			if ('promptAudio' in newQuestion) {
-				AudioController.PlayAudio(newQuestion.promptAudio, UIController.getInstance().showOptions);
+				AudioController.PlayAudio(newQuestion.promptAudio);
 			}
 		})
 
