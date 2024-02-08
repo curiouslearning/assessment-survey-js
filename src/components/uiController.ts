@@ -168,7 +168,7 @@ export class UIController {
 		if (!UIController.getInstance().shown) {
 			const newQ = UIController.getInstance().nextQuestion;
 			const buttons = UIController.getInstance().buttons;
-			const animationDuration = 1000; 
+			const animationDuration = 1500; 
 	        UIController.getInstance().shown = true;
 			buttons.forEach(button => {
 				button.style.visibility = "hidden";
@@ -269,7 +269,7 @@ export class UIController {
 			console.log(newQuestion.promptAudio);
 			
 			if ('promptAudio' in newQuestion) {
-				AudioController.PlayAudio(newQuestion.promptAudio, UIController.getInstance().showOptions);
+				AudioController.PlayAudio(newQuestion.promptAudio);
 			}
 		})
 
