@@ -100,7 +100,7 @@ export class App {
 						if (data["quizName"].includes("Luganda")) {
 							audioItemURL = "/audio/" + this.dataURL + "/" + buckets[i].items[j].itemName.toLowerCase() + ".mp3";
 						} else {
-							audioItemURL = "/audio/" + this.dataURL + "/" + buckets[i].items[j].itemName + ".mp3";
+							audioItemURL = "/audio/" + this.dataURL + "/" + buckets[i].items[j].itemName + ".wav";
 						}
 
 						this.cacheModel.addItemToAudioVisualResources(audioItemURL);
