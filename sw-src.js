@@ -68,6 +68,8 @@ function updateCachingProgress(bookName) {
   });
 }
 
+let debugCaching = true;
+
 function cacheTheBookJSONAndImages(data) {
   console.log("Caching the book JSON and images", data);
   let appData = data["appData"];
@@ -91,12 +93,13 @@ function cacheTheBookJSONAndImages(data) {
       cache.add(cachableAssets[i]).finally(() => {
         updateCachingProgress(appData["appName"]);
       }).catch((error) => {
-        // console.log("Error while caching an asset: ", cachableAssets[i], error);
-        // Identify missing audio files
-        // cachableAssets[i] = cachableAssets[i] + " ERROR WHILE CACHING!";
+        if (debugCaching) {
+          console.log("Error while caching an asset: ", cachableAssets[i], error);
+          cachableAssets[i] = cachableAssets[i] + " ERROR WHILE CACHING!";
+        }
       });
     }
-    // console.log("After caching: ", cachableAssets);
+    console.log("After caching: ", cachableAssets);
   });
 }
 

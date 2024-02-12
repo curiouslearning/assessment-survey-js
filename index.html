@@ -6,12 +6,16 @@
 
 	<meta name="description" content="Assessment/Survey from Curious Learning">
 	<meta name="viewport" content="width=device-width,initial-scale=1.0">
-
+	<link rel="manifest" href="manifest.json"/>
 	<link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 	<div class="bodyWrapper">
+		<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg" id="svg-c">
+			<!-- SVG content goes here -->
+		</svg>
+
 		<div class="landingPageWrapper" id="landWrap">
 			<img class="landingMonster" src="img/monster.png" />
 			<BR>
@@ -72,6 +76,29 @@
 
 		gtag('config', 'G-DGTWM534Z4');
 	</script> -->
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.0/gsap.min.js"></script>
+
+	<script>
+		// Fetch JSON data and trigger animation
+		fetch('/dist/Animations/LetterButton.json')
+			.then(response => response.json())
+			.then(jsonData => {
+				// Access the SVG container by its ID
+				const svgContainer = document.getElementById('svg-c');
+
+				// Create an animation timeline using GSAP
+				const tl = gsap.timeline();
+				tl.to(svgContainer.querySelectorAll('rect'), {
+					duration: jsonData.duration,
+					ease: jsonData.ease,
+					keyframes: jsonData.keyframes
+				});
+
+				tl.play();
+			})
+			.catch(error => console.error('Error fetching JSON:', error));
+	</script>
 
 	<script src="dist/bundle.js"></script>
 
