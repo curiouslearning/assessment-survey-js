@@ -135,12 +135,15 @@ export class App {
 				console.log("Service worker registration failed: " + err);
 			});
 
+			navigator.serviceWorker.addEventListener("message", handleServiceWorkerMessage);
+
 			await navigator.serviceWorker.ready;
 			
 			console.log("Cache Model: ");
 			console.log(this.cacheModel);
 
 			if (localStorage.getItem(this.cacheModel.appName) == null) {
+				console.log("WE DONT HAVE THIS ASSESSMENT< CACHING IT!");
 				loadingScreen!.style.display = "flex";
                 broadcastChannel.postMessage({
                     command: "Cache",
@@ -154,7 +157,7 @@ export class App {
 
 			broadcastChannel.onmessage = (event) => {
 				console.log(event.data.command + " received from service worker!");
-				if (event.data.command == "Activated") {
+				if (event.data.command == "Activated" && localStorage.getItem(this.cacheModel.appName) == null) {
 					broadcastChannel.postMessage({
 						command: "Cache",
 						data: {
@@ -163,8 +166,6 @@ export class App {
 					});
 				}
 			};
-
-			navigator.serviceWorker.addEventListener("message", handleServiceWorkerMessage);
 
 		} else {
 			console.warn("Service workers are not supported in this browser.");
