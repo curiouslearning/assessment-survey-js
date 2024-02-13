@@ -98,9 +98,9 @@ export class AudioController {
 		}
 	}
 
-	public static PlayAudio(audioName: string, finishedCallback?: Function): void {
+	public static PlayAudio(audioName: string, finishedCallback?: Function, audioAnim?: Function): void {
 		console.log("trying to play " + audioName);
-	
+		
 		if (audioName.includes(".mp3")){
 			if (audioName.slice(-4) != ".mp3"){
 				audioName = audioName + ".mp3";
@@ -112,11 +112,15 @@ export class AudioController {
 		console.log("Pre play all audios: ");
 		console.log(AudioController.getInstance().allAudios);
 
-		if (typeof(finishedCallback) != 'undefined'){
-			AudioController.getInstance().allAudios[audioName].addEventListener("ended", () => {
-				finishedCallback();
-			})
-		}
+		AudioController.getInstance().allAudios[audioName].addEventListener("play", () => {
+			typeof(audioAnim) !== 'undefined' ? audioAnim(true) : null;
+		})
+
+		AudioController.getInstance().allAudios[audioName].addEventListener("ended", () => {
+			typeof(finishedCallback) !== 'undefined' ? finishedCallback() : null;
+        	typeof(audioAnim) !== 'undefined' ? audioAnim(false) : null;
+		})
+
 		if (audioName in AudioController.getInstance().allAudios){
 			AudioController.getInstance().allAudios[audioName].play();
 		}
