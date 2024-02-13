@@ -193,7 +193,6 @@ function handleServiceWorkerMessage(event): void {
     if (event.data.msg == "Loading") {
         let progressValue = parseInt(event.data.data.progress);
         handleLoadingMessage(event, progressValue);
-
     }
     if (event.data.msg == "UpdateFound") {
         console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>.,update Found");
@@ -208,9 +207,9 @@ function handleLoadingMessage(event, progressValue): void {
     } else if (progressValue >= 100) {
         loadingScreen!.style.display = "none";
 		UIController.SetContentLoaded(true);
-        readLanguageDataFromCacheAndNotifyAndroidApp(event.data.data.bookName);
         // add book with a name to local storage as cached
         localStorage.setItem(event.data.data.bookName, "true");
+        readLanguageDataFromCacheAndNotifyAndroidApp(event.data.data.bookName);
     }
 }
 
