@@ -13,5 +13,6 @@
     "display": "standalone",
     "orientation": "landscape",
     "incognito": "split",
-    "background_color": "#fff"
+    "background_color": "#fff",
+    "theme_color": ""
 }

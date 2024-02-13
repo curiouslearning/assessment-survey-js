@@ -70,56 +70,58 @@ export class App {
 		window.addEventListener('load', () => {
 			console.log("Window Loaded!");
 			(async () => {
+				await fetchAppData(this.dataURL).then(data => {
+					console.log("Assessment/Survey " + appVersion + " initializing!");
+					console.log("App data loaded!");
+					console.log(data);
+
+					this.cacheModel.setContentFilePath(getDataURL(this.dataURL));
+
+					// TODO: Why do we need to set the feedback text here?
+					UIController.SetFeedbackText(data["feedbackText"]);
+
+					let appType = data["appType"];
+
+					if (appType == "survey") {
+						this.game = new Survey(this.dataURL, this.unityBridge);
+					} else if (appType == "assessment") {
+						// Get and add all the audio assets to the cache model
+
+						let buckets = data["buckets"];
+
+						for (let i = 0; i < buckets.length; i++) {
+							for (let j = 0; j < buckets[i].items.length; j++) {
+								let audioItemURL;
+								// Use to lower case for the Lugandan data
+								if (data["quizName"].includes("Luganda")) {
+									audioItemURL = "/audio/" + this.dataURL + "/" + buckets[i].items[j].itemName.toLowerCase() + ".mp3";
+								} else {
+									audioItemURL = "/audio/" + this.dataURL + "/" + buckets[i].items[j].itemName + ".mp3";
+								}
+
+								this.cacheModel.addItemToAudioVisualResources(audioItemURL);
+							}
+						}
+
+						this.cacheModel.addItemToAudioVisualResources("/audio/" + this.dataURL + "/answer_feedback.mp3");
+
+						this.game = new Assessment(this.dataURL, this.unityBridge);
+					}
+
+					this.game.unityBridge = this.unityBridge;
+
+					setUuid(getUUID(), getUserSource());
+					linkAnalytics(this.analytics, this.dataURL);
+					sendInit();
+
+					this.game.Run(this);
+				});
+				
 				await this.registerServiceWorker(this.game);
 			})();
 		});
 
-		await fetchAppData(this.dataURL).then(data => {
-			console.log("Assessment/Survey " + appVersion + " initializing!");
-			console.log("App data loaded!");
-			console.log(data);
-
-			this.cacheModel.setContentFilePath(getDataURL(this.dataURL));
-
-			// TODO: Why do we need to set the feedback text here?
-			UIController.SetFeedbackText(data["feedbackText"]);
-
-			let appType = data["appType"];
-
-			if (appType == "survey") {
-				this.game = new Survey(this.dataURL, this.unityBridge);
-			} else if (appType == "assessment") {
-				// Get and add all the audio assets to the cache model
-
-				let buckets = data["buckets"];
-
-				for (let i = 0; i < buckets.length; i++) {
-					for (let j = 0; j < buckets[i].items.length; j++) {
-						let audioItemURL;
-						// Use to lower case for the Lugandan data
-						if (data["quizName"].includes("Luganda")) {
-							audioItemURL = "/audio/" + this.dataURL + "/" + buckets[i].items[j].itemName.toLowerCase() + ".mp3";
-						} else {
-							audioItemURL = "/audio/" + this.dataURL + "/" + buckets[i].items[j].itemName + ".mp3";
-						}
-
-						this.cacheModel.addItemToAudioVisualResources(audioItemURL);
-					}
-				}
-
-				this.cacheModel.addItemToAudioVisualResources("/audio/" + this.dataURL + "/answer_feedback.mp3");
-
-				this.game = new Assessment(this.dataURL, this.unityBridge);
-			}
-
-			this.game.unityBridge = this.unityBridge;
-
-			setUuid(getUUID(), getUserSource());
-			linkAnalytics(this.analytics, this.dataURL);
-			sendInit();
-
-			this.game.Run(this);
-		});
+		
 	}
 
 	async registerServiceWorker(game: BaseQuiz) {
