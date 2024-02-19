@@ -108,27 +108,42 @@ export class AudioController {
 		} else {
 			audioName = audioName + ".mp3";
 		}
-        
+	
 		console.log("Pre play all audios: ");
 		console.log(AudioController.getInstance().allAudios);
-
-		AudioController.getInstance().allAudios[audioName].addEventListener("play", () => {
-			typeof(audioAnim) !== 'undefined' ? audioAnim(true) : null;
-		})
-
-		AudioController.getInstance().allAudios[audioName].addEventListener("ended", () => {
+	
+		
+		const playPromise = new Promise<void>((resolve, reject) => {
+			const audio = AudioController.getInstance().allAudios[audioName];
+			if (audio) {
+				audio.addEventListener("play", () => {
+					typeof(audioAnim) !== 'undefined' ? audioAnim(true) : null;
+				});
+	
+				audio.addEventListener("ended", () => {
+					typeof(audioAnim) !== 'undefined' ? audioAnim(false) : null;
+					resolve(); 
+				});
+	
+				audio.play().catch((error) => {
+					console.error("Error playing audio:", error);
+					resolve();
+				});
+			} else {
+				console.warn("Audio file not found:", audioName);
+				resolve(); 
+			}
+		});
+	
+		
+		playPromise.then(() => {
 			typeof(finishedCallback) !== 'undefined' ? finishedCallback() : null;
-        	typeof(audioAnim) !== 'undefined' ? audioAnim(false) : null;
-		})
-
-		if (audioName in AudioController.getInstance().allAudios){
-			AudioController.getInstance().allAudios[audioName].play();
-		}
-		else if(audioName.toLowerCase() in AudioController.getInstance().allAudios)
-		{
-			AudioController.getInstance().allAudios[audioName.toLowerCase()].play();
-		}
+		}).catch(error => {
+			console.error("Promise error:", error);
+		});
 	}
+	
+	
 
 	public static GetImage(imageName: string): any {
 		return AudioController.getInstance().allImages[imageName];
