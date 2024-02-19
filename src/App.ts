@@ -7,15 +7,15 @@ import { Survey } from './survey/survey';
 import { Assessment } from './assessment/assessment';
 import { UnityBridge } from './components/unityBridge';
 import { setUuid, linkAnalytics, sendInit } from './components/analyticsEvents';
-import { BaseQuiz } from './baseQuiz';
+import { BaseQuiz } from './BaseQuiz';
 import { fetchAppData, getDataURL } from './components/jsonUtils';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics, logEvent } from 'firebase/analytics';
 import { Workbox } from 'workbox-window';
 import CacheModel from './components/cacheModel';
-import { setFeedbackText, setContentLoaded } from './components/uiController';
+import { UIController } from './components/uiController';
 
-const appVersion = "v0.1.3";
+const appVersion = "v0.1.5";
 
 let loadingScreen = document.getElementById("loadingScreen");
 
@@ -70,56 +70,58 @@ export class App {
 		window.addEventListener('load', () => {
 			console.log("Window Loaded!");
 			(async () => {
+				await fetchAppData(this.dataURL).then(data => {
+					console.log("Assessment/Survey " + appVersion + " initializing!");
+					console.log("App data loaded!");
+					console.log(data);
+
+					this.cacheModel.setContentFilePath(getDataURL(this.dataURL));
+
+					// TODO: Why do we need to set the feedback text here?
+					UIController.SetFeedbackText(data["feedbackText"]);
+
+					let appType = data["appType"];
+
+					if (appType == "survey") {
+						this.game = new Survey(this.dataURL, this.unityBridge);
+					} else if (appType == "assessment") {
+						// Get and add all the audio assets to the cache model
+
+						let buckets = data["buckets"];
+
+						for (let i = 0; i < buckets.length; i++) {
+							for (let j = 0; j < buckets[i].items.length; j++) {
+								let audioItemURL;
+								// Use to lower case for the Lugandan data
+								if (data["quizName"].includes("Luganda")) {
+									audioItemURL = "/audio/" + this.dataURL + "/" + buckets[i].items[j].itemName.toLowerCase() + ".mp3";
+								} else {
+									audioItemURL = "/audio/" + this.dataURL + "/" + buckets[i].items[j].itemName + ".mp3";
+								}
+
+								this.cacheModel.addItemToAudioVisualResources(audioItemURL);
+							}
+						}
+
+						this.cacheModel.addItemToAudioVisualResources("/audio/" + this.dataURL + "/answer_feedback.mp3");
+
+						this.game = new Assessment(this.dataURL, this.unityBridge);
+					}
+
+					this.game.unityBridge = this.unityBridge;
+
+					setUuid(getUUID(), getUserSource());
+					linkAnalytics(this.analytics, this.dataURL);
+					sendInit();
+
+					this.game.Run(this);
+				});
+				
 				await this.registerServiceWorker(this.game);
 			})();
 		});
 
-		await fetchAppData(this.dataURL).then(data => {
-			console.log("Assessment/Survey " + appVersion + " initializing!");
-			console.log("App data loaded!");
-			console.log(data);
-
-			this.cacheModel.setContentFilePath(getDataURL(this.dataURL));
-
-			// TODO: Why do we need to set the feedback text here?
-			setFeedbackText(data["feedbackText"]);
-
-			let appType = data["appType"];
-
-			if (appType == "survey") {
-				this.game = new Survey(this.dataURL, this.unityBridge);
-			} else if (appType == "assessment") {
-				// Get and add all the audio assets to the cache model
-
-				let buckets = data["buckets"];
-
-				for (let i = 0; i < buckets.length; i++) {
-					for (let j = 0; j < buckets[i].items.length; j++) {
-						let audioItemURL;
-						// Use to lower case for the Lugandan data
-						if (data["quizName"].includes("Luganda")) {
-							audioItemURL = "/audio/" + this.dataURL + "/" + buckets[i].items[j].itemName.toLowerCase() + ".mp3";
-						} else {
-							audioItemURL = "/audio/" + this.dataURL + "/" + buckets[i].items[j].itemName + ".mp3";
-						}
-
-						this.cacheModel.addItemToAudioVisualResources(audioItemURL);
-					}
-				}
-
-				this.cacheModel.addItemToAudioVisualResources("/audio/" + this.dataURL + "/answer_feedback.mp3");
-
-				this.game = new Assessment(this.dataURL, this.unityBridge);
-			}
-
-			this.game.unityBridge = this.unityBridge;
-
-			setUuid(getUUID(), getUserSource());
-			linkAnalytics(this.analytics, this.dataURL);
-			sendInit();
-
-			this.game.Run(this);
-		});
+		
 	}
 
 	async registerServiceWorker(game: BaseQuiz) {
@@ -135,12 +137,15 @@ export class App {
 				console.log("Service worker registration failed: " + err);
 			});
 
+			navigator.serviceWorker.addEventListener("message", handleServiceWorkerMessage);
+
 			await navigator.serviceWorker.ready;
 			
 			console.log("Cache Model: ");
 			console.log(this.cacheModel);
 
 			if (localStorage.getItem(this.cacheModel.appName) == null) {
+				console.log("WE DONT HAVE THIS ASSESSMENT< CACHING IT!");
 				loadingScreen!.style.display = "flex";
                 broadcastChannel.postMessage({
                     command: "Cache",
@@ -154,7 +159,7 @@ export class App {
 
 			broadcastChannel.onmessage = (event) => {
 				console.log(event.data.command + " received from service worker!");
-				if (event.data.command == "Activated") {
+				if (event.data.command == "Activated" && localStorage.getItem(this.cacheModel.appName) == null) {
 					broadcastChannel.postMessage({
 						command: "Cache",
 						data: {
@@ -163,8 +168,6 @@ export class App {
 					});
 				}
 			};
-
-			navigator.serviceWorker.addEventListener("message", handleServiceWorkerMessage);
 
 		} else {
 			console.warn("Service workers are not supported in this browser.");
@@ -193,7 +196,6 @@ function handleServiceWorkerMessage(event): void {
     if (event.data.msg == "Loading") {
         let progressValue = parseInt(event.data.data.progress);
         handleLoadingMessage(event, progressValue);
-
     }
     if (event.data.msg == "UpdateFound") {
         console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>.,update Found");
@@ -207,10 +209,10 @@ function handleLoadingMessage(event, progressValue): void {
         progressBar!.style.width = progressValue + "%";
     } else if (progressValue >= 100) {
         loadingScreen!.style.display = "none";
-		setContentLoaded(true);
-        readLanguageDataFromCacheAndNotifyAndroidApp(event.data.data.bookName);
+		UIController.SetContentLoaded(true);
         // add book with a name to local storage as cached
         localStorage.setItem(event.data.data.bookName, "true");
+        readLanguageDataFromCacheAndNotifyAndroidApp(event.data.data.bookName);
     }
 }
 

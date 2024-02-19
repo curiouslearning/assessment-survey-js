@@ -1,33 +1,31 @@
 // A binary tree node
-export type TNode =
-{
+export type TNode = {
+  data: number;
+  left: TNode;
+  right: TNode;
+};
 
-        data: number;
-				left: TNode;
-				right: TNode;
-
-}
-
-export function sortedArrayToBST(arr, start: number, end: number)
-{
+export function sortedArrayToBST(array, start: number, end: number) {
     /* Base Case */
     if (start > end)
     {
         return null;
     }
     /* Get the middle element and make it root */
-    var mid = parseInt(((start + end) / 2)+"");
-    const ntnode: TNode = {
-			data:arr[mid],
+    var middle = parseInt(((start + end) / 2)+"");
+
+    const ntNode: TNode = {
+			data: array[middle],
 			left: null,
 			right: null
 		}
 
     /* Recursively construct the left subtree and make it
      left child of root */
-    ntnode.left = sortedArrayToBST(arr, start, mid - 1);
+    ntNode.left = sortedArrayToBST(array, start, middle - 1);
     /* Recursively construct the right subtree and make it
      right child of root */
-    ntnode.right = sortedArrayToBST(arr, mid + 1, end);
-    return ntnode;
+    ntNode.right = sortedArrayToBST(array, middle + 1, end);
+
+    return ntNode;
 }

@@ -6,12 +6,13 @@
 
 	<meta name="description" content="Assessment/Survey from Curious Learning">
 	<meta name="viewport" content="width=device-width,initial-scale=1.0">
-
+	<link rel="manifest" href="manifest.json"/>
 	<link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 	<div class="bodyWrapper">
+
 		<div class="landingPageWrapper" id="landWrap">
 			<img class="landingMonster" src="img/monster.png" />
 			<BR>
@@ -32,7 +33,7 @@
 		<div class="questionViewWrapper" id="gameWrap" style="display:none">
 			<div class="starWrapper" id="starWrapper"></div>
 			<div class="chestWrapper">
-				<div class="chestdiv"><img src='img/chest.png' /></div>
+				<div class="chestdiv"><img id="chestImage"src='img/chestprogression/TreasureChestOpen01.svg' /></div>
 			</div>
 			<div class="questionContainer" id="qWrap"></div>
 
@@ -73,9 +74,9 @@
 		gtag('config', 'G-DGTWM534Z4');
 	</script> -->
 
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.0/gsap.min.js"></script>
+
 	<script src="dist/bundle.js"></script>
 
-
 </body>
-
 </html>
