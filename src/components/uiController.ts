@@ -168,29 +168,32 @@ export class UIController {
 		if (!UIController.getInstance().shown) {
 			const newQ = UIController.getInstance().nextQuestion;
 			const buttons = UIController.getInstance().buttons;
-			const animationDuration = 1500; 
+			const animationDuration = 1000; 
+			const delayBforeOption = 200;
 	        UIController.getInstance().shown = true;
 			buttons.forEach(button => {
 				button.style.visibility = "hidden";
 				button.style.animation = "";
 			});
+			setTimeout(()=>{
+				for (let i = 0; i < newQ.answers.length; i++) {
+					const curAnswer = newQ.answers[i];
+					const button = buttons[i];
+		
+					button.innerHTML = 'answerText' in curAnswer ? curAnswer.answerText : '';
+					button.style.visibility = "hidden";
+					setTimeout(() => {
+						button.style.visibility = "visible";
+						button.style.animation = `zoomIn ${animationDuration}ms ease forwards`;
+						
+						if ('answerImg' in curAnswer) {
+							const tmpimg = AudioController.GetImage(curAnswer.answerImg);
+							button.appendChild(tmpimg);
+						}
+					}, i * animationDuration);
+				}
+			},delayBforeOption)
 			
-			for (let i = 0; i < newQ.answers.length; i++) {
-				const curAnswer = newQ.answers[i];
-				const button = buttons[i];
-	
-				button.innerHTML = 'answerText' in curAnswer ? curAnswer.answerText : '';
-				button.style.visibility = "hidden";
-				setTimeout(() => {
-					button.style.visibility = "visible";
-					button.style.animation = `zoomIn ${animationDuration}ms ease forwards`;
-					
-					if ('answerImg' in curAnswer) {
-						const tmpimg = AudioController.GetImage(curAnswer.answerImg);
-						button.appendChild(tmpimg);
-					}
-				}, i * animationDuration);
-			}
 	
 			UIController.getInstance().qStart = Date.now();
 		}

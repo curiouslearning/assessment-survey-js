@@ -100,8 +100,9 @@ export class Assessment extends BaseQuiz {
 	}
 
 	public onQuestionEnd = () => {
-		let questionEndTimeout = (this.HasQuestionsLeft())?500:4000;
-		setTimeout(() => {
+		let questionEndTimeout = (this.HasQuestionsLeft()) ? 500 : 4000;
+	
+		const endOperations = () => {
 			UIController.SetFeedbackVisibile(false);
 			if (this.HasQuestionsLeft()) {
 				UIController.ReadyForNext(this.getNextQuestion());
@@ -109,8 +110,21 @@ export class Assessment extends BaseQuiz {
 				console.log("No questions left");
 				this.onEnd();
 			}
-		}, questionEndTimeout);
+		};
+	
+		// Create a promise that resolves after the specified timeout
+		const timeoutPromise = new Promise<void>(resolve => {
+			setTimeout(() => {
+				resolve();
+			}, questionEndTimeout);
+		});
+	
+		// Execute endOperations after timeoutPromise resolves
+		timeoutPromise.then(() => {
+			endOperations();
+		});
 	}
+	
 
 	public getNextQuestion = () => {
 		var targetItem, foil1, foil2, foil3;
