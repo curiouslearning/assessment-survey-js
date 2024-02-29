@@ -68,7 +68,7 @@ export class AudioController {
 		} else if (newAudioURL.includes(".mp3")) {
 			// Already contains .mp3 not doing anything
 		} else {
-			newAudioURL = newAudioURL + ".mp3";
+			newAudioURL = newAudioURL.trim() + ".mp3";
 		}
 
 		console.log("Filtered: " + newAudioURL);
@@ -103,10 +103,10 @@ export class AudioController {
 		
 		if (audioName.includes(".mp3")){
 			if (audioName.slice(-4) != ".mp3"){
-				audioName = audioName + ".mp3";
+				audioName = audioName.trim() + ".mp3";
 			}
 		} else {
-			audioName = audioName + ".mp3";
+			audioName = audioName.trim() + ".mp3";
 		}
 	
 		console.log("Pre play all audios: ");
