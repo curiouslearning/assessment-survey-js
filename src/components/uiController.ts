@@ -318,7 +318,8 @@ export class UIController {
 	}
 
 	public static AddStar(): void {
-		var starToShow = document.getElementById("star" + UIController.getInstance().stars[UIController.getInstance().qAnsNum]);
+		var starToShow = document.getElementById("star" + UIController.getInstance().stars[UIController.getInstance().qAnsNum]) as HTMLImageElement;
+		starToShow.src = '../animation/Star.gif'
 		starToShow.classList.add("topstarv");
 		starToShow.classList.remove("topstarh");
 		UIController.getInstance().qAnsNum += 1;
