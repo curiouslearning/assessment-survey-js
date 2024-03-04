@@ -104,6 +104,7 @@ export class Assessment extends BaseQuiz {
 	
 		const endOperations = () => {
 			UIController.SetFeedbackVisibile(false);
+			UIController.ChangeStarImageAfterAnimation();
 			if (this.HasQuestionsLeft()) {
 				UIController.ReadyForNext(this.getNextQuestion());
 			} else {

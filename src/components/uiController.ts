@@ -101,7 +101,7 @@ export class UIController {
 	private initializeStars(): void {
 		for (let i = 0; i < 20; i++) {
 			const newStar = document.createElement("img");
-			newStar.src = "img/star.png";
+			// newStar.src = "img/star.png";
 			newStar.id = "star" + i;
 
 			newStar.classList.add("topstarh");
@@ -324,6 +324,12 @@ export class UIController {
 		starToShow.classList.remove("topstarh");
 		UIController.getInstance().qAnsNum += 1;
 	}
+
+	public static ChangeStarImageAfterAnimation(): void {
+		var starToShow = document.getElementById("star" + UIController.getInstance().stars[UIController.getInstance().qAnsNum-1]) as HTMLImageElement;
+		starToShow.src = '../img/star_after_animation.gif'
+	}
+
 
 	private answerButtonPress(buttonNum: number): void {
 		if (this.buttonsActive) {
