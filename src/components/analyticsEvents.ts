@@ -215,7 +215,7 @@ function calculateScore(buckets: bucket[]): [number, number] {
 
 	console.log("Basal Bucket ID: " + basalBucketID);
 
-	score = (basalBucketID - 1) * 100 + buckets[basalBucketID].numCorrect / 5 * 100;
+	score = Math.round((basalBucketID - 1) * 100 + buckets[basalBucketID].numCorrect / 5 * 100);
 
 	return [score, maxScore];
 }
