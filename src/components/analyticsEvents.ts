@@ -143,8 +143,6 @@ export function sendAnswered(theQ: qData, theA: number, elapsed: number): void {
 		iscorrect: iscorrect,
 		options: opts,
 		bucket: bucket
-
-
 	});
 
 }
@@ -169,21 +167,85 @@ export function sendBucket(tb: bucket, passed: boolean): void {
 		numberTriedInBucket:btried,
 		numberCorrectInBucket:bcorrect,
 		passedBucket: passed
-
-	})
+	});
 }
 
-export function sendFinished(): void {
-	var eventString = "user " + uuid + " finished the assessment"
+export function sendFinished(buckets: bucket[] = null): void {
+	let eventString = "user " + uuid + " finished the assessment";
 	console.log(eventString);
+
+	let [score, maxScore] = calculateScore(buckets);
+	let basalBucketID = getBasalBucketID(buckets);
+	let ceilingBucketID = getCeilingBucketID(buckets);
+
+	console.log("Sending completed event");
+	console.log("Score: " + score);
+	console.log("Max Score: " + maxScore);
+	console.log("Basal Bucket: " + basalBucketID);
+	console.log("Ceiling Bucket: " + ceilingBucketID);
+	
+
 	logEvent(gana,"completed", {
 		type: "completed",
 		clUserId: uuid,
 		userSource: userSource,
+		app: apptype,
 		lat: clat,
 		lon: clon,
 		city: city,
 		region: region,
-		country: country
+		country: country,
+		score: score,
+		maxScore: maxScore,
+		basalBucket: basalBucketID,
+		ceilingBucket: ceilingBucketID
 	});
+}
+
+function calculateScore(buckets: bucket[]): [number, number] {
+	console.log("Calculating score");
+	console.log(buckets);
+	
+	let score = 0;
+	
+	const maxScore = buckets.length * 100;
+	score = maxScore;
+
+	const basalBucketID = getBasalBucketID(buckets);
+
+	score = (basalBucketID - 1) * 100 + buckets[basalBucketID - 1].numCorrect / 5 * 100;
+
+	return [score, maxScore];
+}
+
+function getBasalBucketID(buckets: bucket[]): number {
+	let bucketID = 0;
+	
+	// Select the lowest bucketID bucket that the user has failed
+	for (const index in buckets) {
+		const bucket = buckets[index];
+		if (bucket.tested && !bucket.passed) {
+			if (bucketID == 0 || bucket.bucketID < bucketID) {
+				bucketID = bucket.bucketID;
+			}
+		}
+	}
+
+	return bucketID;
+}
+
+function getCeilingBucketID(buckets: bucket[]): number {
+	let bucketID = 0;
+	
+	// Select the hiughest bucketID bucket that the user has passed
+	for (const index in buckets) {
+		const bucket = buckets[index];
+		if (bucket.tested && bucket.passed) {
+			if (bucketID == 0 || bucket.bucketID > bucketID) {
+				bucketID = bucket.bucketID;
+			}
+		}
+	}
+
+	return bucketID;
 }
