@@ -149,7 +149,9 @@ export class Assessment extends BaseQuiz {
 		shuffleArray(answerOptions);
 
 		var result = {
-			qName: "question" + this.questionNumber + "-" + targetItem.itemName,
+			qName: "question-" + this.questionNumber + "-" + targetItem.itemName,
+			qNumber: this.questionNumber,
+			qTarget: targetItem.itemName,
 			promptText: "",
 			bucket: this.currentBucket.bucketID,
 			promptAudio: targetItem.itemName,
