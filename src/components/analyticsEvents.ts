@@ -202,26 +202,21 @@ export function sendFinished(buckets: bucket[] = null): void {
 	let eventString = "user " + uuid + " finished the assessment";
 	console.log(eventString);
 
-	let score = calculateScore(buckets);
-	const maxScore = buckets.length * 100;
 	let basalBucketID = getBasalBucketID(buckets);
 	let ceilingBucketID = getCeilingBucketID(buckets);
+
+	if (basalBucketID == 0) {
+		basalBucketID = ceilingBucketID;
+	}
+
+	let score = calculateScore(buckets, basalBucketID);
+	const maxScore = buckets.length * 100;
 
 	console.log("Sending completed event");
 	console.log("Score: " + score);
 	console.log("Max Score: " + maxScore);
 	console.log("Basal Bucket: " + basalBucketID);
 	console.log("Ceiling Bucket: " + ceilingBucketID);
-
-	let numCorrect = 0;
-
-	for (const index in buckets) {
-		const bucket = buckets[index];
-		if (bucket.bucketID == basalBucketID) {
-			numCorrect = bucket.numCorrect;
-			break;
-		}
-	}
 
 	logEvent(gana,"completed", {
 		type: "completed",
@@ -235,25 +230,17 @@ export function sendFinished(buckets: bucket[] = null): void {
 		region: region,
 		country: country,
 		score: score,
-		maxScore: "b: " + basalBucketID + " nc: " + numCorrect + " div: " + (numCorrect / 5) + " sc: " + (Math.round(((basalBucketID - 1) * 100) + (numCorrect / 5) * 100) | 0),
-		// maxScore: maxScore,
-		// basalBucket: basalBucketID,
-		// ceilingBucket: ceilingBucketID
+		maxScore: maxScore,
+		basalBucket: basalBucketID,
+		ceilingBucket: ceilingBucketID
 	});
 }
 
-function calculateScore(buckets: bucket[]): number {
+function calculateScore(buckets: bucket[], basalBucketID: number): number {
 	console.log("Calculating score");
 	console.log(buckets);
 	
 	let score = 0;
-
-	let basalBucketID = getBasalBucketID(buckets);
-	const ceilingBucketID = getCeilingBucketID(buckets);
-
-	if (basalBucketID == 0) {
-		basalBucketID = ceilingBucketID;
-	}
 
 	console.log("Basal Bucket ID: " + basalBucketID);
 
