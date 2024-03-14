@@ -1,7 +1,7 @@
 {
 	"quizName": "Nepalese letter sounds",
 	"appType": "assessment",
-	"feedbackText": "дивовижно!",
+	"feedbackText": "गज्जब!",
 	"buckets":[
 		{	"bucketID":1,
 			"bucketName":"nepalese-let-b1",
