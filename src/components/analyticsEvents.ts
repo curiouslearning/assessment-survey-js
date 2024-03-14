@@ -202,7 +202,8 @@ export function sendFinished(buckets: bucket[] = null): void {
 	let eventString = "user " + uuid + " finished the assessment";
 	console.log(eventString);
 
-	let [score, maxScore] = calculateScore(buckets);
+	let score = calculateScore(buckets);
+	const maxScore = buckets.length * 100;
 	let basalBucketID = getBasalBucketID(buckets);
 	let ceilingBucketID = getCeilingBucketID(buckets);
 
@@ -225,20 +226,18 @@ export function sendFinished(buckets: bucket[] = null): void {
 		region: region,
 		country: country,
 		score: score,
-		maxScore: maxScore,
-		basalBucket: basalBucketID,
-		ceilingBucket: ceilingBucketID
+		maxScore: "b: " + basalBucketID + " nc: " + buckets[basalBucketID].numCorrect + " div: " + (buckets[basalBucketID].numCorrect / 5) + " sc: " + ((basalBucketID - 1) * 100 + buckets[basalBucketID].numCorrect / 5 * 100),
+		// maxScore: maxScore,
+		// basalBucket: basalBucketID,
+		// ceilingBucket: ceilingBucketID
 	});
 }
 
-function calculateScore(buckets: bucket[]): [number, number] {
+function calculateScore(buckets: bucket[]): number {
 	console.log("Calculating score");
 	console.log(buckets);
 	
 	let score = 0;
-	
-	const maxScore = buckets.length * 100;
-	score = maxScore;
 
 	const basalBucketID = getBasalBucketID(buckets);
 
@@ -246,7 +245,7 @@ function calculateScore(buckets: bucket[]): [number, number] {
 
 	score = Math.round((basalBucketID - 1) * 100 + buckets[basalBucketID].numCorrect / 5 * 100);
 
-	return [score, maxScore];
+	return score;
 }
 
 function getBasalBucketID(buckets: bucket[]): number {
