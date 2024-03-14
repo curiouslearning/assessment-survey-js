@@ -213,6 +213,16 @@ export function sendFinished(buckets: bucket[] = null): void {
 	console.log("Basal Bucket: " + basalBucketID);
 	console.log("Ceiling Bucket: " + ceilingBucketID);
 
+	let numCorrect = 0;
+
+	for (const index in buckets) {
+		const bucket = buckets[index];
+		if (bucket.bucketID == basalBucketID) {
+			numCorrect = bucket.numCorrect;
+			break;
+		}
+	}
+
 	logEvent(gana,"completed", {
 		type: "completed",
 		clUserId: uuid,
@@ -225,7 +235,7 @@ export function sendFinished(buckets: bucket[] = null): void {
 		region: region,
 		country: country,
 		score: score,
-		maxScore: "b: " + basalBucketID + " nc: " + buckets[basalBucketID].numCorrect + " div: " + (buckets[basalBucketID].numCorrect / 5) + " sc: " + (Math.round(((basalBucketID - 1) * 100) + (buckets[basalBucketID].numCorrect / 5) * 100) | 0),
+		maxScore: "b: " + basalBucketID + " nc: " + numCorrect + " div: " + (numCorrect / 5) + " sc: " + (Math.round(((basalBucketID - 1) * 100) + (numCorrect / 5) * 100) | 0),
 		// maxScore: maxScore,
 		// basalBucket: basalBucketID,
 		// ceilingBucket: ceilingBucketID
@@ -247,7 +257,18 @@ function calculateScore(buckets: bucket[]): number {
 
 	console.log("Basal Bucket ID: " + basalBucketID);
 
-	score = Math.round(((basalBucketID - 1) * 100) + (buckets[basalBucketID].numCorrect / 5) * 100) | 0;
+	// Get the numcorrect from the basal bucket based on looping through and finding the bucket id
+	let numCorrect = 0;
+
+	for (const index in buckets) {
+		const bucket = buckets[index];
+		if (bucket.bucketID == basalBucketID) {
+			numCorrect = bucket.numCorrect;
+			break;
+		}
+	}
+	
+	score = Math.round(((basalBucketID - 1) * 100) + (numCorrect / 5) * 100) | 0;
 
 	return score;
 }
