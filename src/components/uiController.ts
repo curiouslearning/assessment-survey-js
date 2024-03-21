@@ -185,18 +185,20 @@ export class UIController {
 					button.style.visibility = "hidden";
 					setTimeout(() => {
 						button.style.visibility = "visible";
-						button.style.animation = `zoomIn ${animationDuration}ms ease forwards`;
-						
+						button.style.animation = `zoomIn ${animationDuration}ms ease forwards`;			
 						if ('answerImg' in curAnswer) {
 							const tmpimg = AudioController.GetImage(curAnswer.answerImg);
 							button.appendChild(tmpimg);
 						}
-						optionsDisplayed++;
-						if (optionsDisplayed === newQ.answers.length) {
-							UIController.getInstance().enableAnswerButton(); // Call a function to enable the answer button
-						}
+						button.addEventListener('animationend', () => {
+							optionsDisplayed++;
+							if (optionsDisplayed === newQ.answers.length) {
+								UIController.getInstance().enableAnswerButton();
+							}
+						});						
 					}, i * animationDuration);
 				}
+			
 			},delayBforeOption)
 			
 	
