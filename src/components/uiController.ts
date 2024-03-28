@@ -68,7 +68,7 @@ export class UIController {
 	private buttonPressCallback: Function;
 	private startPressCallback: Function;
 
-	public buttonsActive: boolean = true;
+	public buttonsActive: boolean = false;
 
 	private init(): void {
 		// Initialize required containers
@@ -168,9 +168,10 @@ export class UIController {
 		if (!UIController.getInstance().shown) {
 			const newQ = UIController.getInstance().nextQuestion;
 			const buttons = UIController.getInstance().buttons;
-			const animationDuration = 1000; 
+			const animationDuration = 500; 
 			const delayBforeOption = 200;
 	        UIController.getInstance().shown = true;
+			let optionsDisplayed = 0;
 			buttons.forEach(button => {
 				button.style.visibility = "hidden";
 				button.style.animation = "";
@@ -184,14 +185,20 @@ export class UIController {
 					button.style.visibility = "hidden";
 					setTimeout(() => {
 						button.style.visibility = "visible";
-						button.style.animation = `zoomIn ${animationDuration}ms ease forwards`;
-						
+						button.style.animation = `zoomIn ${animationDuration}ms ease forwards`;			
 						if ('answerImg' in curAnswer) {
 							const tmpimg = AudioController.GetImage(curAnswer.answerImg);
 							button.appendChild(tmpimg);
 						}
+						button.addEventListener('animationend', () => {
+							optionsDisplayed++;
+							if (optionsDisplayed === newQ.answers.length) {
+								UIController.getInstance().enableAnswerButton();
+							}
+						});						
 					}, i * animationDuration);
 				}
+			
 			},delayBforeOption)
 			
 	
@@ -199,7 +206,9 @@ export class UIController {
 		}
 	}
 	
-
+	private enableAnswerButton(): void {
+	 UIController.getInstance().buttonsActive = true;
+	}
 	public static SetFeedbackText(nt: string): void {
 		console.log("Feedback text set to " + nt);
 		UIController.getInstance().feedbackContainer.innerHTML = nt;
@@ -231,13 +240,11 @@ export class UIController {
 			UIController.getInstance().feedbackContainer.classList.remove("hidden");
 			UIController.getInstance().feedbackContainer.classList.add("visible");
 			AudioController.PlayCorrect();
-
 			UIController.getInstance().buttonsActive = false;
 		} else {
 			UIController.getInstance().feedbackContainer.classList.remove("visible");
 			UIController.getInstance().feedbackContainer.classList.add("hidden");
-
-			UIController.getInstance().buttonsActive = true;
+			UIController.getInstance().buttonsActive = false;
 		}
 	}
 
@@ -259,7 +266,9 @@ export class UIController {
 			UIController.ShowQuestion();
 			//playquestionaudio
 			AudioController.PlayAudio(newQ.promptAudio, UIController.getInstance().showOptions, UIController.ShowAudioAnimation);
+
 		});
+		
 	}
 
 	public static ShowAudioAnimation(playing: boolean = false){
@@ -332,7 +341,9 @@ export class UIController {
 
 
 	private answerButtonPress(buttonNum: number): void {
-		if (this.buttonsActive) {
+		const allButtonsVisible = this.buttons.every(button => button.style.visibility === "visible");
+		console.log(this.buttonsActive,allButtonsVisible);
+		if (this.buttonsActive===true) {
 			AudioController.PlayDing();
 			const nPressed = Date.now();
 			const dTime = nPressed - this.qStart;

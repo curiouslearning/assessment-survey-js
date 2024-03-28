@@ -10,8 +10,7 @@ var userSource: string;
 var clat, clon;
 var gana;
 var latlong;
-var croppedlat, croppedlong;
-var city, region, country;
+// var city, region, country;
 var dataURL;
 
 export function getLocation(){
@@ -26,9 +25,16 @@ export function getLocation(){
 		}).then((jsonResponse)  => {
 			console.log(jsonResponse);
 			latlong = jsonResponse.loc;
-			city = jsonResponse.city;
-			region = jsonResponse.region;
-			country = jsonResponse.country;
+			var lpieces = latlong.split(",");
+			var lat = parseFloat(lpieces[0]).toFixed(2);
+			var lon = parseFloat(lpieces[1]).toFixed(1);
+			clat = lat;
+			clon = lon;
+			latlong = "";
+			lpieces = [];
+			// city = jsonResponse.city;
+			// region = jsonResponse.region;
+			// country = jsonResponse.country;
 			sendLocation();
 
 				return {};
@@ -79,25 +85,15 @@ export function getAppTypeFromDataURL(appType: string): string {
 	return "NotAvailable";
 }
 
-export function sendLocation(): void{
-	var lpieces = latlong.split(",");
-	var lat = parseFloat(lpieces[0]).toFixed(2);
-	var lon = parseFloat(lpieces[1]).toFixed(1);
-	clat = lat;
-	clon = lon;
-	latlong = "";
-	lpieces = [];
-
-
-	var eventString = "user " + uuid + " is at location " + lat + "," + lon;
+export function sendLocation(): void {
+	var eventString = "Sending User coordinates: " + uuid + " : " + clat + ", " + clon;
 	console.log(eventString);
 
 	logEvent(gana,"user_location", {
 		user: uuid,
-		language: getAppLanguageFromDataURL(dataURL),
+		lang: getAppLanguageFromDataURL(dataURL),
 		app: getAppTypeFromDataURL(dataURL),
-		lat: lat,
-		lon: lon
+		latlong: joinLatLong(clat, clon),
 	});
 
 	console.log("INITIALIZED EVENT SENT");
@@ -108,15 +104,13 @@ export function sendLocation(): void{
 		type: "initialized",
 		clUserId: uuid,
 		userSource: userSource,
-		lat: clat,
-		lon: clon,
-		city: city,
-		region: region,
-		country: country,
+		latLong: joinLatLong(clat, clon),
+		// city: city,
+		// region: region,
+		// country: country,
 		app: getAppTypeFromDataURL(dataURL),
-		language: getAppLanguageFromDataURL(dataURL)
+		lang: getAppLanguageFromDataURL(dataURL)
 	});
-
 }
 
 
@@ -155,13 +149,12 @@ export function sendAnswered(theQ: qData, theA: number, elapsed: number): void {
 		type: "answered",
 		clUserId: uuid,
 		userSource: userSource,
-		lat: clat,
-		lon: clon,
-		city: city,
-		region: region,
-		country: country,
+		latLong: joinLatLong(clat, clon),
+		// city: city,
+		// region: region,
+		// country: country,
 		app: getAppTypeFromDataURL(dataURL),
-		language: getAppLanguageFromDataURL(dataURL),
+		lang: getAppLanguageFromDataURL(dataURL),
 		dt: elapsed,
 		question_number: theQ.qNumber,
 		target: theQ.qTarget,
@@ -178,19 +171,20 @@ export function sendBucket(tb: bucket, passed: boolean): void {
 	var bn = tb.bucketID;
 	var btried = tb.numTried;
 	var bcorrect = tb.numCorrect;
+	
 	var eventString = "user " + uuid + " finished the bucket " + bn;
 	console.log(eventString);
+
 	logEvent(gana,"bucketCompleted", {
 		type: "bucketCompleted",
 		clUserId: uuid,
 		userSource: userSource,
-		lat: clat,
-		lon: clon,
-		city: city,
-		region: region,
-		country: country,
+		latLong: joinLatLong(clat, clon),
+		// city: city,
+		// region: region,
+		// country: country,
 		app: getAppTypeFromDataURL(dataURL),
-		language: getAppLanguageFromDataURL(dataURL),
+		lang: getAppLanguageFromDataURL(dataURL),
 		bucketNumber: bn,
 		numberTriedInBucket:btried,
 		numberCorrectInBucket:bcorrect,
@@ -223,12 +217,11 @@ export function sendFinished(buckets: bucket[] = null): void {
 		clUserId: uuid,
 		userSource: userSource,
 		app: getAppTypeFromDataURL(dataURL),
-		language: getAppLanguageFromDataURL(dataURL),
-		lat: clat,
-		lon: clon,
-		city: city,
-		region: region,
-		country: country,
+		lang: getAppLanguageFromDataURL(dataURL),
+		latLong: joinLatLong(clat, clon),
+		// city: city,
+		// region: region,
+		// country: country,
 		score: score,
 		maxScore: maxScore,
 		basalBucket: basalBucketID,
@@ -290,4 +283,8 @@ function getCeilingBucketID(buckets: bucket[]): number {
 	}
 
 	return bucketID;
+}
+
+function joinLatLong(lat: string, lon: string): string {
+	return lat + "," + lon;
 }
