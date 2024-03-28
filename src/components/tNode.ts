@@ -12,8 +12,24 @@ export function sortedArrayToBST(array, start: number, end: number) {
         return null;
     }
     /* Get the middle element and make it root */
-    var middle = parseInt(((start + end) / 2)+"");
+    var middle = 0;
 
+    if (array.length % 2 === 0) {
+      // Rqandomly choose the middle element
+      const randomMiddle = Math.random();
+      const middleIndex = Math.floor(((start + end) / 2));
+
+      if (randomMiddle < 0.5) {
+        middle = middleIndex;
+      } else {
+        middle = middleIndex + 1;
+      }
+    } else {
+      middle = parseInt(((start + end) / 2)+"");
+    }
+
+    console.log("Middle bucket: ", middle, "Start: ", start, "End: ", end, "Array: ", array.length);
+    
     const ntNode: TNode = {
 			data: array[middle],
 			left: null,
