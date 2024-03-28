@@ -19,10 +19,10 @@ export function sortedArrayToBST(array, start: number, end: number) {
       const randomMiddle = Math.random();
       const middleIndex = Math.floor(((start + end) / 2));
 
-      if (randomMiddle < 0.5) {
+      if (randomMiddle > 0.5) {
         middle = middleIndex;
       } else {
-        middle = middleIndex + 1;
+        middle = middleIndex - 1;
       }
     } else {
       middle = parseInt(((start + end) / 2)+"");
