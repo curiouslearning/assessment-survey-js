@@ -91,7 +91,7 @@ export function sendLocation(): void {
 
 	logEvent(gana,"user_location", {
 		user: uuid,
-		language: getAppLanguageFromDataURL(dataURL),
+		lang: getAppLanguageFromDataURL(dataURL),
 		app: getAppTypeFromDataURL(dataURL),
 		latlong: joinLatLong(clat, clon),
 	});
@@ -109,7 +109,7 @@ export function sendLocation(): void {
 		// region: region,
 		// country: country,
 		app: getAppTypeFromDataURL(dataURL),
-		language: getAppLanguageFromDataURL(dataURL)
+		lang: getAppLanguageFromDataURL(dataURL)
 	});
 }
 
@@ -154,7 +154,7 @@ export function sendAnswered(theQ: qData, theA: number, elapsed: number): void {
 		// region: region,
 		// country: country,
 		app: getAppTypeFromDataURL(dataURL),
-		language: getAppLanguageFromDataURL(dataURL),
+		lang: getAppLanguageFromDataURL(dataURL),
 		dt: elapsed,
 		question_number: theQ.qNumber,
 		target: theQ.qTarget,
@@ -184,7 +184,7 @@ export function sendBucket(tb: bucket, passed: boolean): void {
 		// region: region,
 		// country: country,
 		app: getAppTypeFromDataURL(dataURL),
-		language: getAppLanguageFromDataURL(dataURL),
+		lang: getAppLanguageFromDataURL(dataURL),
 		bucketNumber: bn,
 		numberTriedInBucket:btried,
 		numberCorrectInBucket:bcorrect,
@@ -217,7 +217,7 @@ export function sendFinished(buckets: bucket[] = null): void {
 		clUserId: uuid,
 		userSource: userSource,
 		app: getAppTypeFromDataURL(dataURL),
-		language: getAppLanguageFromDataURL(dataURL),
+		lang: getAppLanguageFromDataURL(dataURL),
 		latLong: joinLatLong(clat, clon),
 		// city: city,
 		// region: region,
