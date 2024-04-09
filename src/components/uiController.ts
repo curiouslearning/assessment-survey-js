@@ -168,8 +168,8 @@ export class UIController {
 		if (!UIController.getInstance().shown) {
 			const newQ = UIController.getInstance().nextQuestion;
 			const buttons = UIController.getInstance().buttons;
-			const animationDuration = 500; 
-			const delayBforeOption = 200;
+			const animationDuration = 200;
+			const delayBforeOption = 150;
 	        UIController.getInstance().shown = true;
 			let optionsDisplayed = 0;
 			buttons.forEach(button => {
@@ -183,9 +183,11 @@ export class UIController {
 		
 					button.innerHTML = 'answerText' in curAnswer ? curAnswer.answerText : '';
 					button.style.visibility = "hidden";
+					button.style.boxShadow = "0px 0px 0px 0px rgba(0,0,0,0)";
 					setTimeout(() => {
 						button.style.visibility = "visible";
-						button.style.animation = `zoomIn ${animationDuration}ms ease forwards`;			
+						button.style.boxShadow = "0px 6px 8px #606060";
+						button.style.animation = `zoomIn ${animationDuration}ms ease forwards`;
 						if ('answerImg' in curAnswer) {
 							const tmpimg = AudioController.GetImage(curAnswer.answerImg);
 							button.appendChild(tmpimg);
@@ -260,7 +262,7 @@ export class UIController {
 		UIController.getInstance().questionsContainer.style.display = "none";
 		// pB.innerHTML = "<button id='nextqButton'><svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M9 18L15 12L9 6V18Z' fill='currentColor' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'></path></svg></button>";
 		// UIController.getInstance().playButton.classList.add("audio-button");
-		UIController.getInstance().playButton.innerHTML = "<button id='nextqButton'><img class=audio-button width='85px' height='85px' src='/img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>";
+		UIController.getInstance().playButton.innerHTML = "<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='/img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>";
 		var nextQuestionButton = document.getElementById("nextqButton");
 		nextQuestionButton.addEventListener("click", function () {
 			UIController.ShowQuestion();
@@ -287,7 +289,7 @@ export class UIController {
 	public static ShowQuestion(newQuestion?: qData): void {
 
 		// pB.innerHTML = "<button id='nextqButton'><svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M9 18L15 12L9 6V18Z' fill='currentColor' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'></path></svg></button>";
-		UIController.getInstance().playButton.innerHTML = "<button id='nextqButton'><img class=audio-button width='85px' height='85px' src='/img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>";
+		UIController.getInstance().playButton.innerHTML = "<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='/img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>";
 
 		var nextQuestionButton = document.getElementById("nextqButton");
 		nextQuestionButton.addEventListener("click", function () {
