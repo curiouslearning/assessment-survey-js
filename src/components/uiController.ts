@@ -362,7 +362,7 @@ export class UIController {
 		do {
 			randomX = Math.floor(Math.random() * (containerWidth - 60));
 			randomY = Math.floor(Math.random() * containerHeight);
-		} while (UIController.OverlappingOtherStars(UIController.instance.starPositions, randomX, randomY, 50));
+		} while (UIController.OverlappingOtherStars(UIController.instance.starPositions, randomX, randomY, 40));
 
 		// Save these random x and y values, make the star appear in the center of the screen, make it 3 times bigger using scale and slowly transition to the random x and y values
 		starToShow.style.transform = "scale(10)";

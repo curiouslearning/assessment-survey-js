@@ -247,6 +247,15 @@ function calculateScore(buckets: bucket[], basalBucketID: number): number {
 			break;
 		}
 	}
+
+	console.log("Num Correct: " + numCorrect, " basal: " + basalBucketID, " buckets: " + buckets.length);
+	
+	if (basalBucketID === buckets.length && numCorrect >= 4) {
+		// If the user has enough correct answers in the last bucket, give them a perfect score
+		console.log("Perfect score");
+		
+		return buckets.length * 100;
+	}
 	
 	score = Math.round(((basalBucketID - 1) * 100) + (numCorrect / 5) * 100) | 0;
 
