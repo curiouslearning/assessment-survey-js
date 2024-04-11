@@ -369,7 +369,7 @@ export class UIController {
 		starToShow.style.transition = "top 1s ease, left 1s ease, transform 0.5s ease";
 		starToShow.style.zIndex = "500";
 		starToShow.style.top = window.innerHeight / 2 + "px";
-		starToShow.style.left = window.innerWidth / 2 - (starToShow.offsetWidth / 2) + "px";
+		starToShow.style.left = UIController.instance.gameContainer.offsetWidth / 2 - (starToShow.offsetWidth / 2) + "px";
 
 		setTimeout(() => {
 			starToShow.style.transition = "top 2s ease, left 2s ease, transform 2s ease";

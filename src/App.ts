@@ -15,7 +15,7 @@ import { Workbox } from 'workbox-window';
 import CacheModel from './components/cacheModel';
 import { UIController } from './components/uiController';
 
-const appVersion = "v0.2.7";
+const appVersion = "v0.2.8";
 
 let loadingScreen = document.getElementById("loadingScreen");
 
