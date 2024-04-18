@@ -387,6 +387,10 @@ export class UIController {
 
 			starToShow.style.left = 20 + randomX + "px";
 			starToShow.style.top = 60 + randomY + "px";
+
+			setTimeout(() => {
+				starToShow.style.filter = "drop-shadow(0px 0px 10px yellow)";
+			}, 1900);
 		}, 1000);
 
 		UIController.instance.starPositions.push({ x: randomX, y: randomY });
