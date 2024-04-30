@@ -15,7 +15,7 @@ import { Workbox } from 'workbox-window';
 import CacheModel from './components/cacheModel';
 import { UIController } from './components/uiController';
 
-const appVersion = "v0.2.9";
+const appVersion: string = "v0.3.0";
 
 let loadingScreen = document.getElementById("loadingScreen");
 
@@ -112,7 +112,7 @@ export class App {
 
 					setUuid(getUUID(), getUserSource());
 					linkAnalytics(this.analytics, this.dataURL);
-					sendInit();
+					sendInit(appVersion, data["contentVersion"]);
 
 					this.game.Run(this);
 				});

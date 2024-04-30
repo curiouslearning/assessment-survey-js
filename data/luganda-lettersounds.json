@@ -2,6 +2,7 @@
 	"quizName": "Lugandan Letter Sounds",
 	"appType": "assessment",
 	"feedbackText": "Kirungi!",
+    "contentVersion": "v0.1",
 	"buckets":[
 		{	"bucketID":1,
 			"bucketName":"lugandan-let-b1",

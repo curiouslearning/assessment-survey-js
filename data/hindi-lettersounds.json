@@ -2,6 +2,7 @@
 	"quizName": "hindi letter sounds",
 	"appType": "assessment",
 	"feedbackText": "बढ़िया काम",
+	"contentVersion": "v0.1",
 	"buckets":[
 		{	"bucketID":1,
 			"bucketName":"hindi-let-b1",

@@ -13,35 +13,36 @@ var latlong;
 // var city, region, country;
 var dataURL;
 
+export var appVersion: string;
+export var contentVersion: string;
+
 export function getLocation(){
 	console.log("starting to get location");
-		fetch(`https://ipinfo.io/json?token=b6268727178610`)
-		.then((response) => {
-			console.log("got location response");
-				if(!response.ok) {
-					throw Error(response.statusText);
-				}
-			return response.json()
-		}).then((jsonResponse)  => {
-			console.log(jsonResponse);
-			latlong = jsonResponse.loc;
-			var lpieces = latlong.split(",");
-			var lat = parseFloat(lpieces[0]).toFixed(2);
-			var lon = parseFloat(lpieces[1]).toFixed(1);
-			clat = lat;
-			clon = lon;
-			latlong = "";
-			lpieces = [];
-			// city = jsonResponse.city;
-			// region = jsonResponse.region;
-			// country = jsonResponse.country;
-			sendLocation();
+	fetch(`https://ipinfo.io/json?token=b6268727178610`).then((response) => {
+		console.log("got location response");
+		if(!response.ok) {
+			throw Error(response.statusText);
+		}
+		return response.json()
+	}).then((jsonResponse)  => {
+		console.log(jsonResponse);
+		latlong = jsonResponse.loc;
+		var lpieces = latlong.split(",");
+		var lat = parseFloat(lpieces[0]).toFixed(2);
+		var lon = parseFloat(lpieces[1]).toFixed(1);
+		clat = lat;
+		clon = lon;
+		latlong = "";
+		lpieces = [];
+		// city = jsonResponse.city;
+		// region = jsonResponse.region;
+		// country = jsonResponse.country;
+		sendLocation();
 
-				return {};
-		}).catch((err) => {
-			console.warn(`location failed to update! encountered error ${err.msg}`);
-		});
-
+		return {};
+	}).catch((err) => {
+		console.warn(`location failed to update! encountered error ${err.msg}`);
+	});
 }
 
 
@@ -56,9 +57,13 @@ export function setUuid(newUuid: string, newUserSource: string): void {
 }
 
 
-export function sendInit(): void {
+export function sendInit(appVersion: string, contentVersion: string): void {
+	appVersion = appVersion;
+	contentVersion = contentVersion;
+
 	getLocation();
-	var eventString = "user " + uuid + " opened the assessment"
+
+	var eventString = "user " + uuid + " opened the assessment";
 
 	console.log(eventString);
 
@@ -99,6 +104,8 @@ export function sendLocation(): void {
 	console.log("INITIALIZED EVENT SENT");
 	console.log("App Language: " + getAppLanguageFromDataURL(dataURL));
 	console.log("App Type: " + getAppTypeFromDataURL(dataURL));
+	console.log("App Version: " + appVersion);
+	console.log("Content Version: " + contentVersion);
 
 	logEvent(gana,"initialized", {
 		type: "initialized",
@@ -144,6 +151,8 @@ export function sendAnswered(theQ: qData, theA: number, elapsed: number): void {
 	eventString += iscorrect;
 	eventString += bucket;
 	console.log(eventString);
+	console.log("Answered App Version: " + appVersion);
+	console.log("Content Version: " + contentVersion);
 
 	logEvent(gana,"answered", {
 		type: "answered",
@@ -172,8 +181,10 @@ export function sendBucket(tb: bucket, passed: boolean): void {
 	var btried = tb.numTried;
 	var bcorrect = tb.numCorrect;
 	
-	var eventString = "user " + uuid + " finished the bucket " + bn;
+	var eventString = "user " + uuid + " finished the bucket " + bn + " with " + bcorrect + " correct answers out of " + btried + " tried" + " and passed: " + passed;
 	console.log(eventString);
+	console.log("Bucket Completed App Version: " + appVersion);
+	console.log("Content Version: " + contentVersion);
 
 	logEvent(gana,"bucketCompleted", {
 		type: "bucketCompleted",
@@ -192,7 +203,7 @@ export function sendBucket(tb: bucket, passed: boolean): void {
 	});
 }
 
-export function sendFinished(buckets: bucket[] = null): void {
+export function sendFinished(buckets: bucket[] = null, basalBucket: number, ceilingBucket: number): void {
 	let eventString = "user " + uuid + " finished the assessment";
 	console.log(eventString);
 
@@ -210,7 +221,11 @@ export function sendFinished(buckets: bucket[] = null): void {
 	console.log("Score: " + score);
 	console.log("Max Score: " + maxScore);
 	console.log("Basal Bucket: " + basalBucketID);
+	console.log("BASAL FROM ASSESSMENT: " + basalBucket);
 	console.log("Ceiling Bucket: " + ceilingBucketID);
+	console.log("CEILING FROM ASSESSMENT: " + ceilingBucket);
+	console.log("Completed App Version: " + appVersion);
+	console.log("Content Version: " + contentVersion);
 
 	logEvent(gana,"completed", {
 		type: "completed",

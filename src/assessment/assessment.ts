@@ -97,7 +97,8 @@ export class Assessment extends BaseQuiz {
 		UIController.SetFeedbackVisibile(true);
 		setTimeout(() => { 
 			console.log('Completed first Timeout');
-			this.onQuestionEnd() }, 2000);
+			this.onQuestionEnd()
+		}, 2000);
 	}
 
 	public onQuestionEnd = () => {
@@ -194,6 +195,8 @@ export class Assessment extends BaseQuiz {
 	public HasQuestionsLeft = () => {
 		//// TODO: check buckets, check if done
 		var hasQuestionsLeft = true;
+
+		if (this.currentBucket.passed) return false;
 			
 		if (this.currentBucket.numCorrect >= 4) {
 			//passed this bucket
@@ -227,9 +230,7 @@ export class Assessment extends BaseQuiz {
 					// do something here
 				}
 			}
-		}
-
-		if (this.currentBucket.numConsecutiveWrong >= 2 || this.currentBucket.numTried >= 5) {
+		} else if (this.currentBucket.numConsecutiveWrong >= 2 || this.currentBucket.numTried >= 5) {
 			//failed this bucket
 			console.log("failed this bucket " + this.currentBucket.bucketID);
 			if (this.currentBucket.bucketID < this.basalBucket) {
@@ -266,7 +267,7 @@ export class Assessment extends BaseQuiz {
 	}
 	
 	public override onEnd(): void {
-		sendFinished(this.buckets);
+		sendFinished(this.buckets, this.basalBucket, this.ceilingBucket);
 		UIController.ShowEnd();
 		this.app.unityBridge.SendClose();
 	}

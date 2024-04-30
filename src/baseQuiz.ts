@@ -13,7 +13,7 @@ export abstract class BaseQuiz {
 	public abstract HasQuestionsLeft(): boolean;
 
 	public onEnd(): void {
-		sendFinished();
+		// sendFinished();
 		UIController.ShowEnd();
 		this.app.unityBridge.SendClose();
 	}
