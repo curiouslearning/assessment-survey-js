@@ -3,7 +3,7 @@
 //once we start adding in the assessment functionality
 import { UIController } from '../components/uiController';
 import { qData, answerData } from '../components/questionData';
-import { sendAnswered, sendFinished, sendBucket } from '../components/analyticsEvents'
+import { AnalyticsEvents } from '../components/analyticsEvents'
 import { App } from '../App';
 import { bucket, bucketItem } from './bucketData';
 import { BaseQuiz } from '../BaseQuiz';
@@ -83,7 +83,7 @@ export class Assessment extends BaseQuiz {
 	}
 
 	public TryAnswer = (answer: number, elapsed: number) => {
-		sendAnswered(this.currentQuestion, answer, elapsed)
+		AnalyticsEvents.sendAnswered(this.currentQuestion, answer, elapsed);
 		this.currentBucket.numTried += 1;
 		if (this.currentQuestion.answers[answer-1].answerName == this.currentQuestion.correct){
 			this.currentBucket.numCorrect += 1;
@@ -185,7 +185,7 @@ export class Assessment extends BaseQuiz {
 	public tryMoveBucket = (nBucket, passed: boolean) => {
 		if (this.currentBucket != null) {
 			this.currentBucket.passed = passed;
-			sendBucket(this.currentBucket, passed);
+			AnalyticsEvents.sendBucket(this.currentBucket, passed);
 		}
 		console.log("new  bucket is " + nBucket.bucketID);
 		AudioController.PreloadBucket(nBucket, this.app.GetDataURL());
@@ -206,7 +206,7 @@ export class Assessment extends BaseQuiz {
 				//passed highest bucket
 				console.log("passed highest bucket");
 				this.currentBucket.passed = true;
-				sendBucket(this.currentBucket, true);
+				AnalyticsEvents.sendBucket(this.currentBucket, true);
 				UIController.ProgressChest();
 				hasQuestionsLeft = false;	
 			}
@@ -224,7 +224,7 @@ export class Assessment extends BaseQuiz {
 					// reached root node!!!!
 						console.log("reached root node");
 						this.currentBucket.passed = true;
-						sendBucket(this.currentBucket, true);
+						AnalyticsEvents.sendBucket(this.currentBucket, true);
 						UIController.ProgressChest();
 						hasQuestionsLeft = false;
 					// do something here
@@ -242,7 +242,7 @@ export class Assessment extends BaseQuiz {
 				console.log("failed lowest bucket");
 				hasQuestionsLeft = false;
 				this.currentBucket.passed = false;
-				sendBucket(this.currentBucket, false);
+				AnalyticsEvents.sendBucket(this.currentBucket, false);
 			}
 			else {
 				console.log("moving down bucket");
@@ -256,7 +256,7 @@ export class Assessment extends BaseQuiz {
 					console.log("reached root node");
 					hasQuestionsLeft = false;
 					this.currentBucket.passed = false;
-					sendBucket(this.currentBucket, false);
+					AnalyticsEvents.sendBucket(this.currentBucket, false);
 					// do something here
 				}
 			}
@@ -267,7 +267,7 @@ export class Assessment extends BaseQuiz {
 	}
 	
 	public override onEnd(): void {
-		sendFinished(this.buckets, this.basalBucket, this.ceilingBucket);
+		AnalyticsEvents.sendFinished(this.buckets, this.basalBucket, this.ceilingBucket);
 		UIController.ShowEnd();
 		this.app.unityBridge.SendClose();
 	}

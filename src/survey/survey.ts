@@ -4,7 +4,7 @@
 import { UIController } from '../components/uiController';
 import { AudioController } from '../components/audioController';
 import { qData, answerData } from '../components/questionData';
-import { sendAnswered, sendFinished } from '../components/analyticsEvents'
+import { AnalyticsEvents } from '../components/analyticsEvents'
 import { App } from '../App';
 import { BaseQuiz } from '../BaseQuiz';
 import { fetchSurveyQuestions } from '../components/jsonUtils';
@@ -55,7 +55,7 @@ export class Survey extends BaseQuiz {
 	}
 
 	public TryAnswer = (answer: number, elapsed: number) => {
-		sendAnswered(this.questionsData[this.currentQuestionIndex], answer, elapsed)
+		AnalyticsEvents.sendAnswered(this.questionsData[this.currentQuestionIndex], answer, elapsed)
 		UIController.SetFeedbackVisibile(true);
 		UIController.AddStar();
 		setTimeout(() => { this.onQuestionEnd() }, 2000);

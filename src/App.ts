@@ -6,7 +6,7 @@ import { getUUID, getUserSource, getDataFile } from './components/urlUtils';
 import { Survey } from './survey/survey';
 import { Assessment } from './assessment/assessment';
 import { UnityBridge } from './components/unityBridge';
-import { setUuid, linkAnalytics, sendInit } from './components/analyticsEvents';
+import { AnalyticsEvents } from './components/analyticsEvents';
 import { BaseQuiz } from './BaseQuiz';
 import { fetchAppData, getDataURL } from './components/jsonUtils';
 import { initializeApp } from 'firebase/app';
@@ -110,9 +110,10 @@ export class App {
 
 					this.game.unityBridge = this.unityBridge;
 
-					setUuid(getUUID(), getUserSource());
-					linkAnalytics(this.analytics, this.dataURL);
-					sendInit(appVersion, data["contentVersion"]);
+					AnalyticsEvents.setUuid(getUUID(), getUserSource());
+					AnalyticsEvents.linkAnalytics(this.analytics, this.dataURL);
+					AnalyticsEvents.sendInit(appVersion, data["contentVersion"]);
+					// this.cacheModel.setAppName(this.cacheModel.appName + ':' + data["contentVersion"]);
 
 					this.game.Run(this);
 				});
