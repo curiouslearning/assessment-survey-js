@@ -1,5 +1,5 @@
 import { App } from './App';
-import { sendFinished } from './components/analyticsEvents';
+import { AnalyticsEvents } from './components/analyticsEvents';
 import { UIController } from './components/uiController';
 import { UnityBridge } from './components/unityBridge';
 
@@ -13,7 +13,7 @@ export abstract class BaseQuiz {
 	public abstract HasQuestionsLeft(): boolean;
 
 	public onEnd(): void {
-		sendFinished();
+		// sendFinished();
 		UIController.ShowEnd();
 		this.app.unityBridge.SendClose();
 	}

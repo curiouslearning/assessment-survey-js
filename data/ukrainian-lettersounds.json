@@ -2,6 +2,7 @@
 	"quizName": "Ukrainian letter sounds",
 	"appType": "assessment",
 	"feedbackText": "дивовижно!",
+    "contentVersion": "v0.1",
 	"buckets":[
 		{	"bucketID":1,
 			"bucketName":"ukrainian-let-b1",

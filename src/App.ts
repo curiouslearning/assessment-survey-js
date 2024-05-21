@@ -6,7 +6,7 @@ import { getUUID, getUserSource, getDataFile } from './components/urlUtils';
 import { Survey } from './survey/survey';
 import { Assessment } from './assessment/assessment';
 import { UnityBridge } from './components/unityBridge';
-import { setUuid, linkAnalytics, sendInit } from './components/analyticsEvents';
+import { AnalyticsEvents } from './components/analyticsEvents';
 import { BaseQuiz } from './BaseQuiz';
 import { fetchAppData, getDataURL } from './components/jsonUtils';
 import { initializeApp } from 'firebase/app';
@@ -15,7 +15,7 @@ import { Workbox } from 'workbox-window';
 import CacheModel from './components/cacheModel';
 import { UIController } from './components/uiController';
 
-const appVersion = "v0.2.5";
+const appVersion: string = "v0.3.0";
 
 let loadingScreen = document.getElementById("loadingScreen");
 
@@ -110,9 +110,10 @@ export class App {
 
 					this.game.unityBridge = this.unityBridge;
 
-					setUuid(getUUID(), getUserSource());
-					linkAnalytics(this.analytics, this.dataURL);
-					sendInit();
+					AnalyticsEvents.setUuid(getUUID(), getUserSource());
+					AnalyticsEvents.linkAnalytics(this.analytics, this.dataURL);
+					AnalyticsEvents.sendInit(appVersion, data["contentVersion"]);
+					// this.cacheModel.setAppName(this.cacheModel.appName + ':' + data["contentVersion"]);
 
 					this.game.Run(this);
 				});
