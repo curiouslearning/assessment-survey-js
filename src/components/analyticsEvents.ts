@@ -259,6 +259,8 @@ export class AnalyticsEvents {
 		console.log("Completed App Version: " + AnalyticsEvents.appVersion);
 		console.log("Content Version: " + AnalyticsEvents.contentVersion);
 
+		AnalyticsEvents.sendDataToThirdParty(score, AnalyticsEvents.uuid);
+
 		logEvent(AnalyticsEvents.gana,"completed", {
 			type: "completed",
 			clUserId: AnalyticsEvents.uuid,
@@ -276,6 +278,57 @@ export class AnalyticsEvents {
 			appVersion: AnalyticsEvents.appVersion,
 			contentVersion: AnalyticsEvents.contentVersion
 		});
+	}
+
+	static sendDataToThirdParty(score: number, uuid: string): void {
+		// Send data to the third party
+		console.log("Attempting to send score to a third party! Score: ", score);
+
+		// Read the URL from utm parameters
+		const urlParams = new URLSearchParams(window.location.search);
+		const targetPartyURL = urlParams.get('endpoint');
+		const organization = urlParams.get('organization');
+        const xhr = new XMLHttpRequest();
+
+		if (!targetPartyURL) {
+			console.error("No target party URL found!");
+			return;
+		}
+
+        const payload = {
+          "user": uuid,
+          "page": "111108121363615", 
+          "event": { 
+            "type": "external", 
+            "value": {  
+              "type": "assessment",
+              "score": score,
+              "completed": true
+            }
+          }
+        };
+
+        const payloadString = JSON.stringify(payload);
+
+		try {
+			xhr.open("POST", targetPartyURL, true);
+			xhr.setRequestHeader('Content-Type', 'application/json');
+	
+			xhr.onload = function () {
+				if (xhr.status >= 200 && xhr.status < 300) {
+					// Request was successful, handle the response here
+					console.log("POST success!" + xhr.responseText);
+				} else {
+					// Request failed
+					console.error('Request failed with status: ' + xhr.status);
+				}
+			};
+	
+			xhr.send(payloadString);
+		} catch (error) {
+			console.error("Failed to send data to target party: ", error);
+		}
+
 	}
 
 	// Calculate Score

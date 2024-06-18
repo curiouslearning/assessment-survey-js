@@ -1,0 +1,170 @@
+{
+	"quizName": "West African Sight Words",
+	"appType": "assessment",
+	"feedbackText": "Kirungi!",
+    "contentVersion": "v0.1",
+	"buckets":[
+		{	"bucketID":1,
+			"bucketName":"west-african-english-let-b1",
+			"usedItems":[],
+			"items": [
+                {"itemName" : "and", "itemText": "and"},
+                {"itemName" : "you", "itemText": "you"},
+                {"itemName" : "they", "itemText": "they"},
+                {"itemName" : "are", "itemText": "are"},
+                {"itemName" : "at", "itemText": "at"},
+                {"itemName" : "me", "itemText": "me"},
+                {"itemName" : "up", "itemText": "up"},
+                {"itemName" : "him", "itemText": "him"},
+                {"itemName" : "when", "itemText": "when"},
+                {"itemName" : "now", "itemText": "now"}
+            ]
+		},
+		{	"bucketID":2,
+			"bucketName":"west-african-english-let-b2",
+			"usedItems":[],
+			"items":[
+                {"itemName" : "like", "itemText": "like"},
+                {"itemName" : "fly", "itemText": "fly"},
+                {"itemName" : "go", "itemText": "go"},
+                {"itemName" : "see", "itemText": "see"},
+                {"itemName" : "help", "itemText": "help"},
+                {"itemName" : "big", "itemText": "big"},
+                {"itemName" : "know", "itemText": "know"},
+                {"itemName" : "come", "itemText": "come"},
+                {"itemName" : "down", "itemText": "down"},
+                {"itemName" : "us", "itemText": "us"}
+            ]
+		},
+
+		{	"bucketID":3,
+			"bucketName":"west-african-english-let-b3",
+			"usedItems":[],
+			"items":[
+                {"itemName" : "want", "itemText": "want"},
+                {"itemName" : "find", "itemText": "find"},
+                {"itemName" : "house", "itemText": "house"},
+                {"itemName" : "play", "itemText": "play"},
+                {"itemName" : "red", "itemText": "red"},
+                {"itemName" : "many", "itemText": "many"},
+                {"itemName" : "please", "itemText": "please"},
+                {"itemName" : "green", "itemText": "green"},
+                {"itemName" : "good", "itemText": "good"},
+                {"itemName" : "soon", "itemText": "soon"}
+            ]
+		},
+
+		{	"bucketID":4,
+			"bucketName":"west-african-english-let-b4",
+			"usedItems":[],
+			"items":[
+                {"itemName" : "must", "itemText": "must"},
+                {"itemName" : "must", "itemText": "must"},
+                {"itemName" : "going", "itemText": "going"},
+                {"itemName" : "man", "itemText": "man"},
+                {"itemName" : "under", "itemText": "under"},
+                {"itemName" : "which", "itemText": "which"},
+                {"itemName" : "always", "itemText": "always"},
+                {"itemName" : "stop", "itemText": "stop"},
+                {"itemName" : "sad", "itemText": "sad"},
+                {"itemName" : "run", "itemText": "run"}
+            ]
+		},
+		{	"bucketID":5,
+			"bucketName":"west-african-english-let-b5",
+			"usedItems":[],
+			"items":[
+                {"itemName" : "sing", "itemText": "sing"},
+                {"itemName" : "thank", "itemText": "thank"},
+                {"itemName" : "once", "itemText": "once"},
+                {"itemName" : "girl", "itemText": "girl"},
+                {"itemName" : "ask", "itemText": "ask"},
+                {"itemName" : "those", "itemText": "those"},
+                {"itemName" : "clean", "itemText": "clean"},
+                {"itemName" : "sit", "itemText": "sit"},
+                {"itemName" : "jump", "itemText": "jump"},
+                {"itemName" : "chair", "itemText": "chair"}
+            ]
+		},
+		{	"bucketID":6,
+			"bucketName":"west-african-english-let-b6",
+			"usedItems":[],
+			"items":[
+                {"itemName" : "upon", "itemText": "upon"},
+                {"itemName" : "today", "itemText": "today"},
+                {"itemName" : "uncle", "itemText": "uncle"},
+                {"itemName" : "hard", "itemText": "hard"},
+                {"itemName" : "gave", "itemText": "gave"},
+                {"itemName" : "great", "itemText": "great"},
+                {"itemName" : "fell", "itemText": "fell"},
+                {"itemName" : "than", "itemText": "than"},
+                {"itemName" : "really", "itemText": "really"},
+                {"itemName" : "teacher", "itemText": "teacher"}
+            ]
+		},
+		{	"bucketID":7,
+			"bucketName":"west-african-english-let-b7",
+			"usedItems":[],
+			"items":[
+                {"itemName" : "dear", "itemText": "dear"},
+                {"itemName" : "decided", "itemText": "decided"},
+                {"itemName" : "towards", "itemText": "towards"},
+                {"itemName" : "love", "itemText": "love"},
+                {"itemName" : "any", "itemText": "any"},
+                {"itemName" : "brother", "itemText": "brother"},
+                {"itemName" : "garden", "itemText": "garden"},
+                {"itemName" : "already", "itemText": "already"},
+                {"itemName" : "plays", "itemText": "plays"},
+                {"itemName" : "shone", "itemText": "shone"}
+            ]
+		},
+		{	"bucketID":8,
+			"bucketName":"west-african-english-let-b8",
+			"usedItems":[],
+			"items":[
+                {"itemName" : "watching", "itemText": "watching"},
+                {"itemName" : "changed", "itemText": "changed"},
+                {"itemName" : "keeps", "itemText": "keeps"},
+                {"itemName" : "seems", "itemText": "seems"},
+                {"itemName" : "bigger", "itemText": "bigger"},
+                {"itemName" : "chase", "itemText": "chase"},
+                {"itemName" : "difficult", "itemText": "difficult"},
+                {"itemName" : "dinner", "itemText": "dinner"},
+                {"itemName" : "famous", "itemText": "famous"},
+                {"itemName" : "group", "itemText": "group"}
+            ]
+		},
+		{	"bucketID":9,
+			"bucketName":"west-african-english-let-b9",
+			"usedItems":[],
+			"items":[
+                {"itemName" : "meeting", "itemText": "meeting"},
+                {"itemName" : "parts", "itemText": "parts"},
+                {"itemName" : "skin", "itemText": "skin"},
+                {"itemName" : "spent", "itemText": "spent"},
+                {"itemName" : "below", "itemText": "below"},
+                {"itemName" : "collected", "itemText": "collected"},
+                {"itemName" : "engine", "itemText": "engine"},
+                {"itemName" : "finish", "itemText": "finish"},
+                {"itemName" : "least", "itemText": "least"},
+                {"itemName" : "hairy", "itemText": "hairy"}
+            ]
+		},
+        {	"bucketID":10,
+			"bucketName":"west-african-english-let-b9",
+			"usedItems":[],
+			"items":[
+                {"itemName" : "ignored", "itemText": "ignored"},
+                {"itemName" : "magnificent", "itemText": "magnificent"},
+                {"itemName" : "rubber", "itemText": "rubber"},
+                {"itemName" : "salty", "itemText": "salty"},
+                {"itemName" : "written", "itemText": "written"},
+                {"itemName" : "cactus", "itemText": "cactus"},
+                {"itemName" : "roosters", "itemText": "roosters"},
+                {"itemName" : "afford", "itemText": "afford"},
+                {"itemName" : "bold", "itemText": "bold"},
+                {"itemName" : "furry", "itemText": "furry"}
+            ]
+		}
+	]
+}
