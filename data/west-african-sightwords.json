@@ -1,7 +1,7 @@
 {
 	"quizName": "West African Sight Words",
 	"appType": "assessment",
-	"feedbackText": "Kirungi!",
+	"feedbackText": "Fantastic!",
     "contentVersion": "v0.1",
 	"buckets":[
 		{	"bucketID":1,
