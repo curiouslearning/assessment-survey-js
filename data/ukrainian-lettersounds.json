@@ -1,6 +1,7 @@
 {
 	"quizName": "Ukrainian letter sounds",
 	"appType": "assessment",
+    "assessmentType": "letter-sounds",
 	"feedbackText": "дивовижно!",
     "contentVersion": "v0.1",
 	"buckets":[

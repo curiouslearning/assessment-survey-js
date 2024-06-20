@@ -81,6 +81,7 @@ export class App {
 					UIController.SetFeedbackText(data["feedbackText"]);
 
 					let appType = data["appType"];
+					let assessmentType = data["assessmentType"];
 
 					if (appType == "survey") {
 						this.game = new Survey(this.dataURL, this.unityBridge);
@@ -112,6 +113,7 @@ export class App {
 
 					AnalyticsEvents.setUuid(getUUID(), getUserSource());
 					AnalyticsEvents.linkAnalytics(this.analytics, this.dataURL);
+					AnalyticsEvents.setAssessmentType(assessmentType);
 					AnalyticsEvents.sendInit(appVersion, data["contentVersion"]);
 					// this.cacheModel.setAppName(this.cacheModel.appName + ':' + data["contentVersion"]);
 

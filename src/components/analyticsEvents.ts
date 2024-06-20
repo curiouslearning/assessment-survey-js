@@ -21,6 +21,8 @@ export class AnalyticsEvents {
 	protected static appVersion;
 	protected static contentVersion;
 
+	protected static assessmentType: string;
+
 	static instance: AnalyticsEvents;
 
 	private constructor() {
@@ -33,6 +35,10 @@ export class AnalyticsEvents {
 		}
 
 		return AnalyticsEvents.instance;
+	}
+
+	static setAssessmentType(assessmentType: string): void {
+		AnalyticsEvents.assessmentType = assessmentType;
 	}
 
 	// Get Location
@@ -302,6 +308,7 @@ export class AnalyticsEvents {
             "type": "external", 
             "value": {  
               "type": "assessment",
+			  "assessmentType": AnalyticsEvents.assessmentType,
               "score": score,
               "completed": true
             }

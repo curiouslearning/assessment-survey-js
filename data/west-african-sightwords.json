@@ -1,6 +1,7 @@
 {
 	"quizName": "West African Sight Words",
 	"appType": "assessment",
+    "assessmentType": "sight-words",
 	"feedbackText": "Fantastic!",
     "contentVersion": "v0.1",
 	"buckets":[

@@ -1,6 +1,7 @@
 {
 	"quizName": "zulu letter sounds",
 	"appType": "assessment",
+	"assessmentType": "letter-sounds",
 	"feedbackText": "kuyancomeka!",
 	"contentVersion": "v0.1",
 	"buckets":[

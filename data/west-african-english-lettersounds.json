@@ -1,6 +1,7 @@
 {
 	"quizName": "west african english letter sounds",
 	"appType": "assessment",
+	"assessmentType": "letter-sounds",
 	"feedbackText": "Fantastic!",
 	"contentVersion": "v0.1",
 	"buckets":[

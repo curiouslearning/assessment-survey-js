@@ -1,6 +1,7 @@
 {
 	"quizName": "Nepalese letter sounds",
 	"appType": "assessment",
+    "assessmentType": "letter-sounds",
 	"feedbackText": "गज्जब!",
     "contentVersion": "v0.1",
 	"buckets":[
