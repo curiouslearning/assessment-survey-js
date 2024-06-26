@@ -308,7 +308,7 @@ export class AnalyticsEvents {
             "type": "external", 
             "value": {  
               "type": "assessment",
-			  "assessmentType": AnalyticsEvents.assessmentType,
+			  "subType": AnalyticsEvents.assessmentType,
               "score": score,
               "completed": true
             }
