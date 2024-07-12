@@ -94,7 +94,7 @@ export class App {
 							for (let j = 0; j < buckets[i].items.length; j++) {
 								let audioItemURL;
 								// Use to lower case for the Lugandan data
-								if (data["quizName"].includes("Luganda")) {
+								if (data["quizName"].includes("Luganda") || data["quizName"].toLowerCase().includes("west african english")) {
 									audioItemURL = "/audio/" + this.dataURL + "/" + buckets[i].items[j].itemName.toLowerCase().trim() + ".mp3";
 								} else {
 									audioItemURL = "/audio/" + this.dataURL + "/" + buckets[i].items[j].itemName.trim() + ".mp3";
