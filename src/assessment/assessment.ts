@@ -8,7 +8,7 @@ import { App } from '../App';
 import { bucket, bucketItem } from './bucketData';
 import { BaseQuiz } from '../BaseQuiz';
 import { fetchAssessmentBuckets } from '../components/jsonUtils';
-import { TNode, sortedArrayToBST } from '../components/tNode';
+import { TreeNode, sortedArrayToIDsBST } from '../components/tNode';
 import { randFrom, shuffleArray } from '../components/mathUtils';
 import { AudioController } from '../components/audioController';
 
@@ -22,7 +22,7 @@ export class Assessment extends BaseQuiz {
 
 	public unityBridge;
 
-	public currentNode: TNode;
+	public currentNode: TreeNode;
 	public currentQuestion: qData;
 	public bucketArray: number[];
 	public questionNumber: number;
@@ -56,20 +56,44 @@ export class Assessment extends BaseQuiz {
 	}
 
 	public buildBuckets = () => {
-		var res = fetchAssessmentBuckets(this.app.GetDataURL()).then(result => {
+		var res = fetchAssessmentBuckets(this.app.GetDataURL()).then((result) => {
 			this.buckets = result;
 			this.numBuckets = result.length;
 			console.log("buckets: " + this.buckets);
 			this.bucketArray = Array.from(Array(this.numBuckets), (_, i) => i+1);
 			console.log("empty array " +  this.bucketArray)
-			var root = sortedArrayToBST(this.buckets, 0, this.numBuckets);
-			console.log(root);
+			let usedIndices = new Set<number>();
+			usedIndices.add(0);
+			let rootOfIDs = sortedArrayToIDsBST(this.buckets[0].bucketID - 1, this.buckets[this.buckets.length - 1].bucketID, usedIndices);
+			// console.log("Generated the buckets root ----------------------------------------------");
+			// console.log(rootOfIDs);
+			let bucketsRoot = this.convertToBucketBST(rootOfIDs, this.buckets);
+			console.log("Generated the buckets root ----------------------------------------------");
+			console.log(bucketsRoot);
 			this.basalBucket = this.numBuckets + 1;
 			this.ceilingBucket = -1;
-			this.currentNode = root;
-			this.tryMoveBucket(root.data, false);
+			this.currentNode = bucketsRoot;
+			this.tryMoveBucket(bucketsRoot.value, false);
 		});
 		return res;
+	}
+
+	/**
+	 * Converts a binary search tree of numbers to a binary search tree of bucket objects
+	 * @param node Is a root node of a binary search tree
+	 * @param buckets Is an array of bucket objects
+	 * @returns A root node of a binary search tree where the value of each node is a bucket object
+	 */
+	public convertToBucketBST = (node: TreeNode, buckets: bucket[]) => {
+		// Traverse each element take the value and find that bucket in the buckets array and assign that bucket instead of the number value
+		if (node === null) return node;
+
+		let bucketId = node.value;
+		node.value = buckets.find(bucket => bucket.bucketID === bucketId);
+		if (node.left !== null) node.left = this.convertToBucketBST(node.left, buckets);
+		if (node.right !== null) node.right = this.convertToBucketBST(node.right, buckets);
+
+		return node;
 	}
 
 	public initBucket = (bucket: bucket) => {
@@ -218,7 +242,7 @@ export class Assessment extends BaseQuiz {
 					UIController.ProgressChest();
 					console.log("moving to right node");
 					this.currentNode = this.currentNode.right;
-					this.tryMoveBucket(this.currentNode.data, true);
+					this.tryMoveBucket(this.currentNode.value, true);
 					
 				}else{
 					// reached root node!!!!
@@ -250,7 +274,7 @@ export class Assessment extends BaseQuiz {
 					//move down to left
 					console.log("moving to left node");
 					this.currentNode = this.currentNode.left;
-					this.tryMoveBucket(this.currentNode.data, false);
+					this.tryMoveBucket(this.currentNode.value, false);
 				} else {
 					// reached root node!!!!
 					console.log("reached root node");

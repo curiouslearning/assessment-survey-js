@@ -1,49 +1,46 @@
-// A binary tree node
-export type TNode = {
-  data: number;
-  left: TNode;
-  right: TNode;
-};
+import { bucket } from "../assessment/bucketData";
 
-export function sortedArrayToBST(array, start: number, end: number) {
-    /* Base Case */
-    if (start > end)
-    {
-        return null;
+export class TreeNode {
+    value: number | bucket;
+    left: TreeNode | null;
+    right: TreeNode | null;
+
+    constructor(value: number) {
+        this.value = value;
+        this.left = null;
+        this.right = null;
     }
-    
-    /* Get the middle element and make it root */
-    var middle = 0;
+}
 
-    if ((start + end) % 2 === 0) {
-      // Raandomly choose the middle element
-      const randomMiddle = Math.random();
-      const middleIndex = Math.floor(((start + end) / 2));
+/** Generates a random binary search tree from a sorted array
+ - If the start and end indices are the same, the function returns null
+ - If the middle index is even, the function uses the exact middle point
+ - Otherwise, the function randomly adds 0 or 1 to the middle index
+ - Returns the root node of the generated binary search tree which contains the bucketIds if called properly
+ - ex: let rootOfIds = sortedArrayToBST(this.buckets, this.buckets[0].bucketID - 1, this.buckets[this.buckets.length - 1].bucketID, usedIndices);
+ */
+export function sortedArrayToIDsBST(start, end, usedIndices) {
+    if (start > end) return null;
 
-      if (randomMiddle > 0.5) {
-        middle = middleIndex;
-      } else {
-        if (middleIndex !== 0)
-          middle = middleIndex - 1;
-      }
+    // Randomize middle point within unused indices
+    let mid;
+
+    if ((start + end) % 2 === 0 && usedIndices.size !== 1) {
+        mid = Math.floor((start + end) / 2); // Use the exact middle point
+        if (mid === 0) return null;
     } else {
-      middle = parseInt(((start + end) / 2)+"");
+        do {
+            mid = Math.floor((start + end) / 2);
+            mid += Math.floor(Math.random() * 2); // Randomly add 0 or 1 to mid
+        } while (mid > end || usedIndices.has(mid));
     }
 
-    console.log("Middle bucket: ", middle, "Start: ", start, "End: ", end, "Array: ", array.length);
+    usedIndices.add(mid);
     
-    const ntNode: TNode = {
-			data: array[middle],
-			left: null,
-			right: null
-		}
+    let node = new TreeNode(mid);
 
-    /* Recursively construct the left subtree and make it
-     left child of root */
-    ntNode.left = sortedArrayToBST(array, start, middle - 1);
-    /* Recursively construct the right subtree and make it
-     right child of root */
-    ntNode.right = sortedArrayToBST(array, middle + 1, end);
+    node.left = sortedArrayToIDsBST(start, mid - 1, usedIndices);
+    node.right = sortedArrayToIDsBST(mid + 1, end, usedIndices);
 
-    return ntNode;
+    return node;
 }
