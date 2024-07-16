@@ -137,6 +137,7 @@ export class UIController {
 	}
 
 	private initEventListeners(): void {
+		// TODO: refactor this
 		this.answerButton1.addEventListener("click", () => {
 			this.answerButtonPress(1);
 		});
