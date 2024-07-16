@@ -148,7 +148,7 @@
                 {"itemName" : "finish", "itemText": "finish"},
                 {"itemName" : "least", "itemText": "least"},
                 {"itemName" : "hairy", "itemText": "hairy"},
-                {"itemName" : "ignored", "itemText": "silly"}
+                {"itemName" : "ignored", "itemText": "ignored"}
             ]
 		},
         {	"bucketID":10,
