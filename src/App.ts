@@ -15,7 +15,7 @@ import { Workbox } from 'workbox-window';
 import CacheModel from './components/cacheModel';
 import { UIController } from './components/uiController';
 
-const appVersion: string = "v1.0.4";
+const appVersion: string = "v1.0.5";
 
 let loadingScreen = document.getElementById("loadingScreen");
 
@@ -123,8 +123,6 @@ export class App {
 				await this.registerServiceWorker(this.game);
 			})();
 		});
-
-		
 	}
 
 	async registerServiceWorker(game: BaseQuiz) {
