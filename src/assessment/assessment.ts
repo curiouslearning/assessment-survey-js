@@ -6,7 +6,7 @@ import { qData, answerData } from '../components/questionData';
 import { AnalyticsEvents } from '../components/analyticsEvents'
 import { App } from '../App';
 import { bucket, bucketItem } from './bucketData';
-import { BaseQuiz } from '../BaseQuiz';
+import { BaseQuiz } from '../baseQuiz';
 import { fetchAssessmentBuckets } from '../components/jsonUtils';
 import { TreeNode, sortedArrayToIDsBST } from '../components/tNode';
 import { randFrom, shuffleArray } from '../components/mathUtils';
@@ -38,6 +38,8 @@ export class Assessment extends BaseQuiz {
 	public basalBucket: number;
 	public ceilingBucket: number;
 
+	protected bucketGenMode: BucketGenMode = BucketGenMode.RandomBST;
+
 	constructor(dataURL: string, unityBridge: any) {
 		super();
 		this.dataURL = dataURL;
@@ -54,6 +56,13 @@ export class Assessment extends BaseQuiz {
 			console.log(this.currentBucket);
 			this.unityBridge.SendLoaded();
 		});
+	}
+
+	public handleBucketGenModeChange(): void {
+		// TODO: Implement handleBucketGenModeChange
+		console.log("handleBucketGenModeChange: " + this.devModeBucketGenSelect.value);
+		this.bucketGenMode = parseInt(this.devModeBucketGenSelect.value) as BucketGenMode;
+		console.log("bucketGenMode: " + this.bucketGenMode);
 	}
 
 	public startAssessment = () => {
