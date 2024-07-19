@@ -18,6 +18,11 @@ enum searchStage {
 	LinearSearchDown
 }
 
+enum BucketGenMode {
+	RandomBST,
+	LinearArrayBased,
+}
+
 export class Assessment extends BaseQuiz {
 
 	public unityBridge;
