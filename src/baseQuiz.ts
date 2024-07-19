@@ -29,13 +29,13 @@ export abstract class BaseQuiz {
 		this.devModeSettingsModal = document.getElementById(this.devModeModalId);
 
 		this.devModeBucketGenSelect = document.getElementById(this.devModeBucketGenSelectId) as HTMLSelectElement;
-		this.devModeBucketGenSelect.onchange = this.handleBucketGenModeChange;
+		this.devModeBucketGenSelect.onchange = (event) => { this.handleBucketGenModeChange(event) };
 		
 		this.devModeToggleButton = document.getElementById(this.devModeToggleButtonId) as HTMLButtonElement;
 		this.devModeToggleButton.onclick = this.toggleDevModeModal;
 	}
 
-	public abstract handleBucketGenModeChange(): void;
+	public abstract handleBucketGenModeChange(event: Event): void;
 
 	public toggleDevModeModal = () => {
 		if (this.devModeSettingsModal.style.display == "block") {

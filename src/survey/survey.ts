@@ -6,7 +6,7 @@ import { AudioController } from '../components/audioController';
 import { qData, answerData } from '../components/questionData';
 import { AnalyticsEvents } from '../components/analyticsEvents'
 import { App } from '../App';
-import { BaseQuiz } from '../baseQuiz';
+import { BaseQuiz } from '../BaseQuiz';
 import { fetchSurveyQuestions } from '../components/jsonUtils';
 import { UnityBridge } from '../components/unityBridge';
 
