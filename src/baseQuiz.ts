@@ -20,14 +20,24 @@ export abstract class BaseQuiz {
 	public devModeModalId: string = "devModeSettingsModal";
 	public devModeSettingsModal: HTMLElement;
 
+	public devModeBucketGenSelectId: string = "devModeBucketGenSelect";
+	public devModeBucketGenSelect: HTMLSelectElement;
+
 	constructor() {
+		this.isInDevMode = window.location.href.includes("localhost") || window.location.href.includes("assessmentdev");
 		this.devModeToggleButtonContainer = document.getElementById(this.devModeToggleButtonContainerId);
-		this.devModeToggleButton = document.getElementById(this.devModeToggleButtonId) as HTMLButtonElement;
 		this.devModeSettingsModal = document.getElementById(this.devModeModalId);
-		this.devModeToggleButton.onclick = this.ToggleDevModeModal;
+
+		this.devModeBucketGenSelect = document.getElementById(this.devModeBucketGenSelectId) as HTMLSelectElement;
+		this.devModeBucketGenSelect.onchange = this.handleBucketGenModeChange;
+		
+		this.devModeToggleButton = document.getElementById(this.devModeToggleButtonId) as HTMLButtonElement;
+		this.devModeToggleButton.onclick = this.toggleDevModeModal;
 	}
 
-	public ToggleDevModeModal = () => {
+	public abstract handleBucketGenModeChange(): void;
+
+	public toggleDevModeModal = () => {
 		if (this.devModeSettingsModal.style.display == "block") {
 			this.devModeSettingsModal.style.display = "none";
 		} else {
