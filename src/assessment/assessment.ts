@@ -6,7 +6,7 @@ import { qData, answerData } from '../components/questionData';
 import { AnalyticsEvents } from '../components/analyticsEvents'
 import { App } from '../App';
 import { bucket, bucketItem } from './bucketData';
-import { BaseQuiz } from '../baseQuiz';
+import { BaseQuiz } from '../BaseQuiz';
 import { fetchAssessmentBuckets } from '../components/jsonUtils';
 import { TreeNode, sortedArrayToIDsBST } from '../components/tNode';
 import { randFrom, shuffleArray } from '../components/mathUtils';
@@ -52,44 +52,68 @@ export class Assessment extends BaseQuiz {
 
 	public Run(applink: App): void {
 		this.app = applink;
-		this.buildBuckets().then(result => {
+		this.buildBuckets(this.bucketGenMode).then(result => {
 			console.log(this.currentBucket);
 			this.unityBridge.SendLoaded();
 		});
 	}
 
-	public handleBucketGenModeChange(): void {
+	public handleBucketGenModeChange(event: Event): void {
 		// TODO: Implement handleBucketGenModeChange
-		console.log("handleBucketGenModeChange: " + this.devModeBucketGenSelect.value);
 		this.bucketGenMode = parseInt(this.devModeBucketGenSelect.value) as BucketGenMode;
-		console.log("bucketGenMode: " + this.bucketGenMode);
+		this.buildBuckets(this.bucketGenMode).then(() => {
+			// Finished building buckets
+		});
 	}
 
 	public startAssessment = () => {
 		UIController.ReadyForNext(this.getNextQuestion());
 	}
 
-	public buildBuckets = () => {
-		var res = fetchAssessmentBuckets(this.app.GetDataURL()).then((result) => {
-			this.buckets = result;
-			this.numBuckets = result.length;
-			console.log("buckets: " + this.buckets);
-			this.bucketArray = Array.from(Array(this.numBuckets), (_, i) => i+1);
-			console.log("empty array " +  this.bucketArray)
-			let usedIndices = new Set<number>();
-			usedIndices.add(0);
-			let rootOfIDs = sortedArrayToIDsBST(this.buckets[0].bucketID - 1, this.buckets[this.buckets.length - 1].bucketID, usedIndices);
-			// console.log("Generated the buckets root ----------------------------------------------");
-			// console.log(rootOfIDs);
-			let bucketsRoot = this.convertToBucketBST(rootOfIDs, this.buckets);
-			console.log("Generated the buckets root ----------------------------------------------");
-			console.log(bucketsRoot);
-			this.basalBucket = this.numBuckets + 1;
-			this.ceilingBucket = -1;
-			this.currentNode = bucketsRoot;
-			this.tryMoveBucket(bucketsRoot.value, false);
-		});
-		return res;
+	public buildBuckets = (bucketGenMode: BucketGenMode) => {
+		// If we don't have the buckets loaded, load them and initialize the current node, which is the starting point
+		if (this.buckets.length === 0) {
+			var res = fetchAssessmentBuckets(this.app.GetDataURL()).then((result) => {
+				this.buckets = result;
+				this.numBuckets = result.length;
+				console.log("buckets: " + this.buckets);
+				this.bucketArray = Array.from(Array(this.numBuckets), (_, i) => i+1);
+				console.log("empty array " +  this.bucketArray)
+				let usedIndices = new Set<number>();
+				usedIndices.add(0);
+				let rootOfIDs = sortedArrayToIDsBST(this.buckets[0].bucketID - 1, this.buckets[this.buckets.length - 1].bucketID, usedIndices);
+				// console.log("Generated the buckets root ----------------------------------------------");
+				// console.log(rootOfIDs);
+				let bucketsRoot = this.convertToBucketBST(rootOfIDs, this.buckets);
+				console.log("Generated the buckets root ----------------------------------------------");
+				console.log(bucketsRoot);
+				this.basalBucket = this.numBuckets + 1;
+				this.ceilingBucket = -1;
+				this.currentNode = bucketsRoot;
+				this.tryMoveBucket(bucketsRoot.value, false);
+			});
+			return res;
+		} else {
+			if (bucketGenMode === BucketGenMode.RandomBST) {
+				// If we have the buckets loaded, we can initialize the current node, which is the starting point
+				let usedIndices = new Set<number>();
+				usedIndices.add(0);
+				let rootOfIDs = sortedArrayToIDsBST(this.buckets[0].bucketID - 1, this.buckets[this.buckets.length - 1].bucketID, usedIndices);
+				// console.log("Generated the buckets root ----------------------------------------------");
+				// console.log(rootOfIDs);
+				let bucketsRoot = this.convertToBucketBST(rootOfIDs, this.buckets);
+				console.log("Generated the buckets root ----------------------------------------------");
+				console.log(bucketsRoot);
+				this.basalBucket = this.numBuckets + 1;
+				this.ceilingBucket = -1;
+				this.currentNode = bucketsRoot;
+				this.tryMoveBucket(bucketsRoot.value, false);
+			} else if (bucketGenMode === BucketGenMode.LinearArrayBased) {
+				// If we have the buckets loaded, we can initialize linear bucket arrangements here
+				// TODO: Implement linear bucket arrangements
+			}
+		
+		}
 	}
 
 	/**
