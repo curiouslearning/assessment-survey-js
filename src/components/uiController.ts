@@ -100,10 +100,6 @@ export class UIController {
 		this.initEventListeners();
 	}
 
-	public getStarsArray(): Array<any> {
-		return this.stars;
-	}
-
 	private initializeStars(): void {
 		for (let i = 0; i < 20; i++) {
 			const newStar = document.createElement("img");
