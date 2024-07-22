@@ -113,7 +113,7 @@ export class App {
 
 					AnalyticsEvents.setUuid(getUUID(), getUserSource());
 					AnalyticsEvents.linkAnalytics(this.analytics, this.dataURL);
-					AnalyticsEvents.setAssessmentType(assessmentType);
+					AnalyticsEvents.setAssessmentType(assessmentType); 
 					AnalyticsEvents.sendInit(appVersion, data["contentVersion"]);
 					// this.cacheModel.setAppName(this.cacheModel.appName + ':' + data["contentVersion"]);
 
