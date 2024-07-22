@@ -306,6 +306,7 @@ button {
   cursor: pointer;
   z-index: 100;
   outline: none;
+  display: none;
 }
 
 #devModeModalToggleButton {
@@ -336,12 +337,15 @@ button {
 #devModeSettingsContainer {
   width: 90%;
   height: 80%;
-  overflow-y: scroll;
+  overflow: hidden;
+  overflow-y: auto;
   margin: 0 auto; 
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
+  padding-right: 10px;
+  padding-left: 10px;
 }
 
 .devModeLabel {
