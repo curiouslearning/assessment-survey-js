@@ -72,9 +72,12 @@ export class Assessment extends BaseQuiz {
 
 	public startAssessment = () => {
 		UIController.ReadyForNext(this.getNextQuestion());
+		if (this.isInDevMode) {
+			this.hideDevModeButton();
+		}
 	}
 
-	public buildBuckets = (bucketGenMode: BucketGenMode) => {
+	public buildBuckets = async (bucketGenMode: BucketGenMode) => {
 		// If we don't have the buckets loaded, load them and initialize the current node, which is the starting point
 		if (this.buckets === undefined || this.buckets.length === 0) {
 			var res = fetchAssessmentBuckets(this.app.GetDataURL()).then((result) => {
