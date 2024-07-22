@@ -24,7 +24,7 @@ export abstract class BaseQuiz {
 	public devModeBucketGenSelect: HTMLSelectElement;
 
 	constructor() {
-		this.isInDevMode = window.location.href.includes("localhost") || window.location.href.includes("assessmentdev");
+		this.isInDevMode = window.location.href.includes("localhost") || window.location.href.includes("127.0.0.1") || window.location.href.includes("assessmentdev");
 		this.devModeToggleButtonContainer = document.getElementById(this.devModeToggleButtonContainerId);
 		this.devModeSettingsModal = document.getElementById(this.devModeModalId);
 
@@ -33,6 +33,16 @@ export abstract class BaseQuiz {
 		
 		this.devModeToggleButton = document.getElementById(this.devModeToggleButtonId) as HTMLButtonElement;
 		this.devModeToggleButton.onclick = this.toggleDevModeModal;
+
+		if (!this.isInDevMode) {
+			this.devModeToggleButtonContainer.style.display = "none";
+		} else {
+			this.devModeToggleButtonContainer.style.display = "block";
+		}
+	}
+
+	public hideDevModeButton() {
+		this.devModeToggleButtonContainer.style.display = "none";
 	}
 
 	public abstract handleBucketGenModeChange(event: Event): void;
