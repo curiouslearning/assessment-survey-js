@@ -38,7 +38,11 @@ export class Assessment extends BaseQuiz {
 	public basalBucket: number;
 	public ceilingBucket: number;
 
+	public currentLinearBucketIndex: number;
+
 	protected bucketGenMode: BucketGenMode = BucketGenMode.RandomBST;
+
+	private MAX_STARS_COUNT_IN_LINEAR_MODE = 20;
 
 	constructor(dataURL: string, unityBridge: any) {
 		super();
