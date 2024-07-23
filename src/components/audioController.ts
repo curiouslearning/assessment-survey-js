@@ -90,7 +90,7 @@ export class AudioController {
 
     public static PlayAudio(audioName: string, finishedCallback?: Function, audioAnim?: Function): void {
         audioName = normalizeFileName(audioName);
-
+        console.log("playing audio:-",audioName);
         if (!audioName.endsWith(".mp3")) {
             audioName = audioName.trim() + ".mp3";
         }
