@@ -1,8 +1,10 @@
-//code for loading audios
-
 import { qData } from './questionData';
 import { bucket, bucketItem } from '../assessment/bucketData';
 import { getCaseIndependentLangList } from './jsonUtils';
+
+function normalizeFileName(fileName: string): string {
+    return fileName.toLowerCase();
+}
 
 export class AudioController {
 
@@ -33,8 +35,7 @@ export class AudioController {
         AudioController.getInstance().wavToCache.push(feedbackSoundPath);
         AudioController.getInstance().correctAudio.src = feedbackSoundPath;
 
-        for (var questionIndex in questionsData){
-            let questionData = questionsData[questionIndex];
+        for (const questionData of questionsData) {
             if (questionData.promptAudio != null) {
                 AudioController.FilterAndAddAudioToAllAudios(questionData.promptAudio);
             }
@@ -43,8 +44,7 @@ export class AudioController {
                 AudioController.AddImageToAllImages(questionData.promptImg);
             }
 
-            for (var answerIndex in questionData.answers) {
-                let answerData = questionData.answers[answerIndex];
+            for (const answerData of questionData.answers) {
                 if (answerData.answerImg != null){
                     AudioController.AddImageToAllImages(answerData.answerImg);
                 }
@@ -62,88 +62,72 @@ export class AudioController {
     }
 
     public static FilterAndAddAudioToAllAudios(newAudioURL: string): void {
-        console.log("Adding audio: " + newAudioURL);
+        newAudioURL = normalizeFileName(newAudioURL);
+
         if (newAudioURL.includes(".wav")){
             newAudioURL = newAudioURL.replace(".wav", ".mp3");
-        } else if (newAudioURL.includes(".mp3")) {
-            // Already contains .mp3 not doing anything
-        } else {
+        } else if (!newAudioURL.includes(".mp3")) {
             newAudioURL = newAudioURL.trim() + ".mp3";
         }
 
         console.log("Filtered: " + newAudioURL);
-       
+        
         let newAudio = new Audio();
-        if(getCaseIndependentLangList().includes(AudioController.getInstance().dataURL.split('-')[0])  )
-        {
-            newAudio.src = "audio/" + AudioController.getInstance().dataURL + "/" + newAudioURL;
-            
-        }
-        else{
-            newAudio.src = "audio/" + AudioController.getInstance().dataURL + "/" + newAudioURL;
-
-        }
+        newAudio.src = "audio/" + AudioController.getInstance().dataURL + "/" + newAudioURL;
         
         AudioController.getInstance().allAudios[newAudioURL] = newAudio;
         
         console.log(newAudio.src);
     }
 
-    public static PreloadBucket(newBucket: bucket, dataURL) {
+    public static PreloadBucket(newBucket: bucket, dataURL: string) {
         AudioController.getInstance().dataURL = dataURL;
         AudioController.getInstance().correctAudio.src = "audio/" + AudioController.getInstance().dataURL + "/answer_feedback.mp3";
-        for (var itemIndex in newBucket.items){
-            var item = newBucket.items[itemIndex];
+        for (const item of newBucket.items){
             AudioController.FilterAndAddAudioToAllAudios(item.itemName);
         }
     }
 
     public static PlayAudio(audioName: string, finishedCallback?: Function, audioAnim?: Function): void {
-    
-        console.log("trying to play " + audioName);
-        if (audioName.includes(".mp3")){
-            if (audioName.slice(-4) != ".mp3"){
-                audioName = audioName.trim() + ".mp3";
-            }
-        } else {
+        audioName = normalizeFileName(audioName);
+
+        if (!audioName.endsWith(".mp3")) {
             audioName = audioName.trim() + ".mp3";
         }
     
         console.log("Pre play all audios: ");
         console.log(AudioController.getInstance().allAudios);
-    
-        
+
         const playPromise = new Promise<void>((resolve, reject) => {
             const audio = AudioController.getInstance().allAudios[audioName];
             if (audio) {
                 audio.addEventListener("play", () => {
-                    typeof(audioAnim) !== 'undefined' ? audioAnim(true) : null;
+                    if (audioAnim) audioAnim(true);
                 });
-    
+
                 audio.addEventListener("ended", () => {
-                    typeof(audioAnim) !== 'undefined' ? audioAnim(false) : null;
-                    resolve(); 
+                    if (audioAnim) audioAnim(false);
+                    resolve();
                 });
-    
+
                 audio.play().catch((error) => {
                     console.error("Error playing audio:", error);
                     resolve();
                 });
             } else {
                 console.warn("Audio file not found:", audioName);
-                resolve(); 
+                resolve();
             }
         });
-    
-        
+
         playPromise.then(() => {
-            typeof(finishedCallback) !== 'undefined' ? finishedCallback() : null;
+            if (finishedCallback) finishedCallback();
         }).catch(error => {
             console.error("Promise error:", error);
         });
-    }
-    
-    
+    }    
+
+
 
     public static GetImage(imageName: string): any {
         return AudioController.getInstance().allImages[imageName];
