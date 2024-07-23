@@ -49,19 +49,33 @@
 				<div class="nextQuestionInput">
 					<div id="pbutton"></div>
 				</div>
-	
 				
 				<div class="feedbackContainer hidden" id="feedbackWrap">
 					kuyancomeka!
 				</div>
 			</div>
-			
-
-		
 		</div>
 
 		<div class="endingPageWrapper" id="endWrap" style="display:none">
 			click to exit!
+		</div>
+
+		<div id="devModeModalToggleButtonContainer">
+			<button id="devModeModalToggleButton">
+				Dev<br/>
+				Mode
+			</button>
+		</div>
+
+		<div id="devModeSettingsModal">
+			<p style="font-size: 26px">Dev Mode Settings</p>
+			<div id="devModeSettingsContainer">
+				<span class="devModeLabel">Assessment bucket generation mode</span>
+				<select id="devModeBucketGenSelect">
+					<option value="0">Randomized Middle Point BST</option>
+					<option value="1">Sequential Array Based</option>
+				</select>
+			</div>
 		</div>
 	</div>
 	

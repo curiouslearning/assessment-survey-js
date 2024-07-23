@@ -12,7 +12,7 @@ export class TreeNode {
     }
 }
 
-/** Generates a random binary search tree from a sorted array
+/** Generates a random binary search tree from a
  - If the start and end indices are the same, the function returns null
  - If the middle index is even, the function uses the exact middle point
  - Otherwise, the function randomly adds 0 or 1 to the middle index

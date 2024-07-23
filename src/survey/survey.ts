@@ -26,6 +26,10 @@ export class Survey extends BaseQuiz {
 		UIController.SetStartAction(this.startSurvey);
 	}
 
+	public handleBucketGenModeChange = () => {
+		console.log("Bucket Gen Mode Changed");
+	}
+
 	public async Run(app: App) {
 		this.app = app;
 		this.buildQuestionList().then(result => {

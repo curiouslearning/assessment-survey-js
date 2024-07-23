@@ -18,6 +18,11 @@ enum searchStage {
 	LinearSearchDown
 }
 
+enum BucketGenMode {
+	RandomBST,
+	LinearArrayBased,
+}
+
 export class Assessment extends BaseQuiz {
 
 	public unityBridge;
@@ -33,6 +38,12 @@ export class Assessment extends BaseQuiz {
 	public basalBucket: number;
 	public ceilingBucket: number;
 
+	public currentLinearBucketIndex: number;
+
+	protected bucketGenMode: BucketGenMode = BucketGenMode.RandomBST;
+
+	private MAX_STARS_COUNT_IN_LINEAR_MODE = 20;
+
 	constructor(dataURL: string, unityBridge: any) {
 		super();
 		this.dataURL = dataURL;
@@ -45,37 +56,76 @@ export class Assessment extends BaseQuiz {
 
 	public Run(applink: App): void {
 		this.app = applink;
-		this.buildBuckets().then(result => {
+		this.buildBuckets(this.bucketGenMode).then(result => {
 			console.log(this.currentBucket);
 			this.unityBridge.SendLoaded();
 		});
 	}
 
-	public startAssessment = () => {
-		UIController.ReadyForNext(this.getNextQuestion());
+	public handleBucketGenModeChange(event: Event): void {
+		// TODO: Implement handleBucketGenModeChange
+		this.bucketGenMode = parseInt(this.devModeBucketGenSelect.value) as BucketGenMode;
+		this.buildBuckets(this.bucketGenMode).then(() => {
+			// Finished building buckets
+		});
 	}
 
-	public buildBuckets = () => {
-		var res = fetchAssessmentBuckets(this.app.GetDataURL()).then((result) => {
-			this.buckets = result;
-			this.numBuckets = result.length;
-			console.log("buckets: " + this.buckets);
-			this.bucketArray = Array.from(Array(this.numBuckets), (_, i) => i+1);
-			console.log("empty array " +  this.bucketArray)
-			let usedIndices = new Set<number>();
-			usedIndices.add(0);
-			let rootOfIDs = sortedArrayToIDsBST(this.buckets[0].bucketID - 1, this.buckets[this.buckets.length - 1].bucketID, usedIndices);
-			// console.log("Generated the buckets root ----------------------------------------------");
-			// console.log(rootOfIDs);
-			let bucketsRoot = this.convertToBucketBST(rootOfIDs, this.buckets);
-			console.log("Generated the buckets root ----------------------------------------------");
-			console.log(bucketsRoot);
-			this.basalBucket = this.numBuckets + 1;
-			this.ceilingBucket = -1;
-			this.currentNode = bucketsRoot;
-			this.tryMoveBucket(bucketsRoot.value, false);
-		});
-		return res;
+	public startAssessment = () => {
+		UIController.ReadyForNext(this.getNextQuestion());
+		if (this.isInDevMode) {
+			this.hideDevModeButton();
+		}
+	}
+
+	public buildBuckets = async (bucketGenMode: BucketGenMode) => {
+		// If we don't have the buckets loaded, load them and initialize the current node, which is the starting point
+		if (this.buckets === undefined || this.buckets.length === 0) {
+			var res = fetchAssessmentBuckets(this.app.GetDataURL()).then((result) => {
+				this.buckets = result;
+				this.numBuckets = result.length;
+				console.log("buckets: " + this.buckets);
+				this.bucketArray = Array.from(Array(this.numBuckets), (_, i) => i+1);
+				console.log("empty array " +  this.bucketArray);
+				let usedIndices = new Set<number>();
+				usedIndices.add(0);
+				let rootOfIDs = sortedArrayToIDsBST(this.buckets[0].bucketID - 1, this.buckets[this.buckets.length - 1].bucketID, usedIndices);
+				// console.log("Generated the buckets root ----------------------------------------------");
+				// console.log(rootOfIDs);
+				let bucketsRoot = this.convertToBucketBST(rootOfIDs, this.buckets);
+				console.log("Generated the buckets root ----------------------------------------------");
+				console.log(bucketsRoot);
+				this.basalBucket = this.numBuckets + 1;
+				this.ceilingBucket = -1;
+				this.currentNode = bucketsRoot;
+				this.tryMoveBucket(false);
+			});
+			return res;
+		} else {
+			if (bucketGenMode === BucketGenMode.RandomBST) {
+				// If we have the buckets loaded, we can initialize the current node, which is the starting point
+				return new Promise<void>((resolve, reject) => {
+					let usedIndices = new Set<number>();
+					usedIndices.add(0);
+					let rootOfIDs = sortedArrayToIDsBST(this.buckets[0].bucketID - 1, this.buckets[this.buckets.length - 1].bucketID, usedIndices);
+					// console.log("Generated the buckets root ----------------------------------------------");
+					// console.log(rootOfIDs);
+					let bucketsRoot = this.convertToBucketBST(rootOfIDs, this.buckets);
+					console.log("Generated the buckets root ----------------------------------------------");
+					console.log(bucketsRoot);
+					this.basalBucket = this.numBuckets + 1;
+					this.ceilingBucket = -1;
+					this.currentNode = bucketsRoot;
+					this.tryMoveBucket(false);
+					resolve();
+				});
+			} else if (bucketGenMode === BucketGenMode.LinearArrayBased) {
+				return new Promise<void>((resolve, reject) => {
+					this.currentLinearBucketIndex = 0;
+					this.tryMoveBucket(false);
+					resolve();
+				});
+			}
+		}
 	}
 
 	/**
@@ -107,9 +157,11 @@ export class Assessment extends BaseQuiz {
 	}
 
 	public TryAnswer = (answer: number, elapsed: number) => {
-		AnalyticsEvents.sendAnswered(this.currentQuestion, answer, elapsed);
+		if (this.bucketGenMode === BucketGenMode.RandomBST) {
+			AnalyticsEvents.sendAnswered(this.currentQuestion, answer, elapsed);
+		}
 		this.currentBucket.numTried += 1;
-		if (this.currentQuestion.answers[answer-1].answerName == this.currentQuestion.correct){
+		if (this.currentQuestion.answers[answer - 1].answerName == this.currentQuestion.correct){
 			this.currentBucket.numCorrect += 1;
 			this.currentBucket.numConsecutiveWrong = 0;
 			console.log("Answered correctly");
@@ -117,7 +169,11 @@ export class Assessment extends BaseQuiz {
 			this.currentBucket.numConsecutiveWrong += 1;
 			console.log("Answered incorrectly, " + this.currentBucket.numConsecutiveWrong);
 		}
-		UIController.AddStar();
+		if (this.bucketGenMode === BucketGenMode.LinearArrayBased && UIController.getInstance().shownStarsCount < this.MAX_STARS_COUNT_IN_LINEAR_MODE) {
+			UIController.AddStar();
+		} else if (this.bucketGenMode === BucketGenMode.RandomBST) {
+			UIController.AddStar();
+		}
 		UIController.SetFeedbackVisibile(true);
 		setTimeout(() => { 
 			console.log('Completed first Timeout');
@@ -130,7 +186,11 @@ export class Assessment extends BaseQuiz {
 	
 		const endOperations = () => {
 			UIController.SetFeedbackVisibile(false);
-			UIController.ChangeStarImageAfterAnimation();
+			if (this.bucketGenMode === BucketGenMode.LinearArrayBased && UIController.getInstance().shownStarsCount < this.MAX_STARS_COUNT_IN_LINEAR_MODE) {
+				UIController.ChangeStarImageAfterAnimation();
+			} else if (this.bucketGenMode === BucketGenMode.RandomBST) {
+				UIController.ChangeStarImageAfterAnimation();
+			}
 			if (this.HasQuestionsLeft()) {
 				UIController.ReadyForNext(this.getNextQuestion());
 			} else {
@@ -206,14 +266,35 @@ export class Assessment extends BaseQuiz {
 		return result;
 	}
 
-	public tryMoveBucket = (nBucket, passed: boolean) => {
+	public tryMoveBucket = (passed: boolean) => {
+		if (this.bucketGenMode === BucketGenMode.RandomBST) {
+			this.tryMoveBucketRandomBST(passed);
+		} else if (this.bucketGenMode === BucketGenMode.LinearArrayBased) {
+			this.tryMoveBucketLinearArrayBased(passed);
+		}
+	}
+
+	public tryMoveBucketRandomBST = (passed: boolean) => {
+		const newBucket = (this.currentNode.value as bucket);
 		if (this.currentBucket != null) {
 			this.currentBucket.passed = passed;
 			AnalyticsEvents.sendBucket(this.currentBucket, passed);
 		}
-		console.log("new  bucket is " + nBucket.bucketID);
-		AudioController.PreloadBucket(nBucket, this.app.GetDataURL());
-		this.initBucket(nBucket);
+		console.log("new  bucket is " + newBucket.bucketID);
+		AudioController.PreloadBucket(newBucket, this.app.GetDataURL());
+		this.initBucket(newBucket);
+	}
+
+	public tryMoveBucketLinearArrayBased = (passed: boolean) => {
+		const newBucket = this.buckets[this.currentLinearBucketIndex];
+		// Avoid passing bucketPassed event to the analytics when we are in linear dev mode
+		// if (this.currentBucket != null) {
+		// 	this.currentBucket.passed = passed;
+		// 	AnalyticsEvents.sendBucket(this.currentBucket, passed);
+		// }
+		console.log("New Bucket: " + newBucket.bucketID);
+		AudioController.PreloadBucket(newBucket, this.app.GetDataURL());
+		this.initBucket(newBucket);
 	}
 
 	public HasQuestionsLeft = () => {
@@ -224,64 +305,77 @@ export class Assessment extends BaseQuiz {
 			
 		if (this.currentBucket.numCorrect >= 4) {
 			//passed this bucket
-			console.log("passed this bucket " + this.currentBucket.bucketID);
+			console.log("Passed this bucket " + this.currentBucket.bucketID);
 			
 			if (this.currentBucket.bucketID >= this.numBuckets) {
 				//passed highest bucket
-				console.log("passed highest bucket");
+				console.log("Passed highest bucket");
 				this.currentBucket.passed = true;
-				AnalyticsEvents.sendBucket(this.currentBucket, true);
+				if (this.bucketGenMode === BucketGenMode.RandomBST) {
+					AnalyticsEvents.sendBucket(this.currentBucket, true);
+				}
 				UIController.ProgressChest();
-				hasQuestionsLeft = false;	
+				hasQuestionsLeft = false;
 			}
 			else {
 				//moved up to next bucket
-				console.log("moving up bucket");
+				console.log("Moving up bucket");
 				if (this.currentNode.right != null){
 					//move down to right
 					UIController.ProgressChest();
-					console.log("moving to right node");
-					this.currentNode = this.currentNode.right;
-					this.tryMoveBucket(this.currentNode.value, true);
-					
+					console.log("Moving to right node");
+					if (this.bucketGenMode === BucketGenMode.RandomBST) {
+						this.currentNode = this.currentNode.right;
+					} else {
+						this.currentLinearBucketIndex++;
+					}
+					this.tryMoveBucket(true);
 				}else{
-					// reached root node!!!!
-						console.log("reached root node");
-						this.currentBucket.passed = true;
-						AnalyticsEvents.sendBucket(this.currentBucket, true);
-						UIController.ProgressChest();
-						hasQuestionsLeft = false;
-					// do something here
+					// Reached root node
+					console.log("Reached root node");
+					this.currentBucket.passed = true;
+					if (this.bucketGenMode === BucketGenMode.RandomBST) {
+						AnalyticsEvents.sendBucket(this.currentBucket, true)
+					}
+					UIController.ProgressChest();
+					hasQuestionsLeft = false;
 				}
 			}
 		} else if (this.currentBucket.numConsecutiveWrong >= 2 || this.currentBucket.numTried >= 5) {
-			//failed this bucket
-			console.log("failed this bucket " + this.currentBucket.bucketID);
+			// Failed this bucket
+			console.log("Failed this bucket " + this.currentBucket.bucketID);
 			if (this.currentBucket.bucketID < this.basalBucket) {
-				//update basal bucket number
+				// Update basal bucket number
 				this.basalBucket = this.currentBucket.bucketID;
 			}
 			if (this.currentBucket.bucketID <= 1) {
-				//failed the lowest bucket
-				console.log("failed lowest bucket");
+				// Failed the lowest bucket
+				console.log("Failed lowest bucket !");
 				hasQuestionsLeft = false;
 				this.currentBucket.passed = false;
-				AnalyticsEvents.sendBucket(this.currentBucket, false);
+				if (this.bucketGenMode === BucketGenMode.RandomBST) {
+					AnalyticsEvents.sendBucket(this.currentBucket, false);
+				}
 			}
 			else {
-				console.log("moving down bucket");
+				console.log("Moving down bucket !");
 				if (this.currentNode.left != null){
-					//move down to left
-					console.log("moving to left node");
-					this.currentNode = this.currentNode.left;
-					this.tryMoveBucket(this.currentNode.value, false);
+					// Move down to left
+					console.log("Moving to left node");
+					if (this.bucketGenMode === BucketGenMode.RandomBST) {
+						this.currentNode = this.currentNode.left;
+					} else {
+						this.currentLinearBucketIndex++;
+					}
+					this.tryMoveBucket(false);
 				} else {
-					// reached root node!!!!
-					console.log("reached root node");
+					// Reached root node
+					console.log("Reached root node !");
 					hasQuestionsLeft = false;
 					this.currentBucket.passed = false;
-					AnalyticsEvents.sendBucket(this.currentBucket, false);
-					// do something here
+					if (this.bucketGenMode === BucketGenMode.RandomBST) {
+						AnalyticsEvents.sendBucket(this.currentBucket, false);
+					}
 				}
 			}
 		}
