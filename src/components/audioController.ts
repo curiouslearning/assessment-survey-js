@@ -130,6 +130,7 @@ export class AudioController {
                     resolve();
                 });
             } else {
+                console.log(">>>>>>>>>");
                 audio = AudioController.getInstance().allAudios[audioName.toLowerCase()]
                 audio.addEventListener("play", () => {
                     typeof(audioAnim) !== 'undefined' ? audioAnim(true) : null;
