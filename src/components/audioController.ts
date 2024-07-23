@@ -127,12 +127,7 @@ export class AudioController {
     
                 audio.play().catch((error) => {
                     console.log(">>>>>>>>>");
-                    console.error("Error playing audio:", error);
-                    resolve();
-                });
-            } else {
-                
-                audio = AudioController.getInstance().allAudios[audioName.toLowerCase()]
+                    audio = AudioController.getInstance().allAudios[audioName.toLowerCase()]
                 audio.addEventListener("play", () => {
                     typeof(audioAnim) !== 'undefined' ? audioAnim(true) : null;
                 });
@@ -146,6 +141,9 @@ export class AudioController {
                     console.error("Error playing audio:", error);
                     resolve();
                 });
+                    
+                });
+            } else {
                 console.warn("Audio file not found:", audioName);
                 resolve(); 
             }
