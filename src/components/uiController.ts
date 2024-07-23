@@ -59,6 +59,7 @@ export class UIController {
 	public shown = false;
 
 	public stars = [];
+	public shownStarsCount = 0;
 	public starPositions: Array<{ x: number, y: number }> = Array<{ x: number, y: number }>();
 	public qAnsNum = 0;
 
@@ -397,6 +398,8 @@ export class UIController {
 		UIController.instance.starPositions.push({ x: randomX, y: randomY });
 
 		UIController.getInstance().qAnsNum += 1;
+
+		UIController.getInstance().shownStarsCount += 1;
 	}
 
 	public static ChangeStarImageAfterAnimation(): void {
