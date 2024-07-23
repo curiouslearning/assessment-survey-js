@@ -126,11 +126,12 @@ export class AudioController {
                 });
     
                 audio.play().catch((error) => {
+                    console.log(">>>>>>>>>");
                     console.error("Error playing audio:", error);
                     resolve();
                 });
             } else {
-                console.log(">>>>>>>>>");
+                
                 audio = AudioController.getInstance().allAudios[audioName.toLowerCase()]
                 audio.addEventListener("play", () => {
                     typeof(audioAnim) !== 'undefined' ? audioAnim(true) : null;
