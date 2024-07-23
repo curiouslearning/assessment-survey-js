@@ -33,6 +33,15 @@ export abstract class BaseQuiz {
 		this.devModeToggleButtonContainer = document.getElementById(this.devModeToggleButtonContainerId);
 		this.devModeSettingsModal = document.getElementById(this.devModeModalId);
 
+		// this.devModeSettingsModal.addEventListener("click", (event) => {
+		// 	// @ts-ignore
+		// 	const id = event.target.id;
+		// 	if (id == this.devModeModalId) {
+		// 		event.stopPropagation();
+		// 		this.toggleDevModeModal();
+		// 	}
+		// });
+
 		this.devModeBucketGenSelect = document.getElementById(this.devModeBucketGenSelectId) as HTMLSelectElement;
 		this.devModeBucketGenSelect.onchange = (event) => { this.handleBucketGenModeChange(event) };
 		

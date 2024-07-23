@@ -198,16 +198,18 @@ export class Assessment extends BaseQuiz {
 				UIController.ChangeStarImageAfterAnimation();
 			}
 			if (this.HasQuestionsLeft()) {
-				if (this.currentLinearTargetIndex < this.buckets[this.currentLinearBucketIndex].items.length) {
-					this.currentLinearTargetIndex++;
-					// We need to reset the used items array when we move to the next question in linear mode
-					this.currentBucket.usedItems = [];
-				} 
-				
-				if (this.currentLinearTargetIndex >= this.buckets[this.currentLinearBucketIndex].items.length && this.currentLinearBucketIndex < this.buckets.length) {
-					this.currentLinearBucketIndex++;
-					this.currentLinearTargetIndex = 0;
-					this.tryMoveBucket(false);
+				if (this.bucketGenMode === BucketGenMode.LinearArrayBased) {
+					if (this.currentLinearTargetIndex < this.buckets[this.currentLinearBucketIndex].items.length) {
+						this.currentLinearTargetIndex++;
+						// We need to reset the used items array when we move to the next question in linear mode
+						this.currentBucket.usedItems = [];
+					} 
+					
+					if (this.currentLinearTargetIndex >= this.buckets[this.currentLinearBucketIndex].items.length && this.currentLinearBucketIndex < this.buckets.length) {
+						this.currentLinearBucketIndex++;
+						this.currentLinearTargetIndex = 0;
+						this.tryMoveBucket(false);
+					}
 				}
 
 				UIController.ReadyForNext(this.getNextQuestion());

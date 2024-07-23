@@ -127,6 +127,7 @@ export class UIController {
 
 	public SetCorrectLabelVisibility(visible: boolean): void {
 		this.devModeCorrectLabelVisibility = visible;
+		console.log("Correct label visibility set to ", this.devModeCorrectLabelVisibility);
 	}
 
 	public static OverlappingOtherStars(starPositions: Array<{ x: number, y: number }>, x: number, y: number, minDistance: number): boolean {
@@ -211,6 +212,8 @@ export class UIController {
 
 					const isCorrect = curAnswer.answerName === newQ.correct;
 
+					button.innerHTML = 'answerText' in curAnswer ? curAnswer.answerText : '';	
+
 					// Add a label inside the button to show the correct answer
 					if (isCorrect && UIController.getInstance().devModeCorrectLabelVisibility) {
 						const correctLabel = document.createElement("div");
@@ -218,8 +221,7 @@ export class UIController {
 						correctLabel.innerHTML = "Correct";
 						button.appendChild(correctLabel);
 					}
-
-					button.innerHTML = 'answerText' in curAnswer ? curAnswer.answerText : '';
+				
 					button.style.visibility = "hidden";
 					button.style.boxShadow = "0px 0px 0px 0px rgba(0,0,0,0)";
 					setTimeout(() => {
