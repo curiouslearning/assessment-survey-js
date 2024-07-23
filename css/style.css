@@ -364,3 +364,24 @@ select {
   color: white;
   border: 2px solid #ccc;
 }
+
+#devModeCorrectLabelShownCheckbox {
+  width: 30px;
+  height: 30px;
+  padding: 6px;
+  margin-bottom: 16px;
+  font-size: 20px;
+  background-color: #303030;
+  color: white;
+  border: 2px solid #ccc;
+  align-self: flex-start;
+}
+
+.correct-label {
+  color: green;
+  font-size: 10px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 4px;
+}

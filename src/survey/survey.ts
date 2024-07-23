@@ -30,6 +30,10 @@ export class Survey extends BaseQuiz {
 		console.log("Bucket Gen Mode Changed");
 	}
 
+	public handleCorrectLabelShownChange = () => {
+		console.log("Correct Label Shown Changed");
+	}
+
 	public async Run(app: App) {
 		this.app = app;
 		this.buildQuestionList().then(result => {
