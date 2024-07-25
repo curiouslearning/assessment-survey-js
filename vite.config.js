@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { resolve } from 'path';
+import copy from 'rollup-plugin-copy';
 
 export default defineConfig({
   plugins: [
@@ -15,10 +16,10 @@ export default defineConfig({
     //   },
         injectRegister: false,
         strategies: 'injectManifest',
-        srcDir: '',
+        srcDir: 'src',
         filename: 'sw.js',
         injectManifest: {
-            injectionPoint: undefined,
+            injectionPoint: 'self.__WB_MANIFEST',
         },
         manifest: {
             "name": "Assessment and Survey app",
@@ -43,6 +44,12 @@ export default defineConfig({
             globPatterns: ["**/*.{js,css,html,ico,png,webp,svg,wav,webmanifest}"],
         }
     }),
+    copy({
+      targets: [
+        { src: 'dist/index.html', dest: './', rename: '' },
+      ],
+      hook: 'writeBundle'
+    })
   ],
   build: {
     outDir: 'dist', // Specify the output directory
@@ -70,5 +77,8 @@ export default defineConfig({
   server: {
     port: 3000,
     hot: true,
+    hmr: {
+        overlay: false,
+    },
   },
 });
