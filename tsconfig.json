@@ -1,16 +1,17 @@
 {
   "compilerOptions": {
-    "module": "es6",
-    "esModuleInterop": true,
-    "target": "es2016",
-		"lib": ["es7", "dom"],
+    "target": "esnext",
+    "module": "esnext",
     "moduleResolution": "node",
-		"outDir": "dist",
-		"sourceMap": true,
     "strict": false,
-		"removeComments": true
+    "jsx": "preserve",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
-  "include": ["src"],
-  "exclude": ["node_modules"],
-	"lib": ["es7", "dom"]
+  "include": ["src"]
 }

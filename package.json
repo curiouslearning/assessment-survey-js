@@ -8,7 +8,10 @@
     "build": "webpack",
     "dev": "webpack && npx workbox injectManifest && live-server --no-browser",
     "tsc-build": "tsc && tsc-bundle tsconfig.json --exportAs Bundle --entryPoint App --outFile bundle.js",
-    "tsc-run": "tsc && tsc-bundle tsconfig.json --exportAs Bundle --entryPoint App --outFile bundle.js && live-server"
+    "tsc-run": "tsc && tsc-bundle tsconfig.json --exportAs Bundle --entryPoint App --outFile bundle.js && live-server",
+    "vite": "vite",
+    "vite-build": "vite build",
+    "serve": "vite preview"
   },
   "repository": {
     "type": "git",
@@ -24,10 +27,13 @@
     "ts-loader": "^9.4.1",
     "typescript": "~4.8.3",
     "typescript-bundle": "^1.0.18",
+    "vite": "^5.3.4",
+    "vite-plugin-pwa": "^0.20.0",
     "webpack": "^5.74.0",
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
     "firebase": "^9.12.1",
     "workbox-cli": "^7.0.0",
     "workbox-core": "^7.0.0",

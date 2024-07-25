@@ -9,7 +9,7 @@ module.exports = {
         "data/**/*",
         "src/**/*",
         "workbox-config.js",
-        "sw-src.js",
+        // "sw-src.js",
         "tsconfig.json",
         "webpack.config.js",
         "package.json",

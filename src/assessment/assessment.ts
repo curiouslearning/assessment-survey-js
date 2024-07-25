@@ -6,7 +6,7 @@ import { qData, answerData } from '../components/questionData';
 import { AnalyticsEvents } from '../components/analyticsEvents'
 import { App } from '../App';
 import { bucket, bucketItem } from './bucketData';
-import { BaseQuiz } from '../BaseQuiz';
+import { BaseQuiz } from '../baseQuiz';
 import { fetchAssessmentBuckets } from '../components/jsonUtils';
 import { TreeNode, sortedArrayToIDsBST } from '../components/tNode';
 import { randFrom, shuffleArray } from '../components/mathUtils';
@@ -25,6 +25,7 @@ enum BucketGenMode {
 
 export class Assessment extends BaseQuiz {
 
+	// @ts-ignore
 	public unityBridge;
 
 	public currentNode: TreeNode;

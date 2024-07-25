@@ -129,7 +129,7 @@ export class App {
 		console.log("Registering service worker...");
 
 		if ("serviceWorker" in navigator) {
-			let wb = new Workbox('./sw.js', {});
+			let wb = new Workbox('/dist/sw.js', {});
 
 			wb.register().then((registration) => {
 				console.log("Service worker registered!");
