@@ -36,7 +36,7 @@ export class AudioController {
         for (var questionIndex in questionsData){
             let questionData = questionsData[questionIndex];
             if (questionData.promptAudio != null) {
-                AudioController.FilterAndAddAudioToAllAudios(questionData.promptAudio);
+                AudioController.FilterAndAddAudioToAllAudios(questionData.promptAudio.toLowerCase());
             }
 
             if (questionData.promptImg != null ) {
@@ -94,12 +94,12 @@ export class AudioController {
         AudioController.getInstance().correctAudio.src = "audio/" + AudioController.getInstance().dataURL + "/answer_feedback.mp3";
         for (var itemIndex in newBucket.items){
             var item = newBucket.items[itemIndex];
-            AudioController.FilterAndAddAudioToAllAudios(item.itemName);
+            AudioController.FilterAndAddAudioToAllAudios(item.itemName.toLowerCase());
         }
     }
 
     public static PlayAudio(audioName: string, finishedCallback?: Function, audioAnim?: Function): void {
-    
+        audioName = audioName.toLowerCase();
         console.log("trying to play " + audioName);
         if (audioName.includes(".mp3")){
             if (audioName.slice(-4) != ".mp3"){

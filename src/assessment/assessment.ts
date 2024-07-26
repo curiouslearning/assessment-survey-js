@@ -39,6 +39,7 @@ export class Assessment extends BaseQuiz {
 	public ceilingBucket: number;
 
 	public currentLinearBucketIndex: number;
+	public currentLinearTargetIndex: number;
 
 	protected bucketGenMode: BucketGenMode = BucketGenMode.RandomBST;
 
@@ -68,6 +69,10 @@ export class Assessment extends BaseQuiz {
 		this.buildBuckets(this.bucketGenMode).then(() => {
 			// Finished building buckets
 		});
+	}
+
+	public handleCorrectLabelShownChange(): void {
+		UIController.getInstance().SetCorrectLabelVisibility(this.isCorrectLabelShown);
 	}
 
 	public startAssessment = () => {
@@ -121,6 +126,7 @@ export class Assessment extends BaseQuiz {
 			} else if (bucketGenMode === BucketGenMode.LinearArrayBased) {
 				return new Promise<void>((resolve, reject) => {
 					this.currentLinearBucketIndex = 0;
+					this.currentLinearTargetIndex = 0;
 					this.tryMoveBucket(false);
 					resolve();
 				});
@@ -192,6 +198,20 @@ export class Assessment extends BaseQuiz {
 				UIController.ChangeStarImageAfterAnimation();
 			}
 			if (this.HasQuestionsLeft()) {
+				if (this.bucketGenMode === BucketGenMode.LinearArrayBased) {
+					if (this.currentLinearTargetIndex < this.buckets[this.currentLinearBucketIndex].items.length) {
+						this.currentLinearTargetIndex++;
+						// We need to reset the used items array when we move to the next question in linear mode
+						this.currentBucket.usedItems = [];
+					} 
+					
+					if (this.currentLinearTargetIndex >= this.buckets[this.currentLinearBucketIndex].items.length && this.currentLinearBucketIndex < this.buckets.length) {
+						this.currentLinearBucketIndex++;
+						this.currentLinearTargetIndex = 0;
+						this.tryMoveBucket(false);
+					}
+				}
+
 				UIController.ReadyForNext(this.getNextQuestion());
 			} else {
 				console.log("No questions left");
@@ -214,23 +234,51 @@ export class Assessment extends BaseQuiz {
 	
 
 	public getNextQuestion = () => {
+		if (this.bucketGenMode === BucketGenMode.LinearArrayBased && this.currentLinearTargetIndex >= this.buckets[this.currentLinearBucketIndex].items.length) {
+			return null;
+		}
 		var targetItem, foil1, foil2, foil3;
 
-		do {
-			targetItem = randFrom(this.currentBucket.items);
-		} while (this.currentBucket.usedItems.includes(targetItem));
-			this.currentBucket.usedItems.push(targetItem);
-		do {
-			foil1 = randFrom(this.currentBucket.items);
-		} while (targetItem == foil1);
-		do {
-			foil2 = randFrom(this.currentBucket.items);
-		} while (targetItem == foil2 || foil1 == foil2);
-		do {
-			foil3 = randFrom(this.currentBucket.items);
-		} while (targetItem == foil3 || foil1 == foil3 || foil2 == foil3);
+		if (this.bucketGenMode === BucketGenMode.RandomBST) {
+			do {
+				targetItem = randFrom(this.currentBucket.items);
+			} while (this.currentBucket.usedItems.includes(targetItem));
 
-		var answerOptions = [targetItem, foil1, foil2, foil3];
+			this.currentBucket.usedItems.push(targetItem);
+
+			do {
+				foil1 = randFrom(this.currentBucket.items);
+			} while (targetItem == foil1);
+
+			do {
+				foil2 = randFrom(this.currentBucket.items);
+			} while (targetItem == foil2 || foil1 == foil2);
+
+			do {
+				foil3 = randFrom(this.currentBucket.items);
+			} while (targetItem == foil3 || foil1 == foil3 || foil2 == foil3);
+
+		} else if (this.bucketGenMode === BucketGenMode.LinearArrayBased) {
+			// LinearArrayBased
+			targetItem = this.buckets[this.currentLinearBucketIndex].items[this.currentLinearTargetIndex];
+			this.currentBucket.usedItems.push(targetItem);
+
+			// Generate random foils
+			do {
+				foil1 = randFrom(this.buckets[this.currentLinearBucketIndex].items);
+			} while (targetItem == foil1);
+
+			do {
+				foil2 = randFrom(this.buckets[this.currentLinearBucketIndex].items);
+			} while (targetItem == foil2 || foil1 == foil2);
+
+			do {
+				foil3 = randFrom(this.buckets[this.currentLinearBucketIndex].items);
+			} while (targetItem == foil3 || foil1 == foil3 || foil2 == foil3);
+
+		}
+		
+		let answerOptions = [targetItem, foil1, foil2, foil3];
 		shuffleArray(answerOptions);
 
 		var result = {
@@ -302,6 +350,15 @@ export class Assessment extends BaseQuiz {
 		var hasQuestionsLeft = true;
 
 		if (this.currentBucket.passed) return false;
+
+		if (this.bucketGenMode === BucketGenMode.LinearArrayBased) {
+			if (this.currentLinearBucketIndex >= this.buckets.length && this.currentLinearTargetIndex >= this.buckets[this.currentLinearBucketIndex].items.length) {
+				// No more questions left
+				return false;
+			} else {
+				return true;
+			}
+		}
 			
 		if (this.currentBucket.numCorrect >= 4) {
 			//passed this bucket

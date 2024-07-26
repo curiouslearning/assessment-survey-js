@@ -72,6 +72,8 @@ export class UIController {
 
 	public buttonsActive: boolean = false;
 
+	private devModeCorrectLabelVisibility: boolean = false;
+
 	private init(): void {
 		// Initialize required containers
 		this.landingContainer = document.getElementById(this.landingContainerId);
@@ -121,6 +123,11 @@ export class UIController {
 		}
 
 		shuffleArray(this.stars);
+	}
+
+	public SetCorrectLabelVisibility(visible: boolean): void {
+		this.devModeCorrectLabelVisibility = visible;
+		console.log("Correct label visibility set to ", this.devModeCorrectLabelVisibility);
 	}
 
 	public static OverlappingOtherStars(starPositions: Array<{ x: number, y: number }>, x: number, y: number, minDistance: number): boolean {
@@ -186,20 +193,35 @@ export class UIController {
 		if (!UIController.getInstance().shown) {
 			const newQ = UIController.getInstance().nextQuestion;
 			const buttons = UIController.getInstance().buttons;
+
 			let animationDuration = 220;
 			const delayBforeOption = 150;
 			UIController.getInstance().shown = true;
 			let optionsDisplayed = 0;
+
 			buttons.forEach(button => {
 				button.style.visibility = "hidden";
 				button.style.animation = "";
+				button.innerHTML = "";
 			});
+
 			setTimeout(() => {
 				for (let i = 0; i < newQ.answers.length; i++) {
 					const curAnswer = newQ.answers[i];
-					const button = buttons[i];
+					const button = buttons[i] as HTMLButtonElement;
 
-					button.innerHTML = 'answerText' in curAnswer ? curAnswer.answerText : '';
+					const isCorrect = curAnswer.answerName === newQ.correct;
+
+					button.innerHTML = 'answerText' in curAnswer ? curAnswer.answerText : '';	
+
+					// Add a label inside the button to show the correct answer
+					if (isCorrect && UIController.getInstance().devModeCorrectLabelVisibility) {
+						const correctLabel = document.createElement("div");
+						correctLabel.classList.add("correct-label");
+						correctLabel.innerHTML = "Correct";
+						button.appendChild(correctLabel);
+					}
+				
 					button.style.visibility = "hidden";
 					button.style.boxShadow = "0px 0px 0px 0px rgba(0,0,0,0)";
 					setTimeout(() => {
@@ -269,6 +291,9 @@ export class UIController {
 	}
 
 	public static ReadyForNext(newQ: qData): void {
+		if (newQ === null) {
+			return;
+		}
 		console.log("ready for next!");
 		UIController.getInstance().answersContainer.style.visibility = "hidden";
 		for (var b in UIController.getInstance().buttons) {
@@ -286,9 +311,7 @@ export class UIController {
 			UIController.ShowQuestion();
 			//playquestionaudio
 			AudioController.PlayAudio(newQ.promptAudio, UIController.getInstance().showOptions, UIController.ShowAudioAnimation);
-
 		});
-
 	}
 
 	public static ShowAudioAnimation(playing: boolean = false) {
@@ -388,7 +411,7 @@ export class UIController {
 			}
 
 			starToShow.style.left = 20 + randomX + "px";
-			starToShow.style.top = 60 + randomY + "px";
+			starToShow.style.top = 20 + randomY + "px";
 
 			setTimeout(() => {
 				starToShow.style.filter = "drop-shadow(0px 0px 10px yellow)";
