@@ -206,7 +206,7 @@ function handleServiceWorkerMessage(event): void {
 
 function handleLoadingMessage(event, progressValue): void {
     let progressBar = document.getElementById("progressBar");
-    if (progressValue < 100&&progressValue>=10) {
+    if (progressValue < 100 && progressValue >= 10) {
         progressBar!.style.width = progressValue + "%";
     } else if (progressValue >= 100) {
         loadingScreen!.style.display = "none";
