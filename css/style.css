@@ -185,6 +185,7 @@ body {
   /* grid-row-gap: 2%; */
   width: 85%;
   height: auto;
+  min-height: 200px;
 }
 
 button {
