@@ -283,7 +283,7 @@ button {
 
 #progressBar {
   height: 100%;
-  width: 0%;
+  width: 10%;
   background-color: orange;
 }
 
