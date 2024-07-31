@@ -3,40 +3,46 @@
 // import { setFeedbackText } from './uiController';
 
 export async function fetchAppData(url: string) {
-	return loadData(url).then(data => { return data; });
+  return loadData(url).then((data) => {
+    return data;
+  });
 }
 
 export async function fetchAppType(url: string) {
-	return loadData(url).then(data => { 
-		// setFeedbackText(data["feedbackText"]); 
-		return data["appType"]; 
-	});
+  return loadData(url).then((data) => {
+    // setFeedbackText(data["feedbackText"]);
+    return data['appType'];
+  });
 }
 
 export async function fetchFeedback(url: string) {
-	return loadData(url).then(data => { return data["feedbackText"]; });
+  return loadData(url).then((data) => {
+    return data['feedbackText'];
+  });
 }
 
 export async function fetchSurveyQuestions(url: string) {
-	return loadData(url).then(data => { return data["questions"] })
+  return loadData(url).then((data) => {
+    return data['questions'];
+  });
 }
 
 export async function fetchAssessmentBuckets(url: string) {
-	return loadData(url).then(data => { return data["buckets"] })
+  return loadData(url).then((data) => {
+    return data['buckets'];
+  });
 }
 
 export function getDataURL(url: string) {
-	return "/data/" + url + ".json";
+  return '/data/' + url + '.json';
 }
 
 export function getCaseIndependentLangList() {
-	return ['luganda'];
+  return ['luganda'];
 }
 
 async function loadData(url: string) {
-	var furl = getDataURL(url);
-	// console.log(furl);
-	return fetch(furl).then(response => response.json());
+  var furl = getDataURL(url);
+  // console.log(furl);
+  return fetch(furl).then((response) => response.json());
 }
-
-
