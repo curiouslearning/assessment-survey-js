@@ -385,7 +385,7 @@ export class UIController {
 		let randomY = 0;
 
 		do {
-			randomX = Math.floor(Math.random() * (containerWidth - 60));
+			randomX = Math.floor(Math.random() * (containerWidth - (containerWidth * 0.2)));
 			randomY = Math.floor(Math.random() * containerHeight);
 		} while (UIController.OverlappingOtherStars(UIController.instance.starPositions, randomX, randomY, 30));
 
@@ -398,7 +398,7 @@ export class UIController {
 
 		setTimeout(() => {
 			starToShow.style.transition = "top 2s ease, left 2s ease, transform 2s ease";
-			if (randomX < containerWidth / 2) {
+			if (randomX < (containerWidth / 2) - 30) {
 				// Rotate the star to the right a bit
 				const rotation = 5 + (Math.random() * 8);
 				console.log("Rotating star to the right", rotation);
@@ -410,8 +410,8 @@ export class UIController {
 				starToShow.style.transform = "rotate(" + rotation + "deg) scale(1)";
 			}
 
-			starToShow.style.left = 20 + randomX + "px";
-			starToShow.style.top = 20 + randomY + "px";
+			starToShow.style.left = (containerWidth * 0.05) + randomX + "px";
+			starToShow.style.top = (containerHeight * 0.05) + randomY + "px";
 
 			setTimeout(() => {
 				starToShow.style.filter = "drop-shadow(0px 0px 10px yellow)";
