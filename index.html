@@ -1,90 +1,120 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
+  <head>
+    <title>Assessment / Survey</title>
 
-<head>
-	<title>Assessment / Survey</title>
+    <meta
+      name="description"
+      content="Assessment/Survey from Curious Learning"
+    />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
 
-	<meta name="description" content="Assessment/Survey from Curious Learning">
-	<meta name="viewport" content="width=device-width,initial-scale=1.0">
-	<link rel="manifest" href="manifest.json"/>
-	<link rel="stylesheet" href="css/style.css">
-</head>
+  <body>
+    <div class="bodyWrapper">
+      <div class="landingPageWrapper" id="landWrap">
+        <img class="landingMonster" src="img/monster.png" />
+        <br />
+        <button id="startButton">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M9 18L15 12L9 6V18Z"
+              fill="currentColor"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            ></path>
+          </svg>
+        </button>
+        <div id="loadingScreen">
+          <img
+            id="loading-gif"
+            src="/img/loadingImg.gif"
+            alt="Loading Animation"
+          />
+          <div id="progressBarContainer">
+            <div id="progressBar"></div>
+          </div>
+        </div>
+      </div>
 
-<body>
-	<div class="bodyWrapper">
+      <div class="questionViewWrapper" id="gameWrap" style="display: none">
+        <div class="starWrapper" id="starWrapper"></div>
+        <div class="chestWrapper">
+          <div class="chestdiv">
+            <img
+              id="chestImage"
+              src="img/chestprogression/TreasureChestOpen01.svg"
+            />
+          </div>
+        </div>
+        <div class="questionContainer" id="qWrap"></div>
 
-		<div class="landingPageWrapper" id="landWrap">
-			<img class="landingMonster" src="img/monster.png" />
-			<BR>
-			<button id="startButton">
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-					<path d="M9 18L15 12L9 6V18Z" fill="currentColor" stroke="currentColor" stroke-width="2"
-						stroke-linecap="round" stroke-linejoin="round"></path>
-				</svg>
-			</button>
-			<div id="loadingScreen">
-				<img id="loading-gif" src="/img/loadingImg.gif" alt="Loading Animation" />
-				<div id="progressBarContainer">
-					<div id="progressBar"></div>
-				</div>
-		</div>
-		</div>
+        <div class="answerContainer" id="aWrap">
+          <div class="answerButton" id="answerButton1">1</div>
+          <div class="answerButton" id="answerButton2">2</div>
+          <div class="answerButton" id="answerButton3">3</div>
+          <div class="answerButton" id="answerButton4">4</div>
+          <div class="answerButton" id="answerButton5" style="display: none">
+            5
+          </div>
+          <div class="answerButton" id="answerButton6" style="display: none">
+            6
+          </div>
+        </div>
+        <div>
+          <div class="nextQuestionInput">
+            <div id="pbutton"></div>
+          </div>
 
-		<div class="questionViewWrapper" id="gameWrap" style="display:none">
-			<div class="starWrapper" id="starWrapper"></div>
-			<div class="chestWrapper">
-				<div class="chestdiv"><img id="chestImage"src='img/chestprogression/TreasureChestOpen01.svg' /></div>
-			</div>
-			<div class="questionContainer" id="qWrap"></div>
+          <div class="feedbackContainer hidden" id="feedbackWrap">
+            kuyancomeka!
+          </div>
+        </div>
+      </div>
 
-			<div class="answerContainer" id="aWrap">
-				<div class="answerButton" id="answerButton1">1</div>
-				<div class="answerButton" id="answerButton2">2</div>
-				<div class="answerButton" id="answerButton3">3</div>
-				<div class="answerButton" id="answerButton4">4</div>
-				<div class="answerButton" id="answerButton5" style="display: none;">5</div>
-				<div class="answerButton" id="answerButton6" style="display: none;">6</div>
-			</div>
-			<div>
-				<div class="nextQuestionInput">
-					<div id="pbutton"></div>
-				</div>
-				
-				<div class="feedbackContainer hidden" id="feedbackWrap">
-					kuyancomeka!
-				</div>
-			</div>
-		</div>
+      <div class="endingPageWrapper" id="endWrap" style="display: none">
+        click to exit!
+      </div>
 
-		<div class="endingPageWrapper" id="endWrap" style="display:none">
-			click to exit!
-		</div>
+      <div id="devModeModalToggleButtonContainer">
+        <button id="devModeModalToggleButton">
+          Dev<br />
+          Mode
+        </button>
+      </div>
 
-		<div id="devModeModalToggleButtonContainer">
-			<button id="devModeModalToggleButton">
-				Dev<br/>
-				Mode
-			</button>
-		</div>
+      <div id="devModeSettingsModal">
+        <p style="font-size: 26px">Dev Mode Settings</p>
+        <form id="devModeSettingsContainer">
+          <span class="devModeLabel">Assessment bucket generation mode</span>
+          <select id="devModeBucketGenSelect">
+            <option value="0">Randomized Middle Point BST</option>
+            <option value="1">Sequential Array Based</option>
+          </select>
+          <span class="devModeLabel">Show a Label on correct target</span>
+          <div
+            style="display: flex; align-items: center; height: 40px; gap: 8px"
+          >
+            <input id="devModeCorrectLabelShownCheckbox" type="checkbox" />
+            <label for="devModeCorrectLabelShownCheckbox"
+              >Show correct label on answer button</label
+            >
+          </div>
+        </form>
+      </div>
+    </div>
 
-		<div id="devModeSettingsModal">
-			<p style="font-size: 26px">Dev Mode Settings</p>
-			<form id="devModeSettingsContainer">
-				<span class="devModeLabel">Assessment bucket generation mode</span>
-				<select id="devModeBucketGenSelect">
-					<option value="0">Randomized Middle Point BST</option>
-					<option value="1">Sequential Array Based</option>
-				</select>
-				<span class="devModeLabel">Show a Label on correct target</span>
-				<div style="display: flex; align-items: center; height: 40px; gap: 8px;">
-					<input id="devModeCorrectLabelShownCheckbox" type="checkbox" />
-					<label for="devModeCorrectLabelShownCheckbox">Show correct label on answer button</label>
-				</div>
-			</form>
-		</div>
-	</div>
-	
-	<!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-DGTWM534Z4"></script>
+    <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-DGTWM534Z4"></script>
 	<script>
 		window.dataLayer = window.dataLayer || [];
 		function gtag() { dataLayer.push(arguments); }
@@ -93,9 +123,8 @@
 		gtag('config', 'G-DGTWM534Z4');
 	</script> -->
 
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.0/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.0/gsap.min.js"></script>
 
-	<script src="dist/bundle.js"></script>
-
-</body>
+    <script src="dist/bundle.js"></script>
+  </body>
 </html>
