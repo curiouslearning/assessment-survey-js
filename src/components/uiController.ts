@@ -211,7 +211,8 @@ export class UIController {
       const newQ = UIController.getInstance().nextQuestion;
       const buttons = UIController.getInstance().buttons;
 
-      const animationSpeedMultiplier = UIController.getInstance().animationSpeedMultiplier;
+      const animationSpeedMultiplier =
+        UIController.getInstance().animationSpeedMultiplier;
 
       let animationDuration = 220 * animationSpeedMultiplier;
       const delayBforeOption = 150 * animationSpeedMultiplier;
@@ -437,12 +438,12 @@ export class UIController {
       )
     );
 
-    const animationSpeedMultiplier = UIController.getInstance().animationSpeedMultiplier;
+    const animationSpeedMultiplier =
+      UIController.getInstance().animationSpeedMultiplier;
 
     // Save these random x and y values, make the star appear in the center of the screen, make it 3 times bigger using scale and slowly transition to the random x and y values
     starToShow.style.transform = 'scale(10)';
-    starToShow.style.transition =
-      `top ${1 * animationSpeedMultiplier}s ease, left ${1 * animationSpeedMultiplier}s ease, transform ${0.5 * animationSpeedMultiplier}s ease`;
+    starToShow.style.transition = `top ${1 * animationSpeedMultiplier}s ease, left ${1 * animationSpeedMultiplier}s ease, transform ${0.5 * animationSpeedMultiplier}s ease`;
     starToShow.style.zIndex = '500';
     starToShow.style.top = window.innerHeight / 2 + 'px';
     starToShow.style.left =
@@ -451,8 +452,7 @@ export class UIController {
       'px';
 
     setTimeout(() => {
-      starToShow.style.transition =
-        `top ${2 * animationSpeedMultiplier}s ease, left ${2 * animationSpeedMultiplier}s ease, transform ${2 * animationSpeedMultiplier}s ease`;
+      starToShow.style.transition = `top ${2 * animationSpeedMultiplier}s ease, left ${2 * animationSpeedMultiplier}s ease, transform ${2 * animationSpeedMultiplier}s ease`;
       if (randomX < containerWidth / 2 - 30) {
         // Rotate the star to the right a bit
         const rotation = 5 + Math.random() * 8;

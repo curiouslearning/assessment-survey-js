@@ -220,7 +220,9 @@ export class Assessment extends BaseQuiz {
   };
 
   public onQuestionEnd = () => {
-    let questionEndTimeout = this.HasQuestionsLeft() ? 500 *this.animationSpeedMultiplier : 4000 * this.animationSpeedMultiplier;
+    let questionEndTimeout = this.HasQuestionsLeft()
+      ? 500 * this.animationSpeedMultiplier
+      : 4000 * this.animationSpeedMultiplier;
 
     const endOperations = () => {
       UIController.SetFeedbackVisibile(false);
