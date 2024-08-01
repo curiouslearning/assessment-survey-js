@@ -455,7 +455,7 @@ export class UIController {
       }
 
       starToShow.style.left = containerWidth * 0.05 + randomX + 'px';
-      starToShow.style.top = containerHeight * 0.05 + randomY + 'px';
+      starToShow.style.top = containerHeight * 0.2 + randomY + 'px';
 
       setTimeout(() => {
         starToShow.style.filter = 'drop-shadow(0px 0px 10px yellow)';
