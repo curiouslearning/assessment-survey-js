@@ -88,9 +88,9 @@ export abstract class BaseQuiz {
       this.animationSpeedMultiplier = parseFloat(
         this.devModeAnimationSpeedMultiplierRange.value
       );
-      if (this.animationSpeedMultiplier < 0.1) {
-        this.animationSpeedMultiplier = 0.1;
-        this.devModeAnimationSpeedMultiplierRange.value = '0.1';
+      if (this.animationSpeedMultiplier < 0.2) {
+        this.animationSpeedMultiplier = 0.2;
+        this.devModeAnimationSpeedMultiplierRange.value = '0.2';
       }
 
       this.devModeAnimationSpeedMultiplierValue.innerText = this.animationSpeedMultiplier.toString();
