@@ -251,7 +251,13 @@ export class Assessment extends BaseQuiz {
           ) {
             this.currentLinearBucketIndex++;
             this.currentLinearTargetIndex = 0;
-            this.tryMoveBucket(false);
+            if (this.currentLinearBucketIndex < this.buckets.length) {
+              this.tryMoveBucket(false);
+            } else {
+              console.log('No questions left');
+              this.onEnd();
+              return;
+            }
           }
         }
 
