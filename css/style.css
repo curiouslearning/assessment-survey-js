@@ -86,9 +86,9 @@ body {
 .starWrapper {
   width: 100%;
   margin-top: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 40px;
   padding-top: 40px;
-  padding-bottom: 40px;
+  padding-bottom: 20px;
 }
 
 .topstarh {
@@ -185,6 +185,7 @@ body {
   /* grid-row-gap: 2%; */
   width: 85%;
   height: auto;
+  min-height: 200px;
 }
 
 button {
