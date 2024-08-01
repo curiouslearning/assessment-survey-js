@@ -75,6 +75,8 @@ export class UIController {
 
   private devModeCorrectLabelVisibility: boolean = false;
 
+  public animationSpeedMultiplier: number = 1;
+
   private init(): void {
     // Initialize required containers
     this.landingContainer = document.getElementById(this.landingContainerId);
@@ -126,6 +128,10 @@ export class UIController {
     }
 
     shuffleArray(this.stars);
+  }
+
+  public SetAnimationSpeedMultiplier(multiplier: number): void {
+    UIController.getInstance().animationSpeedMultiplier = multiplier;
   }
 
   public SetCorrectLabelVisibility(visible: boolean): void {
@@ -205,8 +211,10 @@ export class UIController {
       const newQ = UIController.getInstance().nextQuestion;
       const buttons = UIController.getInstance().buttons;
 
-      let animationDuration = 220;
-      const delayBforeOption = 150;
+      const animationSpeedMultiplier = UIController.getInstance().animationSpeedMultiplier;
+
+      let animationDuration = 220 * animationSpeedMultiplier;
+      const delayBforeOption = 150 * animationSpeedMultiplier;
       UIController.getInstance().shown = true;
       let optionsDisplayed = 0;
 
@@ -243,7 +251,7 @@ export class UIController {
             () => {
               button.style.visibility = 'visible';
               button.style.boxShadow = '0px 6px 8px #606060';
-              button.style.animation = `zoomIn ${animationDuration}ms ease forwards`;
+              button.style.animation = `zoomIn ${animationDuration * animationSpeedMultiplier}ms ease forwards`;
               if ('answerImg' in curAnswer) {
                 const tmpimg = AudioController.GetImage(curAnswer.answerImg);
                 button.appendChild(tmpimg);
@@ -255,7 +263,7 @@ export class UIController {
                 }
               });
             },
-            i * animationDuration * 0.3
+            i * animationDuration * animationSpeedMultiplier * 0.3
           );
         }
       }, delayBforeOption);
@@ -267,6 +275,7 @@ export class UIController {
   private enableAnswerButton(): void {
     UIController.getInstance().buttonsActive = true;
   }
+
   public static SetFeedbackText(nt: string): void {
     console.log('Feedback text set to ' + nt);
     UIController.getInstance().feedbackContainer.innerHTML = nt;
@@ -428,10 +437,12 @@ export class UIController {
       )
     );
 
+    const animationSpeedMultiplier = UIController.getInstance().animationSpeedMultiplier;
+
     // Save these random x and y values, make the star appear in the center of the screen, make it 3 times bigger using scale and slowly transition to the random x and y values
     starToShow.style.transform = 'scale(10)';
     starToShow.style.transition =
-      'top 1s ease, left 1s ease, transform 0.5s ease';
+      `top ${1 * animationSpeedMultiplier}s ease, left ${1 * animationSpeedMultiplier}s ease, transform ${0.5 * animationSpeedMultiplier}s ease`;
     starToShow.style.zIndex = '500';
     starToShow.style.top = window.innerHeight / 2 + 'px';
     starToShow.style.left =
@@ -441,7 +452,7 @@ export class UIController {
 
     setTimeout(() => {
       starToShow.style.transition =
-        'top 2s ease, left 2s ease, transform 2s ease';
+        `top ${2 * animationSpeedMultiplier}s ease, left ${2 * animationSpeedMultiplier}s ease, transform ${2 * animationSpeedMultiplier}s ease`;
       if (randomX < containerWidth / 2 - 30) {
         // Rotate the star to the right a bit
         const rotation = 5 + Math.random() * 8;
@@ -459,8 +470,8 @@ export class UIController {
 
       setTimeout(() => {
         starToShow.style.filter = 'drop-shadow(0px 0px 10px yellow)';
-      }, 1900);
-    }, 1000);
+      }, 1900 * animationSpeedMultiplier);
+    }, 1000 * animationSpeedMultiplier);
 
     UIController.instance.starPositions.push({ x: randomX, y: randomY });
 
