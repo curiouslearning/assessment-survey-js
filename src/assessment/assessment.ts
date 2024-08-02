@@ -6,7 +6,7 @@ import { qData, answerData } from '../components/questionData';
 import { AnalyticsEvents } from '../components/analyticsEvents';
 import { App } from '../App';
 import { bucket, bucketItem } from './bucketData';
-import { BaseQuiz } from '../BaseQuiz';
+import { BaseQuiz } from '../baseQuiz';
 import { fetchAssessmentBuckets } from '../components/jsonUtils';
 import { TreeNode, sortedArrayToIDsBST } from '../components/tNode';
 import { randFrom, shuffleArray } from '../components/mathUtils';
@@ -75,6 +75,12 @@ export class Assessment extends BaseQuiz {
   public handleCorrectLabelShownChange(): void {
     UIController.getInstance().SetCorrectLabelVisibility(
       this.isCorrectLabelShown
+    );
+  }
+
+  public handleAnimationSpeedMultiplierChange(): void {
+    UIController.getInstance().SetAnimationSpeedMultiplier(
+      this.animationSpeedMultiplier
     );
   }
 
@@ -210,11 +216,13 @@ export class Assessment extends BaseQuiz {
     setTimeout(() => {
       console.log('Completed first Timeout');
       this.onQuestionEnd();
-    }, 2000);
+    }, 2000 * this.animationSpeedMultiplier);
   };
 
   public onQuestionEnd = () => {
-    let questionEndTimeout = this.HasQuestionsLeft() ? 500 : 4000;
+    let questionEndTimeout = this.HasQuestionsLeft()
+      ? 500 * this.animationSpeedMultiplier
+      : 4000 * this.animationSpeedMultiplier;
 
     const endOperations = () => {
       UIController.SetFeedbackVisibile(false);
@@ -245,7 +253,13 @@ export class Assessment extends BaseQuiz {
           ) {
             this.currentLinearBucketIndex++;
             this.currentLinearTargetIndex = 0;
-            this.tryMoveBucket(false);
+            if (this.currentLinearBucketIndex < this.buckets.length) {
+              this.tryMoveBucket(false);
+            } else {
+              console.log('No questions left');
+              this.onEnd();
+              return;
+            }
           }
         }
 

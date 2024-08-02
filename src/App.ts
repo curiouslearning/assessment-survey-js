@@ -7,7 +7,7 @@ import { Survey } from './survey/survey';
 import { Assessment } from './assessment/assessment';
 import { UnityBridge } from './components/unityBridge';
 import { AnalyticsEvents } from './components/analyticsEvents';
-import { BaseQuiz } from './BaseQuiz';
+import { BaseQuiz } from './baseQuiz';
 import { fetchAppData, getDataURL } from './components/jsonUtils';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics, logEvent } from 'firebase/analytics';
@@ -15,7 +15,7 @@ import { Workbox } from 'workbox-window';
 import CacheModel from './components/cacheModel';
 import { UIController } from './components/uiController';
 
-const appVersion: string = 'v1.0.8';
+const appVersion: string = 'v1.0.9';
 
 let loadingScreen = document.getElementById('loadingScreen');
 

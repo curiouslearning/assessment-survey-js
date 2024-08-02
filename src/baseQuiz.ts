@@ -12,6 +12,7 @@ export abstract class BaseQuiz {
   public isInDevMode: boolean = false;
 
   public isCorrectLabelShown: boolean = false;
+  public animationSpeedMultiplier: number = 1;
 
   public devModeToggleButtonContainerId: string =
     'devModeModalToggleButtonContainer';
@@ -29,6 +30,12 @@ export abstract class BaseQuiz {
   public devModeCorrectLabelShownCheckboxId: string =
     'devModeCorrectLabelShownCheckbox';
   public devModeCorrectLabelShownCheckbox: HTMLInputElement;
+
+  public devModeAnimationSpeedMultiplierRangeId: string = 'devModeAnimationSpeedMultiplierRange';
+  public devModeAnimationSpeedMultiplierRange: HTMLInputElement;
+
+  public devModeAnimationSpeedMultiplierValueId: string = 'devModeAnimationSpeedMultiplierValue';
+  public devModeAnimationSpeedMultiplierValue: HTMLElement;
 
   constructor() {
     this.isInDevMode =
@@ -69,11 +76,37 @@ export abstract class BaseQuiz {
       this.handleCorrectLabelShownChange();
     };
 
+    this.devModeAnimationSpeedMultiplierRange = document.getElementById(
+      this.devModeAnimationSpeedMultiplierRangeId
+    ) as HTMLInputElement;
+
+    this.devModeAnimationSpeedMultiplierValue = document.getElementById(
+      this.devModeAnimationSpeedMultiplierValueId
+    );
+
+    this.devModeAnimationSpeedMultiplierRange.onchange = () => {
+      this.animationSpeedMultiplier = parseFloat(
+        this.devModeAnimationSpeedMultiplierRange.value
+      );
+      if (this.animationSpeedMultiplier < 0.2) {
+        this.animationSpeedMultiplier = 0.2;
+        this.devModeAnimationSpeedMultiplierRange.value = '0.2';
+      }
+
+      this.devModeAnimationSpeedMultiplierValue.innerText = this.animationSpeedMultiplier.toString();
+      this.handleAnimationSpeedMultiplierChange();
+    };
+
     if (!this.isInDevMode) {
       this.devModeToggleButtonContainer.style.display = 'none';
     } else {
       this.devModeToggleButtonContainer.style.display = 'block';
     }
+
+    // Initialize the animation speed multiplier value and position
+    this.animationSpeedMultiplier = parseFloat(
+      this.devModeAnimationSpeedMultiplierRange.value
+    );
   }
 
   public hideDevModeButton() {
@@ -82,6 +115,7 @@ export abstract class BaseQuiz {
 
   public abstract handleBucketGenModeChange(event: Event): void;
   public abstract handleCorrectLabelShownChange(): void;
+  public abstract handleAnimationSpeedMultiplierChange(): void;
 
   public toggleDevModeModal = () => {
     if (this.devModeSettingsModal.style.display == 'block') {
