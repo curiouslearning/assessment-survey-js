@@ -18,7 +18,7 @@ import { UIController } from './components/uiController';
 const appVersion: string = 'v1.0.9';
 
 let loadingScreen = document.getElementById('loadingScreen');
-
+const progressBar = document.getElementById('progressBar');
 const broadcastChannel: BroadcastChannel = new BroadcastChannel(
   'as-message-channel'
 );
@@ -41,7 +41,6 @@ export class App {
     console.log('Initializing app...');
 
     this.dataURL = getDataFile();
-
     this.cacheModel = new CacheModel(
       this.dataURL,
       this.dataURL,
@@ -182,7 +181,10 @@ export class App {
           },
         });
       } else {
-        loadingScreen!.style.display = 'none';
+        progressBar!.style.width = 100 + '%';
+        setTimeout(() => {
+          loadingScreen!.style.display = 'none';
+        }, 1500);
       }
 
       broadcastChannel.onmessage = (event) => {
@@ -236,7 +238,6 @@ function handleServiceWorkerMessage(event): void {
 }
 
 function handleLoadingMessage(event, progressValue): void {
-  let progressBar = document.getElementById('progressBar');
   if (progressValue < 100 && progressValue >= 10) {
     progressBar!.style.width = progressValue + '%';
   } else if (progressValue >= 100) {
