@@ -238,10 +238,14 @@ function handleServiceWorkerMessage(event): void {
 }
 
 function handleLoadingMessage(event, progressValue): void {
-  if (progressValue < 100 && progressValue >= 10) {
+  if (progressValue < 40 && progressValue >= 10) {
     progressBar!.style.width = progressValue + '%';
   } else if (progressValue >= 100) {
-    loadingScreen!.style.display = 'none';
+    progressBar!.style.width = 100 + '%';
+    setTimeout(() => {
+      loadingScreen!.style.display = 'none';
+    }, 1500);
+
     UIController.SetContentLoaded(true);
     // add book with a name to local storage as cached
     localStorage.setItem(event.data.data.bookName, 'true');
