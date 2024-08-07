@@ -84,9 +84,7 @@ export class UIController {
     this.endContainer = document.getElementById(this.endContainerId);
     this.starContainer = document.getElementById(this.starContainerId);
     this.chestContainer = document.getElementById(this.chestContainerId);
-    this.questionsContainer = document.getElementById(
-      this.questionsContainerId
-    );
+    this.questionsContainer = document.getElementById(this.questionsContainerId);
     this.feedbackContainer = document.getElementById(this.feedbackContainerId);
     this.answersContainer = document.getElementById(this.answersContainerId);
 
@@ -136,10 +134,7 @@ export class UIController {
 
   public SetCorrectLabelVisibility(visible: boolean): void {
     this.devModeCorrectLabelVisibility = visible;
-    console.log(
-      'Correct label visibility set to ',
-      this.devModeCorrectLabelVisibility
-    );
+    console.log('Correct label visibility set to ', this.devModeCorrectLabelVisibility);
   }
 
   public static OverlappingOtherStars(
@@ -211,8 +206,7 @@ export class UIController {
       const newQ = UIController.getInstance().nextQuestion;
       const buttons = UIController.getInstance().buttons;
 
-      const animationSpeedMultiplier =
-        UIController.getInstance().animationSpeedMultiplier;
+      const animationSpeedMultiplier = UIController.getInstance().animationSpeedMultiplier;
 
       let animationDuration = 220 * animationSpeedMultiplier;
       const delayBforeOption = 150 * animationSpeedMultiplier;
@@ -232,14 +226,10 @@ export class UIController {
 
           const isCorrect = curAnswer.answerName === newQ.correct;
 
-          button.innerHTML =
-            'answerText' in curAnswer ? curAnswer.answerText : '';
+          button.innerHTML = 'answerText' in curAnswer ? curAnswer.answerText : '';
 
           // Add a label inside the button to show the correct answer
-          if (
-            isCorrect &&
-            UIController.getInstance().devModeCorrectLabelVisibility
-          ) {
+          if (isCorrect && UIController.getInstance().devModeCorrectLabelVisibility) {
             const correctLabel = document.createElement('div');
             correctLabel.classList.add('correct-label');
             correctLabel.innerHTML = 'Correct';
@@ -346,8 +336,7 @@ export class UIController {
   }
 
   public static ShowAudioAnimation(playing: boolean = false) {
-    const playButtonImg =
-      UIController.getInstance().playButton.querySelector('img');
+    const playButtonImg = UIController.getInstance().playButton.querySelector('img');
     if (playing) {
       playButtonImg.src = 'animation/SoundButton.gif';
     } else {
@@ -366,11 +355,7 @@ export class UIController {
       console.log(newQuestion.promptAudio);
 
       if ('promptAudio' in newQuestion) {
-        AudioController.PlayAudio(
-          newQuestion.promptAudio,
-          undefined,
-          UIController.ShowAudioAnimation
-        );
+        AudioController.PlayAudio(newQuestion.promptAudio, undefined, UIController.ShowAudioAnimation);
       }
     });
 
@@ -396,15 +381,13 @@ export class UIController {
     UIController.getInstance().questionsContainer.innerHTML += qCode;
 
     for (var buttonIndex in UIController.getInstance().buttons) {
-      UIController.getInstance().buttons[buttonIndex].style.visibility =
-        'hidden';
+      UIController.getInstance().buttons[buttonIndex].style.visibility = 'hidden';
     }
   }
 
   public static AddStar(): void {
     var starToShow = document.getElementById(
-      'star' +
-        UIController.getInstance().stars[UIController.getInstance().qAnsNum]
+      'star' + UIController.getInstance().stars[UIController.getInstance().qAnsNum]
     ) as HTMLImageElement;
     starToShow.src = '../animation/Star.gif';
     starToShow.classList.add('topstarv');
@@ -412,44 +395,27 @@ export class UIController {
 
     starToShow.style.position = 'absolute';
 
-    let containerWidth = UIController.instance.starContainer.offsetWidth;
-    let containerHeight = UIController.instance.starContainer.offsetHeight;
+    let containerWidth = UIController.getInstance().starContainer.offsetWidth;
+    let containerHeight = UIController.getInstance().starContainer.offsetHeight;
 
-    console.log(
-      'Stars Container dimensions: ',
-      containerWidth,
-      containerHeight
-    );
+    console.log('Stars Container dimensions: ', containerWidth, containerHeight);
 
     let randomX = 0;
     let randomY = 0;
 
     do {
-      randomX = Math.floor(
-        Math.random() * (containerWidth - containerWidth * 0.2)
-      );
+      randomX = Math.floor(Math.random() * (containerWidth - containerWidth * 0.2));
       randomY = Math.floor(Math.random() * containerHeight);
-    } while (
-      UIController.OverlappingOtherStars(
-        UIController.instance.starPositions,
-        randomX,
-        randomY,
-        30
-      )
-    );
+    } while (UIController.OverlappingOtherStars(UIController.instance.starPositions, randomX, randomY, 28));
 
-    const animationSpeedMultiplier =
-      UIController.getInstance().animationSpeedMultiplier;
+    const animationSpeedMultiplier = UIController.getInstance().animationSpeedMultiplier;
 
     // Save these random x and y values, make the star appear in the center of the screen, make it 3 times bigger using scale and slowly transition to the random x and y values
     starToShow.style.transform = 'scale(10)';
     starToShow.style.transition = `top ${1 * animationSpeedMultiplier}s ease, left ${1 * animationSpeedMultiplier}s ease, transform ${0.5 * animationSpeedMultiplier}s ease`;
     starToShow.style.zIndex = '500';
     starToShow.style.top = window.innerHeight / 2 + 'px';
-    starToShow.style.left =
-      UIController.instance.gameContainer.offsetWidth / 2 -
-      starToShow.offsetWidth / 2 +
-      'px';
+    starToShow.style.left = UIController.instance.gameContainer.offsetWidth / 2 - starToShow.offsetWidth / 2 + 'px';
 
     setTimeout(() => {
       starToShow.style.transition = `top ${2 * animationSpeedMultiplier}s ease, left ${2 * animationSpeedMultiplier}s ease, transform ${2 * animationSpeedMultiplier}s ease`;
@@ -466,7 +432,7 @@ export class UIController {
       }
 
       starToShow.style.left = containerWidth * 0.05 + randomX + 'px';
-      starToShow.style.top = containerHeight * 0.2 + randomY + 'px';
+      starToShow.style.top = containerHeight * 0.3 + randomY + 'px';
 
       setTimeout(() => {
         starToShow.style.filter = 'drop-shadow(0px 0px 10px yellow)';
@@ -482,16 +448,13 @@ export class UIController {
 
   public static ChangeStarImageAfterAnimation(): void {
     var starToShow = document.getElementById(
-      'star' +
-        UIController.getInstance().stars[UIController.getInstance().qAnsNum - 1]
+      'star' + UIController.getInstance().stars[UIController.getInstance().qAnsNum - 1]
     ) as HTMLImageElement;
     starToShow.src = '../img/star_after_animation.gif';
   }
 
   private answerButtonPress(buttonNum: number): void {
-    const allButtonsVisible = this.buttons.every(
-      (button) => button.style.visibility === 'visible'
-    );
+    const allButtonsVisible = this.buttons.every((button) => button.style.visibility === 'visible');
     console.log(this.buttonsActive, allButtonsVisible);
     if (this.buttonsActive === true) {
       AudioController.PlayDing();
@@ -503,9 +466,7 @@ export class UIController {
   }
 
   public static ProgressChest() {
-    const chestImage = document.getElementById(
-      'chestImage'
-    ) as HTMLImageElement;
+    const chestImage = document.getElementById('chestImage') as HTMLImageElement;
     let currentImgSrc = chestImage.src;
     console.log('Chest Progression-->', chestImage);
     console.log('Chest Progression-->', chestImage.src);
