@@ -74,8 +74,11 @@ export class UIController {
   public buttonsActive: boolean = false;
 
   private devModeCorrectLabelVisibility: boolean = false;
+  private devModeBucketControlsShown: boolean = false;
 
   public animationSpeedMultiplier: number = 1;
+
+  public externalBucketControlsGenerationHandler: (container: HTMLElement) => void;
 
   private init(): void {
     // Initialize required containers
@@ -135,6 +138,11 @@ export class UIController {
   public SetCorrectLabelVisibility(visible: boolean): void {
     this.devModeCorrectLabelVisibility = visible;
     console.log('Correct label visibility set to ', this.devModeCorrectLabelVisibility);
+  }
+
+  public SetBucketControlsVisibility(visible: boolean): void {
+    console.log('Bucket controls visibility set to ', visible);
+    this.devModeBucketControlsShown = visible;
   }
 
   public static OverlappingOtherStars(
@@ -487,6 +495,10 @@ export class UIController {
 
   public static SetStartAction(callback: Function): void {
     UIController.getInstance().startPressCallback = callback;
+  }
+
+  public static SetExternalBucketControlsGenerationHandler(handler: (container: HTMLElement) => void): void {
+    UIController.getInstance().externalBucketControlsGenerationHandler = handler;
   }
 
   public static getInstance(): UIController {
