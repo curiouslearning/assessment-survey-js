@@ -431,8 +431,8 @@ export class UIController {
         starToShow.style.transform = 'rotate(' + rotation + 'deg) scale(1)';
       }
 
-      starToShow.style.left = containerWidth * 0.05 + randomX + 'px';
-      starToShow.style.top = containerHeight * 0.3 + randomY + 'px';
+      starToShow.style.left = 10 + randomX + 'px';
+      starToShow.style.top = randomY + 'px';
 
       setTimeout(() => {
         starToShow.style.filter = 'drop-shadow(0px 0px 10px yellow)';
