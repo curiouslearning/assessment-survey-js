@@ -45,7 +45,7 @@ body {
   flex-direction: column;
   min-height: 100vh;
   overflow: hidden;
-  padding-top: 5vh;
+  padding-top: 6vh;
 }
 
 .chestWrapper {
