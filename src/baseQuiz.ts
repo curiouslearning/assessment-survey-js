@@ -12,10 +12,11 @@ export abstract class BaseQuiz {
   public isInDevMode: boolean = false;
 
   public isCorrectLabelShown: boolean = false;
+  public isBucketInfoShown: boolean = false;
+  public isBucketControlsShown: boolean = false;
   public animationSpeedMultiplier: number = 1;
 
-  public devModeToggleButtonContainerId: string =
-    'devModeModalToggleButtonContainer';
+  public devModeToggleButtonContainerId: string = 'devModeModalToggleButtonContainer';
   public devModeToggleButtonContainer: HTMLElement;
 
   public devModeToggleButtonId: string = 'devModeModalToggleButton';
@@ -27,9 +28,16 @@ export abstract class BaseQuiz {
   public devModeBucketGenSelectId: string = 'devModeBucketGenSelect';
   public devModeBucketGenSelect: HTMLSelectElement;
 
-  public devModeCorrectLabelShownCheckboxId: string =
-    'devModeCorrectLabelShownCheckbox';
+  public devModeCorrectLabelShownCheckboxId: string = 'devModeCorrectLabelShownCheckbox';
   public devModeCorrectLabelShownCheckbox: HTMLInputElement;
+
+  public devModeBucketInfoShownCheckboxId: string = 'devModeBucketInfoShownCheckbox';
+  public devModeBucketInfoShownCheckbox: HTMLInputElement;
+  public devModeBucketInfoContainerId: string = 'devModeBucketInfoContainer';
+  public devModeBucketInfoContainer: HTMLElement;
+
+  public devModeBucketControlsShownCheckboxId: string = 'devModeBucketControlsShownCheckbox';
+  public devModeBucketControlsShownCheckbox: HTMLInputElement;
 
   public devModeAnimationSpeedMultiplierRangeId: string = 'devModeAnimationSpeedMultiplierRange';
   public devModeAnimationSpeedMultiplierRange: HTMLInputElement;
@@ -42,9 +50,7 @@ export abstract class BaseQuiz {
       window.location.href.includes('localhost') ||
       window.location.href.includes('127.0.0.1') ||
       window.location.href.includes('assessmentdev');
-    this.devModeToggleButtonContainer = document.getElementById(
-      this.devModeToggleButtonContainerId
-    );
+    this.devModeToggleButtonContainer = document.getElementById(this.devModeToggleButtonContainerId);
     this.devModeSettingsModal = document.getElementById(this.devModeModalId);
 
     // this.devModeSettingsModal.addEventListener("click", (event) => {
@@ -56,16 +62,12 @@ export abstract class BaseQuiz {
     // 	}
     // });
 
-    this.devModeBucketGenSelect = document.getElementById(
-      this.devModeBucketGenSelectId
-    ) as HTMLSelectElement;
+    this.devModeBucketGenSelect = document.getElementById(this.devModeBucketGenSelectId) as HTMLSelectElement;
     this.devModeBucketGenSelect.onchange = (event) => {
       this.handleBucketGenModeChange(event);
     };
 
-    this.devModeToggleButton = document.getElementById(
-      this.devModeToggleButtonId
-    ) as HTMLButtonElement;
+    this.devModeToggleButton = document.getElementById(this.devModeToggleButtonId) as HTMLButtonElement;
     this.devModeToggleButton.onclick = this.toggleDevModeModal;
 
     this.devModeCorrectLabelShownCheckbox = document.getElementById(
@@ -76,18 +78,33 @@ export abstract class BaseQuiz {
       this.handleCorrectLabelShownChange();
     };
 
+    this.devModeBucketInfoShownCheckbox = document.getElementById(
+      this.devModeBucketInfoShownCheckboxId
+    ) as HTMLInputElement;
+    this.devModeBucketInfoShownCheckbox.onchange = () => {
+      this.isBucketInfoShown = this.devModeBucketInfoShownCheckbox.checked;
+      this.devModeBucketInfoContainer.style.display = this.isBucketInfoShown ? 'block' : 'none';
+      this.handleBucketInfoShownChange();
+    };
+
+    this.devModeBucketControlsShownCheckbox = document.getElementById(
+      this.devModeBucketControlsShownCheckboxId
+    ) as HTMLInputElement;
+    this.devModeBucketControlsShownCheckbox.onchange = () => {
+      this.isBucketControlsShown = this.devModeBucketControlsShownCheckbox.checked;
+      this.handleBucketControlsShownChange();
+    };
+
+    this.devModeBucketInfoContainer = document.getElementById(this.devModeBucketInfoContainerId);
+
     this.devModeAnimationSpeedMultiplierRange = document.getElementById(
       this.devModeAnimationSpeedMultiplierRangeId
     ) as HTMLInputElement;
 
-    this.devModeAnimationSpeedMultiplierValue = document.getElementById(
-      this.devModeAnimationSpeedMultiplierValueId
-    );
+    this.devModeAnimationSpeedMultiplierValue = document.getElementById(this.devModeAnimationSpeedMultiplierValueId);
 
     this.devModeAnimationSpeedMultiplierRange.onchange = () => {
-      this.animationSpeedMultiplier = parseFloat(
-        this.devModeAnimationSpeedMultiplierRange.value
-      );
+      this.animationSpeedMultiplier = parseFloat(this.devModeAnimationSpeedMultiplierRange.value);
       if (this.animationSpeedMultiplier < 0.2) {
         this.animationSpeedMultiplier = 0.2;
         this.devModeAnimationSpeedMultiplierRange.value = '0.2';
@@ -104,9 +121,7 @@ export abstract class BaseQuiz {
     }
 
     // Initialize the animation speed multiplier value and position
-    this.animationSpeedMultiplier = parseFloat(
-      this.devModeAnimationSpeedMultiplierRange.value
-    );
+    this.animationSpeedMultiplier = parseFloat(this.devModeAnimationSpeedMultiplierRange.value);
   }
 
   public hideDevModeButton() {
@@ -115,6 +130,8 @@ export abstract class BaseQuiz {
 
   public abstract handleBucketGenModeChange(event: Event): void;
   public abstract handleCorrectLabelShownChange(): void;
+  public abstract handleBucketInfoShownChange(): void;
+  public abstract handleBucketControlsShownChange(): void;
   public abstract handleAnimationSpeedMultiplierChange(): void;
 
   public toggleDevModeModal = () => {
