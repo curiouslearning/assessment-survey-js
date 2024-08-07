@@ -52,6 +52,7 @@ export class Assessment extends BaseQuiz {
     console.log('app initialized');
     UIController.SetButtonPressAction(this.TryAnswer);
     UIController.SetStartAction(this.startAssessment);
+    UIController.SetExternalBucketControlsGenerationHandler(this.generateDevModeBucketControlsInContainer);
   }
 
   public Run(applink: App): void {
@@ -64,24 +65,37 @@ export class Assessment extends BaseQuiz {
 
   public handleBucketGenModeChange(event: Event): void {
     // TODO: Implement handleBucketGenModeChange
-    this.bucketGenMode = parseInt(
-      this.devModeBucketGenSelect.value
-    ) as BucketGenMode;
+    this.bucketGenMode = parseInt(this.devModeBucketGenSelect.value) as BucketGenMode;
     this.buildBuckets(this.bucketGenMode).then(() => {
       // Finished building buckets
     });
+    this.updateBucketInfo();
   }
 
   public handleCorrectLabelShownChange(): void {
-    UIController.getInstance().SetCorrectLabelVisibility(
-      this.isCorrectLabelShown
-    );
+    UIController.getInstance().SetCorrectLabelVisibility(this.isCorrectLabelShown);
   }
 
   public handleAnimationSpeedMultiplierChange(): void {
-    UIController.getInstance().SetAnimationSpeedMultiplier(
-      this.animationSpeedMultiplier
-    );
+    UIController.getInstance().SetAnimationSpeedMultiplier(this.animationSpeedMultiplier);
+  }
+
+  public handleBucketInfoShownChange(): void {
+    this.updateBucketInfo();
+  }
+
+  public handleBucketControlsShownChange(): void {
+    UIController.getInstance().SetBucketControlsVisibility(this.isBucketControlsShown);
+  }
+
+  public generateDevModeBucketControlsInContainer = (container: HTMLElement) => {
+
+  }
+
+  public updateBucketInfo = () => {
+    if (this.currentBucket != null) {
+      this.devModeBucketInfoContainer.innerHTML = `Bucket: ${this.currentBucket.bucketID}<br/>Correct: ${this.currentBucket.numCorrect}<br/>Tried: ${this.currentBucket.numTried}<br/>Failed: ${this.currentBucket.numConsecutiveWrong}`;
+    }
   }
 
   public startAssessment = () => {
@@ -110,9 +124,7 @@ export class Assessment extends BaseQuiz {
         // console.log("Generated the buckets root ----------------------------------------------");
         // console.log(rootOfIDs);
         let bucketsRoot = this.convertToBucketBST(rootOfIDs, this.buckets);
-        console.log(
-          'Generated the buckets root ----------------------------------------------'
-        );
+        console.log('Generated the buckets root ----------------------------------------------');
         console.log(bucketsRoot);
         this.basalBucket = this.numBuckets + 1;
         this.ceilingBucket = -1;
@@ -134,9 +146,7 @@ export class Assessment extends BaseQuiz {
           // console.log("Generated the buckets root ----------------------------------------------");
           // console.log(rootOfIDs);
           let bucketsRoot = this.convertToBucketBST(rootOfIDs, this.buckets);
-          console.log(
-            'Generated the buckets root ----------------------------------------------'
-          );
+          console.log('Generated the buckets root ----------------------------------------------');
           console.log(bucketsRoot);
           this.basalBucket = this.numBuckets + 1;
           this.ceilingBucket = -1;
@@ -167,10 +177,8 @@ export class Assessment extends BaseQuiz {
 
     let bucketId = node.value;
     node.value = buckets.find((bucket) => bucket.bucketID === bucketId);
-    if (node.left !== null)
-      node.left = this.convertToBucketBST(node.left, buckets);
-    if (node.right !== null)
-      node.right = this.convertToBucketBST(node.right, buckets);
+    if (node.left !== null) node.left = this.convertToBucketBST(node.left, buckets);
+    if (node.right !== null) node.right = this.convertToBucketBST(node.right, buckets);
 
     return node;
   };
@@ -190,23 +198,17 @@ export class Assessment extends BaseQuiz {
       AnalyticsEvents.sendAnswered(this.currentQuestion, answer, elapsed);
     }
     this.currentBucket.numTried += 1;
-    if (
-      this.currentQuestion.answers[answer - 1].answerName ==
-      this.currentQuestion.correct
-    ) {
+    if (this.currentQuestion.answers[answer - 1].answerName == this.currentQuestion.correct) {
       this.currentBucket.numCorrect += 1;
       this.currentBucket.numConsecutiveWrong = 0;
       console.log('Answered correctly');
     } else {
       this.currentBucket.numConsecutiveWrong += 1;
-      console.log(
-        'Answered incorrectly, ' + this.currentBucket.numConsecutiveWrong
-      );
+      console.log('Answered incorrectly, ' + this.currentBucket.numConsecutiveWrong);
     }
     if (
       this.bucketGenMode === BucketGenMode.LinearArrayBased &&
-      UIController.getInstance().shownStarsCount <
-        this.MAX_STARS_COUNT_IN_LINEAR_MODE
+      UIController.getInstance().shownStarsCount < this.MAX_STARS_COUNT_IN_LINEAR_MODE
     ) {
       UIController.AddStar();
     } else if (this.bucketGenMode === BucketGenMode.RandomBST) {
@@ -228,8 +230,7 @@ export class Assessment extends BaseQuiz {
       UIController.SetFeedbackVisibile(false);
       if (
         this.bucketGenMode === BucketGenMode.LinearArrayBased &&
-        UIController.getInstance().shownStarsCount <
-          this.MAX_STARS_COUNT_IN_LINEAR_MODE
+        UIController.getInstance().shownStarsCount < this.MAX_STARS_COUNT_IN_LINEAR_MODE
       ) {
         UIController.ChangeStarImageAfterAnimation();
       } else if (this.bucketGenMode === BucketGenMode.RandomBST) {
@@ -237,18 +238,14 @@ export class Assessment extends BaseQuiz {
       }
       if (this.HasQuestionsLeft()) {
         if (this.bucketGenMode === BucketGenMode.LinearArrayBased) {
-          if (
-            this.currentLinearTargetIndex <
-            this.buckets[this.currentLinearBucketIndex].items.length
-          ) {
+          if (this.currentLinearTargetIndex < this.buckets[this.currentLinearBucketIndex].items.length) {
             this.currentLinearTargetIndex++;
             // We need to reset the used items array when we move to the next question in linear mode
             this.currentBucket.usedItems = [];
           }
 
           if (
-            this.currentLinearTargetIndex >=
-              this.buckets[this.currentLinearBucketIndex].items.length &&
+            this.currentLinearTargetIndex >= this.buckets[this.currentLinearBucketIndex].items.length &&
             this.currentLinearBucketIndex < this.buckets.length
           ) {
             this.currentLinearBucketIndex++;
@@ -268,6 +265,7 @@ export class Assessment extends BaseQuiz {
         console.log('No questions left');
         this.onEnd();
       }
+     
     };
 
     // Create a promise that resolves after the specified timeout
@@ -280,14 +278,18 @@ export class Assessment extends BaseQuiz {
     // Execute endOperations after timeoutPromise resolves
     timeoutPromise.then(() => {
       endOperations();
+
+      // Completed end operations, should update bucket info if in dev mode
+      if (this.isInDevMode) {
+        this.updateBucketInfo();
+      }
     });
   };
 
   public getNextQuestion = () => {
     if (
       this.bucketGenMode === BucketGenMode.LinearArrayBased &&
-      this.currentLinearTargetIndex >=
-        this.buckets[this.currentLinearBucketIndex].items.length
+      this.currentLinearTargetIndex >= this.buckets[this.currentLinearBucketIndex].items.length
     ) {
       return null;
     }
@@ -313,10 +315,7 @@ export class Assessment extends BaseQuiz {
       } while (targetItem == foil3 || foil1 == foil3 || foil2 == foil3);
     } else if (this.bucketGenMode === BucketGenMode.LinearArrayBased) {
       // LinearArrayBased
-      targetItem =
-        this.buckets[this.currentLinearBucketIndex].items[
-          this.currentLinearTargetIndex
-        ];
+      targetItem = this.buckets[this.currentLinearBucketIndex].items[this.currentLinearTargetIndex];
       this.currentBucket.usedItems.push(targetItem);
 
       // Generate random foils
@@ -409,8 +408,7 @@ export class Assessment extends BaseQuiz {
     if (this.bucketGenMode === BucketGenMode.LinearArrayBased) {
       if (
         this.currentLinearBucketIndex >= this.buckets.length &&
-        this.currentLinearTargetIndex >=
-          this.buckets[this.currentLinearBucketIndex].items.length
+        this.currentLinearTargetIndex >= this.buckets[this.currentLinearBucketIndex].items.length
       ) {
         // No more questions left
         return false;
@@ -456,10 +454,7 @@ export class Assessment extends BaseQuiz {
           hasQuestionsLeft = false;
         }
       }
-    } else if (
-      this.currentBucket.numConsecutiveWrong >= 2 ||
-      this.currentBucket.numTried >= 5
-    ) {
+    } else if (this.currentBucket.numConsecutiveWrong >= 2 || this.currentBucket.numTried >= 5) {
       // Failed this bucket
       console.log('Failed this bucket ' + this.currentBucket.bucketID);
       if (this.currentBucket.bucketID < this.basalBucket) {
@@ -501,11 +496,7 @@ export class Assessment extends BaseQuiz {
   };
 
   public override onEnd(): void {
-    AnalyticsEvents.sendFinished(
-      this.buckets,
-      this.basalBucket,
-      this.ceilingBucket
-    );
+    AnalyticsEvents.sendFinished(this.buckets, this.basalBucket, this.ceilingBucket);
     UIController.ShowEnd();
     this.app.unityBridge.SendClose();
   }
