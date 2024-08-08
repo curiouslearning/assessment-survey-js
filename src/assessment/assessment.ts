@@ -85,11 +85,74 @@ export class Assessment extends BaseQuiz {
   }
 
   public handleBucketControlsShownChange(): void {
-    UIController.getInstance().SetBucketControlsVisibility(this.isBucketControlsShown);
+    UIController.getInstance().SetBucketControlsVisibility(this.isBucketControlsEnabled);
   }
 
-  public generateDevModeBucketControlsInContainer = (container: HTMLElement) => {
+  public generateDevModeBucketControlsInContainer = (container: HTMLElement, clickHandler: () => void) => {
+    if (this.isInDevMode && this.bucketGenMode === BucketGenMode.LinearArrayBased) {
+      // Create buttons for the current bucket items, that are clickable and will trigger the item audio
+      // Add 2 buttons, one for moving up and one for moving down the bucket tree
+      // Empty the container before adding new buttons
+      container.innerHTML = '';
+      for (let i = 0; i < this.currentBucket.items.length; i++) {
+        let item = this.currentBucket.items[i];
+        let itemButton = document.createElement('button');
+        let index = i;
+        itemButton.innerText = item.itemName;
+        itemButton.style.margin = '2px';
+        itemButton.onclick = () => {
+          this.currentLinearTargetIndex = index;
+          this.currentBucket.usedItems = [];
+          console.log('Clicked on item ' + item.itemName + ' at index ' + this.currentLinearTargetIndex);
+          UIController.ReadyForNext(this.getNextQuestion(), false);
+          clickHandler();
+        };
+        container.append(itemButton);
+      }
+      // Create 2 more buttons for moving up and down the bucket tree
+      let prevButton = document.createElement('button');
+      prevButton.innerText = 'Prev Bucket';
+      if (this.currentLinearBucketIndex == 0) {
+        prevButton.disabled = true;
+      }
+      prevButton.addEventListener('click', () => {
+        if (this.currentLinearBucketIndex > 0) {
+          this.currentLinearBucketIndex--;
+          this.currentLinearTargetIndex = 0;
+          this.tryMoveBucket(false);
+          UIController.ReadyForNext(this.getNextQuestion());
+          this.updateBucketInfo();
+        } 
+        if (this.currentLinearBucketIndex == 0) {
+          prevButton.disabled = true;
+        }
+      });
+      let nextButton = document.createElement('button');
+      nextButton.innerText = 'Next Bucket';
+      if (this.currentLinearBucketIndex == this.buckets.length - 1) {
+        nextButton.disabled = true;
+      }
+      nextButton.addEventListener('click', () => {
+        if (this.currentLinearBucketIndex < this.buckets.length - 1) {
+          this.currentLinearBucketIndex++;
+          this.currentLinearTargetIndex = 0;
+          this.tryMoveBucket(false);
+          UIController.ReadyForNext(this.getNextQuestion());
+          this.updateBucketInfo();
+        }
+      });
 
+      // Append the buttons to the container
+      let buttonsContainer = document.createElement('div');
+      buttonsContainer.style.display = 'flex';
+      buttonsContainer.style.flexDirection = 'row';
+      buttonsContainer.style.justifyContent = 'center';
+      buttonsContainer.style.alignItems = 'center';
+      buttonsContainer.appendChild(prevButton);
+      buttonsContainer.appendChild(nextButton);
+
+      container.appendChild(buttonsContainer);
+    }
   }
 
   public updateBucketInfo = () => {
@@ -237,7 +300,7 @@ export class Assessment extends BaseQuiz {
         UIController.ChangeStarImageAfterAnimation();
       }
       if (this.HasQuestionsLeft()) {
-        if (this.bucketGenMode === BucketGenMode.LinearArrayBased) {
+        if (this.bucketGenMode === BucketGenMode.LinearArrayBased && !this.isBucketControlsEnabled) {
           if (this.currentLinearTargetIndex < this.buckets[this.currentLinearBucketIndex].items.length) {
             this.currentLinearTargetIndex++;
             // We need to reset the used items array when we move to the next question in linear mode

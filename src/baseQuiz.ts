@@ -13,7 +13,7 @@ export abstract class BaseQuiz {
 
   public isCorrectLabelShown: boolean = false;
   public isBucketInfoShown: boolean = false;
-  public isBucketControlsShown: boolean = false;
+  public isBucketControlsEnabled: boolean = false;
   public animationSpeedMultiplier: number = 1;
 
   public devModeToggleButtonContainerId: string = 'devModeModalToggleButtonContainer';
@@ -91,7 +91,7 @@ export abstract class BaseQuiz {
       this.devModeBucketControlsShownCheckboxId
     ) as HTMLInputElement;
     this.devModeBucketControlsShownCheckbox.onchange = () => {
-      this.isBucketControlsShown = this.devModeBucketControlsShownCheckbox.checked;
+      this.isBucketControlsEnabled = this.devModeBucketControlsShownCheckbox.checked;
       this.handleBucketControlsShownChange();
     };
 
