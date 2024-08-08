@@ -209,7 +209,7 @@ export class UIController {
     });
   }
 
-  private showOptions(): void {
+  public showOptions(): void {
     if (!UIController.getInstance().shown) {
       const newQ = UIController.getInstance().nextQuestion;
       const buttons = UIController.getInstance().buttons;
@@ -337,6 +337,7 @@ export class UIController {
     const isBucketControlsEnabled = UIController.getInstance().devModeBucketControlsEnabled;
     if (isBucketControlsEnabled) {
       UIController.getInstance().externalBucketControlsGenerationHandler(UIController.getInstance().playButton, () => {
+        console.log("Call from inside click handler of external bucket controls");
         UIController.ShowQuestion();
         //playquestionaudio
         AudioController.PlayAudio(
@@ -379,6 +380,7 @@ export class UIController {
     const isBucketControlsEnabled = UIController.getInstance().devModeBucketControlsEnabled;
     if (isBucketControlsEnabled) {
       UIController.getInstance().externalBucketControlsGenerationHandler(UIController.getInstance().playButton, () => {
+        console.log("Call from inside click handler of external bucket controls #2");
         console.log('next question button pressed');
         console.log(newQuestion.promptAudio);
   
