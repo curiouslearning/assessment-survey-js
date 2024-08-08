@@ -4,74 +4,94 @@
 import { UIController } from '../components/uiController';
 import { AudioController } from '../components/audioController';
 import { qData, answerData } from '../components/questionData';
-import { AnalyticsEvents } from '../components/analyticsEvents'
+import { AnalyticsEvents } from '../components/analyticsEvents';
 import { App } from '../App';
-import { BaseQuiz } from '../BaseQuiz';
+import { BaseQuiz } from '../baseQuiz';
 import { fetchSurveyQuestions } from '../components/jsonUtils';
 import { UnityBridge } from '../components/unityBridge';
 
 export class Survey extends BaseQuiz {
+  public questionsData: qData[];
+  public currentQuestionIndex: number;
 
-	public questionsData: qData[];
-	public currentQuestionIndex: number;
+  constructor(dataURL: string, unityBridge) {
+    super();
+    console.log('Survey initialized');
 
-	constructor(dataURL: string, unityBridge) {
-		super();
-		console.log("Survey initialized");
+    this.dataURL = dataURL;
+    this.unityBridge = unityBridge;
+    this.currentQuestionIndex = 0;
+    UIController.SetButtonPressAction(this.TryAnswer);
+    UIController.SetStartAction(this.startSurvey);
+  }
 
-		this.dataURL = dataURL;
-		this.unityBridge = unityBridge;
-		this.currentQuestionIndex = 0;
-		UIController.SetButtonPressAction(this.TryAnswer);
-		UIController.SetStartAction(this.startSurvey);
-	}
+  public handleAnimationSpeedMultiplierChange(): void {
+    console.log('Animation Speed Multiplier Changed');
+  }
 
-	public async Run(app: App) {
-		this.app = app;
-		this.buildQuestionList().then(result => {
-			this.questionsData = result;
-			AudioController.PrepareAudioAndImagesForSurvey(this.questionsData, this.app.GetDataURL());
-			this.unityBridge.SendLoaded();
-		});
-	}
+  public handleBucketGenModeChange = () => {
+    console.log('Bucket Gen Mode Changed');
+  };
 
-	public startSurvey = () =>{
-		UIController.ReadyForNext(this.getNextQuestion());
-	}
+  public handleCorrectLabelShownChange = () => {
+    console.log('Correct Label Shown Changed');
+  };
 
-	public onQuestionEnd = () => {
-		UIController.SetFeedbackVisibile(false);
+  public async Run(app: App) {
+    this.app = app;
+    this.buildQuestionList().then((result) => {
+      this.questionsData = result;
+      AudioController.PrepareAudioAndImagesForSurvey(
+        this.questionsData,
+        this.app.GetDataURL()
+      );
+      this.unityBridge.SendLoaded();
+    });
+  }
 
-		this.currentQuestionIndex += 1;
+  public startSurvey = () => {
+    UIController.ReadyForNext(this.getNextQuestion());
+  };
 
-		setTimeout(() => {
-			if (this.HasQuestionsLeft()) {
-				UIController.ReadyForNext(this.getNextQuestion());
-			} else {
-				console.log("There are no questions left.");
-				this.onEnd();
-			}
-		}, 500);
-	}
+  public onQuestionEnd = () => {
+    UIController.SetFeedbackVisibile(false);
 
-	public TryAnswer = (answer: number, elapsed: number) => {
-		AnalyticsEvents.sendAnswered(this.questionsData[this.currentQuestionIndex], answer, elapsed)
-		UIController.SetFeedbackVisibile(true);
-		UIController.AddStar();
-		setTimeout(() => { this.onQuestionEnd() }, 2000);
-	}
+    this.currentQuestionIndex += 1;
 
-	public buildQuestionList = () => {
-		const surveyQuestions = fetchSurveyQuestions(this.app.dataURL);
-		return surveyQuestions;
-	}
+    setTimeout(() => {
+      if (this.HasQuestionsLeft()) {
+        UIController.ReadyForNext(this.getNextQuestion());
+      } else {
+        console.log('There are no questions left.');
+        this.onEnd();
+      }
+    }, 500);
+  };
 
-	public HasQuestionsLeft(): boolean {
-		return this.currentQuestionIndex <= (this.questionsData.length - 1);
-	}
+  public TryAnswer = (answer: number, elapsed: number) => {
+    AnalyticsEvents.sendAnswered(
+      this.questionsData[this.currentQuestionIndex],
+      answer,
+      elapsed
+    );
+    UIController.SetFeedbackVisibile(true);
+    UIController.AddStar();
+    setTimeout(() => {
+      this.onQuestionEnd();
+    }, 2000);
+  };
 
-	public getNextQuestion(): qData {
-		var questionData = this.questionsData[this.currentQuestionIndex];
-		return questionData;
-	}
+  public buildQuestionList = () => {
+    const surveyQuestions = fetchSurveyQuestions(this.app.dataURL);
+    return surveyQuestions;
+  };
+
+  public HasQuestionsLeft(): boolean {
+    return this.currentQuestionIndex <= this.questionsData.length - 1;
+  }
+
+  public getNextQuestion(): qData {
+    var questionData = this.questionsData[this.currentQuestionIndex];
+    return questionData;
+  }
 }
