@@ -104,8 +104,23 @@ export class Assessment extends BaseQuiz {
           this.currentLinearTargetIndex = index;
           this.currentBucket.usedItems = [];
           console.log('Clicked on item ' + item.itemName + ' at index ' + this.currentLinearTargetIndex);
-          UIController.ReadyForNext(this.getNextQuestion(), false);
-          clickHandler();
+          // UIController.ReadyForNext(this.getNextQuestion(), false);
+          const newQ = this.getNextQuestion();
+          UIController.getInstance().answersContainer.style.visibility = 'hidden';
+          for (var b in UIController.getInstance().buttons) {
+            UIController.getInstance().buttons[b].style.visibility = 'hidden';
+          }
+          UIController.getInstance().shown = false;
+          UIController.getInstance().nextQuestion = newQ;
+          UIController.getInstance().questionsContainer.innerHTML = '';
+          UIController.getInstance().questionsContainer.style.display = 'none';
+          UIController.ShowQuestion(newQ);
+          AudioController.PlayAudio(
+            this.getNextQuestion().promptAudio,
+            UIController.getInstance().showOptions,
+            UIController.ShowAudioAnimation
+          );
+          // clickHandler();
         };
         container.append(itemButton);
       }
