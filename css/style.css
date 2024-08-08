@@ -78,6 +78,8 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-wrap: wrap;
+  flex-basis: 70%;
 }
 
 .chestdiv img {
@@ -380,7 +382,7 @@ select {
   border: 2px solid #ccc;
 }
 
-#devModeCorrectLabelShownCheckbox {
+input[type='checkbox'] {
   width: 24px;
   height: 24px;
   padding: 6px;
@@ -390,6 +392,22 @@ select {
   color: white;
   outline: 2px solid #ccc;
   align-self: flex-start;
+}
+
+#devModeBucketInfoContainer {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  color: white;
+  border: none;
+  z-index: 100;
+  display: none;
+  font-family: BalooBhai2, Kalam, sans-serif;
+  font-size: 12px;
+  text-align: left;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 10px;
+  border-radius: 4px;
 }
 
 .correct-label {
