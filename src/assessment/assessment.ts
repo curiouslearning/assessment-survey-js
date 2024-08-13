@@ -137,7 +137,7 @@ export class Assessment extends BaseQuiz {
           this.tryMoveBucket(false);
           UIController.ReadyForNext(this.getNextQuestion());
           this.updateBucketInfo();
-        } 
+        }
         if (this.currentLinearBucketIndex == 0) {
           prevButton.disabled = true;
         }
@@ -168,13 +168,13 @@ export class Assessment extends BaseQuiz {
 
       container.appendChild(buttonsContainer);
     }
-  }
+  };
 
   public updateBucketInfo = () => {
     if (this.currentBucket != null) {
       this.devModeBucketInfoContainer.innerHTML = `Bucket: ${this.currentBucket.bucketID}<br/>Correct: ${this.currentBucket.numCorrect}<br/>Tried: ${this.currentBucket.numTried}<br/>Failed: ${this.currentBucket.numConsecutiveWrong}`;
     }
-  }
+  };
 
   public startAssessment = () => {
     UIController.ReadyForNext(this.getNextQuestion());
@@ -292,7 +292,10 @@ export class Assessment extends BaseQuiz {
     } else if (this.bucketGenMode === BucketGenMode.RandomBST) {
       UIController.AddStar();
     }
-    UIController.SetFeedbackVisibile(true);
+    UIController.SetFeedbackVisibile(
+      true,
+      this.currentQuestion.answers[answer - 1].answerName == this.currentQuestion.correct
+    );
     setTimeout(() => {
       console.log('Completed first Timeout');
       this.onQuestionEnd();
@@ -305,7 +308,7 @@ export class Assessment extends BaseQuiz {
       : 4000 * this.animationSpeedMultiplier;
 
     const endOperations = () => {
-      UIController.SetFeedbackVisibile(false);
+      UIController.SetFeedbackVisibile(false, false);
       if (
         this.bucketGenMode === BucketGenMode.LinearArrayBased &&
         UIController.getInstance().shownStarsCount < this.MAX_STARS_COUNT_IN_LINEAR_MODE
@@ -343,7 +346,6 @@ export class Assessment extends BaseQuiz {
         console.log('No questions left');
         this.onEnd();
       }
-     
     };
 
     // Create a promise that resolves after the specified timeout

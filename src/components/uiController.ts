@@ -301,12 +301,17 @@ export class UIController {
     this.startPressCallback();
   }
 
-  public static SetFeedbackVisibile(visible: boolean) {
+  public static SetFeedbackVisibile(visible: boolean, isCorrect: boolean) {
     if (visible) {
       UIController.getInstance().feedbackContainer.classList.remove('hidden');
       UIController.getInstance().feedbackContainer.classList.add('visible');
-      AudioController.PlayCorrect();
       UIController.getInstance().buttonsActive = false;
+      if (isCorrect) {
+        UIController.getInstance().feedbackContainer.style.color = 'rgb(109, 204, 122)';
+        AudioController.PlayCorrect();
+      } else {
+        UIController.getInstance().feedbackContainer.style.color = 'red';
+      }
     } else {
       UIController.getInstance().feedbackContainer.classList.remove('visible');
       UIController.getInstance().feedbackContainer.classList.add('hidden');
