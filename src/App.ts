@@ -15,7 +15,14 @@ import { Workbox } from 'workbox-window';
 import CacheModel from './components/cacheModel';
 import { UIController } from './components/uiController';
 
-const appVersion: string = 'v1.0.11';
+const appVersion: string = 'v1.0.12';
+
+
+/**
+ * Content version from the data file in format v0.1
+ * Gets set when the content is loaded
+ */
+let contentVersion: string = '';
 
 let loadingScreen = document.getElementById('loadingScreen');
 const progressBar = document.getElementById('progressBar');
