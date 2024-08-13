@@ -37,6 +37,14 @@ export class Survey extends BaseQuiz {
     console.log('Correct Label Shown Changed');
   };
 
+  public handleBucketInfoShownChange = () => {
+    console.log('Bucket Info Shown Changed');
+  };
+
+  public handleBucketControlsShownChange = () => {
+    console.log('Bucket Controls Shown Changed');
+  };
+
   public async Run(app: App) {
     this.app = app;
     this.buildQuestionList().then((result) => {
