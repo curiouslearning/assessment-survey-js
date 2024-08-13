@@ -52,6 +52,7 @@ export class Assessment extends BaseQuiz {
     console.log('app initialized');
     UIController.SetButtonPressAction(this.TryAnswer);
     UIController.SetStartAction(this.startAssessment);
+    UIController.SetExternalBucketControlsGenerationHandler(this.generateDevModeBucketControlsInContainer);
   }
 
   public Run(applink: App): void {
@@ -68,6 +69,7 @@ export class Assessment extends BaseQuiz {
     this.buildBuckets(this.bucketGenMode).then(() => {
       // Finished building buckets
     });
+    this.updateBucketInfo();
   }
 
   public handleCorrectLabelShownChange(): void {
@@ -77,6 +79,102 @@ export class Assessment extends BaseQuiz {
   public handleAnimationSpeedMultiplierChange(): void {
     UIController.getInstance().SetAnimationSpeedMultiplier(this.animationSpeedMultiplier);
   }
+
+  public handleBucketInfoShownChange(): void {
+    this.updateBucketInfo();
+  }
+
+  public handleBucketControlsShownChange(): void {
+    UIController.getInstance().SetBucketControlsVisibility(this.isBucketControlsEnabled);
+  }
+
+  public generateDevModeBucketControlsInContainer = (container: HTMLElement, clickHandler: () => void) => {
+    if (this.isInDevMode && this.bucketGenMode === BucketGenMode.LinearArrayBased) {
+      // Create buttons for the current bucket items, that are clickable and will trigger the item audio
+      // Add 2 buttons, one for moving up and one for moving down the bucket tree
+      // Empty the container before adding new buttons
+      container.innerHTML = '';
+      for (let i = 0; i < this.currentBucket.items.length; i++) {
+        let item = this.currentBucket.items[i];
+        let itemButton = document.createElement('button');
+        let index = i;
+        itemButton.innerText = item.itemName;
+        itemButton.style.margin = '2px';
+        itemButton.onclick = () => {
+          this.currentLinearTargetIndex = index;
+          this.currentBucket.usedItems = [];
+          console.log('Clicked on item ' + item.itemName + ' at index ' + this.currentLinearTargetIndex);
+          // UIController.ReadyForNext(this.getNextQuestion(), false);
+          const newQ = this.getNextQuestion();
+          UIController.getInstance().answersContainer.style.visibility = 'hidden';
+          for (var b in UIController.getInstance().buttons) {
+            UIController.getInstance().buttons[b].style.visibility = 'hidden';
+          }
+          UIController.getInstance().shown = false;
+          UIController.getInstance().nextQuestion = newQ;
+          UIController.getInstance().questionsContainer.innerHTML = '';
+          UIController.getInstance().questionsContainer.style.display = 'none';
+          UIController.ShowQuestion(newQ);
+          AudioController.PlayAudio(
+            this.getNextQuestion().promptAudio,
+            UIController.getInstance().showOptions,
+            UIController.ShowAudioAnimation
+          );
+          // clickHandler();
+        };
+        container.append(itemButton);
+      }
+      // Create 2 more buttons for moving up and down the bucket tree
+      let prevButton = document.createElement('button');
+      prevButton.innerText = 'Prev Bucket';
+      if (this.currentLinearBucketIndex == 0) {
+        prevButton.disabled = true;
+      }
+      prevButton.addEventListener('click', () => {
+        if (this.currentLinearBucketIndex > 0) {
+          this.currentLinearBucketIndex--;
+          this.currentLinearTargetIndex = 0;
+          this.tryMoveBucket(false);
+          UIController.ReadyForNext(this.getNextQuestion());
+          this.updateBucketInfo();
+        }
+        if (this.currentLinearBucketIndex == 0) {
+          prevButton.disabled = true;
+        }
+      });
+      let nextButton = document.createElement('button');
+      nextButton.innerText = 'Next Bucket';
+      if (this.currentLinearBucketIndex == this.buckets.length - 1) {
+        nextButton.disabled = true;
+      }
+      nextButton.addEventListener('click', () => {
+        if (this.currentLinearBucketIndex < this.buckets.length - 1) {
+          this.currentLinearBucketIndex++;
+          this.currentLinearTargetIndex = 0;
+          this.tryMoveBucket(false);
+          UIController.ReadyForNext(this.getNextQuestion());
+          this.updateBucketInfo();
+        }
+      });
+
+      // Append the buttons to the container
+      let buttonsContainer = document.createElement('div');
+      buttonsContainer.style.display = 'flex';
+      buttonsContainer.style.flexDirection = 'row';
+      buttonsContainer.style.justifyContent = 'center';
+      buttonsContainer.style.alignItems = 'center';
+      buttonsContainer.appendChild(prevButton);
+      buttonsContainer.appendChild(nextButton);
+
+      container.appendChild(buttonsContainer);
+    }
+  };
+
+  public updateBucketInfo = () => {
+    if (this.currentBucket != null) {
+      this.devModeBucketInfoContainer.innerHTML = `Bucket: ${this.currentBucket.bucketID}<br/>Correct: ${this.currentBucket.numCorrect}<br/>Tried: ${this.currentBucket.numTried}<br/>Failed: ${this.currentBucket.numConsecutiveWrong}`;
+    }
+  };
 
   public startAssessment = () => {
     UIController.ReadyForNext(this.getNextQuestion());
@@ -220,7 +318,7 @@ export class Assessment extends BaseQuiz {
         UIController.ChangeStarImageAfterAnimation();
       }
       if (this.HasQuestionsLeft()) {
-        if (this.bucketGenMode === BucketGenMode.LinearArrayBased) {
+        if (this.bucketGenMode === BucketGenMode.LinearArrayBased && !this.isBucketControlsEnabled) {
           if (this.currentLinearTargetIndex < this.buckets[this.currentLinearBucketIndex].items.length) {
             this.currentLinearTargetIndex++;
             // We need to reset the used items array when we move to the next question in linear mode
@@ -260,6 +358,11 @@ export class Assessment extends BaseQuiz {
     // Execute endOperations after timeoutPromise resolves
     timeoutPromise.then(() => {
       endOperations();
+
+      // Completed end operations, should update bucket info if in dev mode
+      if (this.isInDevMode) {
+        this.updateBucketInfo();
+      }
     });
   };
 

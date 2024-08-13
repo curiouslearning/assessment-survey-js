@@ -74,8 +74,11 @@ export class UIController {
   public buttonsActive: boolean = false;
 
   private devModeCorrectLabelVisibility: boolean = false;
+  private devModeBucketControlsEnabled: boolean = false;
 
   public animationSpeedMultiplier: number = 1;
+
+  public externalBucketControlsGenerationHandler: (container: HTMLElement, clickCallback: () => void) => void;
 
   private init(): void {
     // Initialize required containers
@@ -135,6 +138,11 @@ export class UIController {
   public SetCorrectLabelVisibility(visible: boolean): void {
     this.devModeCorrectLabelVisibility = visible;
     console.log('Correct label visibility set to ', this.devModeCorrectLabelVisibility);
+  }
+
+  public SetBucketControlsVisibility(visible: boolean): void {
+    console.log('Bucket controls visibility set to ', visible);
+    this.devModeBucketControlsEnabled = visible;
   }
 
   public static OverlappingOtherStars(
@@ -201,7 +209,7 @@ export class UIController {
     });
   }
 
-  private showOptions(): void {
+  public showOptions(): void {
     if (!UIController.getInstance().shown) {
       const newQ = UIController.getInstance().nextQuestion;
       const buttons = UIController.getInstance().buttons;
@@ -311,7 +319,7 @@ export class UIController {
     }
   }
 
-  public static ReadyForNext(newQ: qData): void {
+  public static ReadyForNext(newQ: qData, reGenerateItems: boolean = true): void {
     if (newQ === null) {
       return;
     }
@@ -326,43 +334,79 @@ export class UIController {
     UIController.getInstance().questionsContainer.style.display = 'none';
     // pB.innerHTML = "<button id='nextqButton'><svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M9 18L15 12L9 6V18Z' fill='currentColor' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'></path></svg></button>";
     // UIController.getInstance().playButton.classList.add("audio-button");
-    UIController.getInstance().playButton.innerHTML =
-      "<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='/img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>";
-    var nextQuestionButton = document.getElementById('nextqButton');
-    nextQuestionButton.addEventListener('click', function () {
-      UIController.ShowQuestion();
-      //playquestionaudio
-      AudioController.PlayAudio(
-        newQ.promptAudio,
-        UIController.getInstance().showOptions,
-        UIController.ShowAudioAnimation
-      );
-    });
+
+    // When the dev mode is active and the bucket next, previous and play buttons are enabled, use the external bucket controls generation handler
+    // if (!reGenerateItems) {
+    //   return;
+    // }
+    const isBucketControlsEnabled = UIController.getInstance().devModeBucketControlsEnabled;
+    if (isBucketControlsEnabled) {
+      UIController.getInstance().externalBucketControlsGenerationHandler(UIController.getInstance().playButton, () => {
+        console.log("Call from inside click handler of external bucket controls");
+        UIController.ShowQuestion();
+        //playquestionaudio
+        AudioController.PlayAudio(
+          newQ.promptAudio,
+          UIController.getInstance().showOptions,
+          UIController.ShowAudioAnimation
+        );
+      });
+    } else {
+      UIController.getInstance().playButton.innerHTML =
+        "<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='/img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>";
+      var nextQuestionButton = document.getElementById('nextqButton');
+      nextQuestionButton.addEventListener('click', function () {
+        UIController.ShowQuestion();
+        //playquestionaudio
+        AudioController.PlayAudio(
+          newQ.promptAudio,
+          UIController.getInstance().showOptions,
+          UIController.ShowAudioAnimation
+        );
+      });
+    }
   }
 
   public static ShowAudioAnimation(playing: boolean = false) {
-    const playButtonImg = UIController.getInstance().playButton.querySelector('img');
-    if (playing) {
-      playButtonImg.src = 'animation/SoundButton.gif';
-    } else {
-      playButtonImg.src = '/img/SoundButton_Idle.png';
+    if (!UIController.getInstance().devModeBucketControlsEnabled) {
+      const playButtonImg = UIController.getInstance().playButton.querySelector('img');
+      if (playing) {
+        playButtonImg.src = 'animation/SoundButton.gif';
+      } else {
+        playButtonImg.src = '/img/SoundButton_Idle.png';
+      }
     }
   }
 
   public static ShowQuestion(newQuestion?: qData): void {
     // pB.innerHTML = "<button id='nextqButton'><svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M9 18L15 12L9 6V18Z' fill='currentColor' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'></path></svg></button>";
-    UIController.getInstance().playButton.innerHTML =
-      "<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='/img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>";
 
-    var nextQuestionButton = document.getElementById('nextqButton');
-    nextQuestionButton.addEventListener('click', function () {
-      console.log('next question button pressed');
-      console.log(newQuestion.promptAudio);
-
-      if ('promptAudio' in newQuestion) {
-        AudioController.PlayAudio(newQuestion.promptAudio, undefined, UIController.ShowAudioAnimation);
-      }
-    });
+    // When the dev mode is active and the bucket next, previous and play buttons are enabled, use the external bucket controls generation handler
+    const isBucketControlsEnabled = UIController.getInstance().devModeBucketControlsEnabled;
+    if (isBucketControlsEnabled) {
+      UIController.getInstance().externalBucketControlsGenerationHandler(UIController.getInstance().playButton, () => {
+        console.log("Call from inside click handler of external bucket controls #2");
+        console.log('next question button pressed');
+        console.log(newQuestion.promptAudio);
+  
+        if ('promptAudio' in newQuestion) {
+          AudioController.PlayAudio(newQuestion.promptAudio, undefined, UIController.ShowAudioAnimation);
+        }
+      });
+    } else {
+      UIController.getInstance().playButton.innerHTML =
+        "<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='/img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>";
+  
+      var nextQuestionButton = document.getElementById('nextqButton');
+      nextQuestionButton.addEventListener('click', function () {
+        console.log('next question button pressed');
+        console.log(newQuestion.promptAudio);
+  
+        if ('promptAudio' in newQuestion) {
+          AudioController.PlayAudio(newQuestion.promptAudio, undefined, UIController.ShowAudioAnimation);
+        }
+      });
+    }
 
     UIController.getInstance().answersContainer.style.visibility = 'visible';
 
@@ -492,6 +536,10 @@ export class UIController {
 
   public static SetStartAction(callback: Function): void {
     UIController.getInstance().startPressCallback = callback;
+  }
+
+  public static SetExternalBucketControlsGenerationHandler(handler: (container: HTMLElement, clickCallback: () => void) => void): void {
+    UIController.getInstance().externalBucketControlsGenerationHandler = handler;
   }
 
   public static getInstance(): UIController {
