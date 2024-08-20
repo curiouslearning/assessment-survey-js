@@ -114,7 +114,7 @@
         { "itemName": "Д", "itemText": "Д" },
         { "itemName": "Й", "itemText": "Й" },
         { "itemName": "И", "itemText": "И" },
-        { "itemName": "Ї", "itemText": "Ї" },
+        { "itemName": "ї", "itemText": "ї" },
         { "itemName": "T", "itemText": "T" },
         { "itemName": "Л", "itemText": "Л" }
       ]
@@ -126,7 +126,7 @@
       "items": [
         { "itemName": "Й", "itemText": "Й" },
         { "itemName": "И", "itemText": "И" },
-        { "itemName": "Ї", "itemText": "Ї" },
+        { "itemName": "ї", "itemText": "ї" },
         { "itemName": "T", "itemText": "T" },
         { "itemName": "Л", "itemText": "Л" },
         { "itemName": "Н", "itemText": "Н" },
