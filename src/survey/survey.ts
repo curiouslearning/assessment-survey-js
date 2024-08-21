@@ -37,14 +37,19 @@ export class Survey extends BaseQuiz {
     console.log('Correct Label Shown Changed');
   };
 
+  public handleBucketInfoShownChange = () => {
+    console.log('Bucket Info Shown Changed');
+  };
+
+  public handleBucketControlsShownChange = () => {
+    console.log('Bucket Controls Shown Changed');
+  };
+
   public async Run(app: App) {
     this.app = app;
     this.buildQuestionList().then((result) => {
       this.questionsData = result;
-      AudioController.PrepareAudioAndImagesForSurvey(
-        this.questionsData,
-        this.app.GetDataURL()
-      );
+      AudioController.PrepareAudioAndImagesForSurvey(this.questionsData, this.app.GetDataURL());
       this.unityBridge.SendLoaded();
     });
   }
@@ -54,7 +59,7 @@ export class Survey extends BaseQuiz {
   };
 
   public onQuestionEnd = () => {
-    UIController.SetFeedbackVisibile(false);
+    UIController.SetFeedbackVisibile(false, false);
 
     this.currentQuestionIndex += 1;
 
@@ -69,12 +74,8 @@ export class Survey extends BaseQuiz {
   };
 
   public TryAnswer = (answer: number, elapsed: number) => {
-    AnalyticsEvents.sendAnswered(
-      this.questionsData[this.currentQuestionIndex],
-      answer,
-      elapsed
-    );
-    UIController.SetFeedbackVisibile(true);
+    AnalyticsEvents.sendAnswered(this.questionsData[this.currentQuestionIndex], answer, elapsed);
+    UIController.SetFeedbackVisibile(true, true);
     UIController.AddStar();
     setTimeout(() => {
       this.onQuestionEnd();

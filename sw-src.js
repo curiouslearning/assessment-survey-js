@@ -9,7 +9,7 @@ workbox.precaching.precacheAndRoute(self.__WB_MANIFEST, {
 
 const channel = new BroadcastChannel('as-message-channel');
 
-let version = 1.5;
+let version = 1.6;
 let cachingProgress = 0;
 let cachableAssetsCount = 0;
 
@@ -116,6 +116,9 @@ self.addEventListener('fetch', function (event) {
   const requestUrl = new URL(event.request.url);
   if (requestUrl.protocol === 'chrome-extension:') {
     return;
+  }
+  if (requestUrl.searchParams.has('cache-bust')) {
+    return event.respondWith(fetch(event.request));
   }
   event.respondWith(
     caches

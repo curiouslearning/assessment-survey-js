@@ -15,7 +15,14 @@ import { Workbox } from 'workbox-window';
 import CacheModel from './components/cacheModel';
 import { UIController } from './components/uiController';
 
-const appVersion: string = 'v1.0.10';
+const appVersion: string = 'v1.1.0';
+
+
+/**
+ * Content version from the data file in format v0.1
+ * Gets set when the content is loaded
+ */
+let contentVersion: string = '';
 
 let loadingScreen = document.getElementById('loadingScreen');
 const progressBar = document.getElementById('progressBar');
@@ -135,18 +142,19 @@ export class App {
           AnalyticsEvents.setUuid(getUUID(), getUserSource());
           AnalyticsEvents.linkAnalytics(this.analytics, this.dataURL);
           AnalyticsEvents.setAssessmentType(assessmentType);
+          contentVersion = data['contentVersion'];
           AnalyticsEvents.sendInit(appVersion, data['contentVersion']);
           // this.cacheModel.setAppName(this.cacheModel.appName + ':' + data["contentVersion"]);
 
           this.game.Run(this);
         });
 
-        await this.registerServiceWorker(this.game);
+        await this.registerServiceWorker(this.game, this.dataURL);
       })();
     });
   }
 
-  async registerServiceWorker(game: BaseQuiz) {
+  async registerServiceWorker(game: BaseQuiz, dataURL: string = '') {
     console.log('Registering service worker...');
 
     if ('serviceWorker' in navigator) {
@@ -171,8 +179,43 @@ export class App {
       console.log('Cache Model: ');
       console.log(this.cacheModel);
 
+      // We need to check if there's a new version of the content file and in that case
+      // remove the localStorage content name and version value
+
+      console.log('Checking for content version updates...' + dataURL);
+
+      fetch(this.cacheModel.contentFilePath + '?cache-bust=' + new Date().getTime(), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store',
+        },
+        cache: 'no-store',
+      }).then(async (response) => {
+        if (!response.ok) {
+          console.error('Failed to fetch the content file from the server!');
+          return;
+        }
+        const newContentFileData = await response.json();
+        const aheadContentVersion = newContentFileData['contentVersion'];
+        console.log('No Cache Content version: ' + aheadContentVersion);
+
+        // We need to check here for the content version updates
+        // If there's a new content version, we need to remove the cached content and reload
+        // We are comparing here the contentVersion with the aheadContentVersion
+        if (aheadContentVersion && contentVersion != aheadContentVersion) {
+          console.log('Content version mismatch! Reloading...');
+          localStorage.removeItem(this.cacheModel.appName);
+          // Clear the cache for tht particular content
+          caches.delete(this.cacheModel.appName);
+          handleUpdateFoundMessage();
+        }
+      }).catch((error) => { 
+        console.error('Error fetching the content file: ' + error);
+      });
+
       if (localStorage.getItem(this.cacheModel.appName) == null) {
-        console.log('WE DONT HAVE THIS ASSESSMENT< CACHING IT!');
+        console.log('Caching!' + this.cacheModel.appName);
         loadingScreen!.style.display = 'flex';
         broadcastChannel.postMessage({
           command: 'Cache',
