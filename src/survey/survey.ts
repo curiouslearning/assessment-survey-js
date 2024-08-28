@@ -21,7 +21,7 @@ export class Survey extends BaseQuiz {
     this.dataURL = dataURL;
     this.unityBridge = unityBridge;
     this.currentQuestionIndex = 0;
-    UIController.SetButtonPressAction(this.TryAnswer);
+    UIController.SetButtonPressAction(this.handleAnswerButtonPress);
     UIController.SetStartAction(this.startSurvey);
   }
 
@@ -55,7 +55,7 @@ export class Survey extends BaseQuiz {
   }
 
   public startSurvey = () => {
-    UIController.ReadyForNext(this.getNextQuestion());
+    UIController.ReadyForNext(this.buildNewQuestion());
   };
 
   public onQuestionEnd = () => {
@@ -65,7 +65,7 @@ export class Survey extends BaseQuiz {
 
     setTimeout(() => {
       if (this.HasQuestionsLeft()) {
-        UIController.ReadyForNext(this.getNextQuestion());
+        UIController.ReadyForNext(this.buildNewQuestion());
       } else {
         console.log('There are no questions left.');
         this.onEnd();
@@ -73,7 +73,7 @@ export class Survey extends BaseQuiz {
     }, 500);
   };
 
-  public TryAnswer = (answer: number, elapsed: number) => {
+  public handleAnswerButtonPress = (answer: number, elapsed: number) => {
     AnalyticsEvents.sendAnswered(this.questionsData[this.currentQuestionIndex], answer, elapsed);
     UIController.SetFeedbackVisibile(true, true);
     UIController.AddStar();
@@ -91,7 +91,7 @@ export class Survey extends BaseQuiz {
     return this.currentQuestionIndex <= this.questionsData.length - 1;
   }
 
-  public getNextQuestion(): qData {
+  public buildNewQuestion(): qData {
     var questionData = this.questionsData[this.currentQuestionIndex];
     return questionData;
   }
