@@ -143,7 +143,7 @@ export abstract class BaseQuiz {
   };
 
   public abstract Run(applink: App): void;
-  public abstract TryAnswer(ans: number, elapsed: number): void;
+  public abstract handleAnswerButtonPress(ans: number, elapsed: number): void;
   public abstract HasQuestionsLeft(): boolean;
 
   public onEnd(): void {

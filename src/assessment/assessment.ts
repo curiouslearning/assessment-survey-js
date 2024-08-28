@@ -50,11 +50,13 @@ export class Assessment extends BaseQuiz {
     this.unityBridge = unityBridge;
     this.questionNumber = 0;
     console.log('app initialized');
-    UIController.SetButtonPressAction(this.TryAnswer);
+    this.setupUIHandlers();
+  }
+  private setupUIHandlers(): void {
+    UIController.SetButtonPressAction(this.handleAnswerButtonPress);
     UIController.SetStartAction(this.startAssessment);
     UIController.SetExternalBucketControlsGenerationHandler(this.generateDevModeBucketControlsInContainer);
   }
-
   public Run(applink: App): void {
     this.app = applink;
     this.buildBuckets(this.bucketGenMode).then((result) => {
@@ -104,10 +106,10 @@ export class Assessment extends BaseQuiz {
           this.currentLinearTargetIndex = index;
           this.currentBucket.usedItems = [];
           console.log('Clicked on item ' + item.itemName + ' at index ' + this.currentLinearTargetIndex);
-          // UIController.ReadyForNext(this.getNextQuestion(), false);
-          const newQ = this.getNextQuestion();
+          // UIController.ReadyForNext(this.buildNewQuestion(), false);
+          const newQ = this.buildNewQuestion();
           UIController.getInstance().answersContainer.style.visibility = 'hidden';
-          for (var b in UIController.getInstance().buttons) {
+          for (let b in UIController.getInstance().buttons) {
             UIController.getInstance().buttons[b].style.visibility = 'hidden';
           }
           UIController.getInstance().shown = false;
@@ -116,7 +118,7 @@ export class Assessment extends BaseQuiz {
           UIController.getInstance().questionsContainer.style.display = 'none';
           UIController.ShowQuestion(newQ);
           AudioController.PlayAudio(
-            this.getNextQuestion().promptAudio,
+            this.buildNewQuestion().promptAudio,
             UIController.getInstance().showOptions,
             UIController.ShowAudioAnimation
           );
@@ -135,7 +137,7 @@ export class Assessment extends BaseQuiz {
           this.currentLinearBucketIndex--;
           this.currentLinearTargetIndex = 0;
           this.tryMoveBucket(false);
-          UIController.ReadyForNext(this.getNextQuestion());
+          UIController.ReadyForNext(this.buildNewQuestion());
           this.updateBucketInfo();
         }
         if (this.currentLinearBucketIndex == 0) {
@@ -152,7 +154,7 @@ export class Assessment extends BaseQuiz {
           this.currentLinearBucketIndex++;
           this.currentLinearTargetIndex = 0;
           this.tryMoveBucket(false);
-          UIController.ReadyForNext(this.getNextQuestion());
+          UIController.ReadyForNext(this.buildNewQuestion());
           this.updateBucketInfo();
         }
       });
@@ -177,7 +179,7 @@ export class Assessment extends BaseQuiz {
   };
 
   public startAssessment = () => {
-    UIController.ReadyForNext(this.getNextQuestion());
+    UIController.ReadyForNext(this.buildNewQuestion());
     if (this.isInDevMode) {
       this.hideDevModeButton();
     }
@@ -186,7 +188,7 @@ export class Assessment extends BaseQuiz {
   public buildBuckets = async (bucketGenMode: BucketGenMode) => {
     // If we don't have the buckets loaded, load them and initialize the current node, which is the starting point
     if (this.buckets === undefined || this.buckets.length === 0) {
-      var res = fetchAssessmentBuckets(this.app.GetDataURL()).then((result) => {
+      const res = fetchAssessmentBuckets(this.app.GetDataURL()).then((result) => {
         this.buckets = result;
         this.numBuckets = result.length;
         console.log('buckets: ' + this.buckets);
@@ -271,19 +273,20 @@ export class Assessment extends BaseQuiz {
     this.currentBucket.passed = false;
   };
 
-  public TryAnswer = (answer: number, elapsed: number) => {
+  public handleAnswerButtonPress = (answer: number, elapsed: number) => {
     if (this.bucketGenMode === BucketGenMode.RandomBST) {
       AnalyticsEvents.sendAnswered(this.currentQuestion, answer, elapsed);
     }
-    this.currentBucket.numTried += 1;
-    if (this.currentQuestion.answers[answer - 1].answerName == this.currentQuestion.correct) {
-      this.currentBucket.numCorrect += 1;
-      this.currentBucket.numConsecutiveWrong = 0;
-      console.log('Answered correctly');
-    } else {
-      this.currentBucket.numConsecutiveWrong += 1;
-      console.log('Answered incorrectly, ' + this.currentBucket.numConsecutiveWrong);
-    }
+    this.updateCurrentBucketValuesAfterAnswering(answer);
+    this.updateFeedbackAfterAnswer(answer);
+
+    setTimeout(() => {
+      console.log('Completed first Timeout');
+      this.onQuestionEnd();
+    }, 2000 * this.animationSpeedMultiplier);
+  };
+
+  private updateFeedbackAfterAnswer(answer: number) {
     if (
       this.bucketGenMode === BucketGenMode.LinearArrayBased &&
       UIController.getInstance().shownStarsCount < this.MAX_STARS_COUNT_IN_LINEAR_MODE
@@ -296,12 +299,18 @@ export class Assessment extends BaseQuiz {
       true,
       this.currentQuestion.answers[answer - 1].answerName == this.currentQuestion.correct
     );
-    setTimeout(() => {
-      console.log('Completed first Timeout');
-      this.onQuestionEnd();
-    }, 2000 * this.animationSpeedMultiplier);
-  };
-
+  }
+  private updateCurrentBucketValuesAfterAnswering(answer: number) {
+    this.currentBucket.numTried += 1;
+    if (this.currentQuestion.answers[answer - 1].answerName == this.currentQuestion.correct) {
+      this.currentBucket.numCorrect += 1;
+      this.currentBucket.numConsecutiveWrong = 0;
+      console.log('Answered correctly');
+    } else {
+      this.currentBucket.numConsecutiveWrong += 1;
+      console.log('Answered incorrectly, ' + this.currentBucket.numConsecutiveWrong);
+    }
+  }
   public onQuestionEnd = () => {
     let questionEndTimeout = this.HasQuestionsLeft()
       ? 500 * this.animationSpeedMultiplier
@@ -341,7 +350,7 @@ export class Assessment extends BaseQuiz {
           }
         }
 
-        UIController.ReadyForNext(this.getNextQuestion());
+        UIController.ReadyForNext(this.buildNewQuestion());
       } else {
         console.log('No questions left');
         this.onEnd();
@@ -365,87 +374,103 @@ export class Assessment extends BaseQuiz {
       }
     });
   };
-
-  public getNextQuestion = () => {
-    if (
-      this.bucketGenMode === BucketGenMode.LinearArrayBased &&
-      this.currentLinearTargetIndex >= this.buckets[this.currentLinearBucketIndex].items.length
-    ) {
+  public buildNewQuestion = () => {
+    if (this.isLinearArrayExhausted()) {
       return null;
     }
-    var targetItem, foil1, foil2, foil3;
+
+    const targetItem = this.selectTargetItem();
+    const foils = this.generateFoils(targetItem);
+    const answerOptions = this.shuffleAnswerOptions([targetItem, ...foils]);
+
+    const newQuestion = this.createQuestion(targetItem, answerOptions);
+    this.currentQuestion = newQuestion;
+    this.questionNumber += 1;
+
+    return newQuestion;
+  };
+
+  private isLinearArrayExhausted = (): boolean => {
+    return (
+      this.bucketGenMode === BucketGenMode.LinearArrayBased &&
+      this.currentLinearTargetIndex >= this.buckets[this.currentLinearBucketIndex].items.length
+    );
+  };
+
+  private selectTargetItem = (): any => {
+    let targetItem;
 
     if (this.bucketGenMode === BucketGenMode.RandomBST) {
-      do {
-        targetItem = randFrom(this.currentBucket.items);
-      } while (this.currentBucket.usedItems.includes(targetItem));
-
-      this.currentBucket.usedItems.push(targetItem);
-
-      do {
-        foil1 = randFrom(this.currentBucket.items);
-      } while (targetItem == foil1);
-
-      do {
-        foil2 = randFrom(this.currentBucket.items);
-      } while (targetItem == foil2 || foil1 == foil2);
-
-      do {
-        foil3 = randFrom(this.currentBucket.items);
-      } while (targetItem == foil3 || foil1 == foil3 || foil2 == foil3);
+      targetItem = this.selectRandomUnusedItem();
     } else if (this.bucketGenMode === BucketGenMode.LinearArrayBased) {
-      // LinearArrayBased
       targetItem = this.buckets[this.currentLinearBucketIndex].items[this.currentLinearTargetIndex];
       this.currentBucket.usedItems.push(targetItem);
-
-      // Generate random foils
-      do {
-        foil1 = randFrom(this.buckets[this.currentLinearBucketIndex].items);
-      } while (targetItem == foil1);
-
-      do {
-        foil2 = randFrom(this.buckets[this.currentLinearBucketIndex].items);
-      } while (targetItem == foil2 || foil1 == foil2);
-
-      do {
-        foil3 = randFrom(this.buckets[this.currentLinearBucketIndex].items);
-      } while (targetItem == foil3 || foil1 == foil3 || foil2 == foil3);
     }
 
-    let answerOptions = [targetItem, foil1, foil2, foil3];
-    shuffleArray(answerOptions);
+    return targetItem;
+  };
 
-    var result = {
-      qName: 'question-' + this.questionNumber + '-' + targetItem.itemName,
+  private selectRandomUnusedItem = (): any => {
+    let item;
+    do {
+      item = randFrom(this.currentBucket.items);
+    } while (this.currentBucket.usedItems.includes(item));
+
+    this.currentBucket.usedItems.push(item);
+    return item;
+  };
+
+  private generateFoils = (targetItem: any): any[] => {
+    let foil1, foil2, foil3;
+
+    if (this.bucketGenMode === BucketGenMode.RandomBST) {
+      foil1 = this.generateRandomFoil(targetItem);
+      foil2 = this.generateRandomFoil(targetItem, foil1);
+      foil3 = this.generateRandomFoil(targetItem, foil1, foil2);
+    } else if (this.bucketGenMode === BucketGenMode.LinearArrayBased) {
+      foil1 = this.generateLinearFoil(targetItem);
+      foil2 = this.generateLinearFoil(targetItem, foil1);
+      foil3 = this.generateLinearFoil(targetItem, foil1, foil2);
+    }
+
+    return [foil1, foil2, foil3];
+  };
+
+  private generateRandomFoil = (targetItem: any, ...existingFoils: any[]): any => {
+    let foil;
+    do {
+      foil = randFrom(this.currentBucket.items);
+    } while ([targetItem, ...existingFoils].includes(foil));
+    return foil;
+  };
+
+  private generateLinearFoil = (targetItem: any, ...existingFoils: any[]): any => {
+    let foil;
+    do {
+      foil = randFrom(this.buckets[this.currentLinearBucketIndex].items);
+    } while ([targetItem, ...existingFoils].includes(foil));
+    return foil;
+  };
+
+  private shuffleAnswerOptions = (options: any[]): any[] => {
+    shuffleArray(options);
+    return options;
+  };
+
+  private createQuestion = (targetItem: any, answerOptions: any[]): any => {
+    return {
+      qName: `question-${this.questionNumber}-${targetItem.itemName}`,
       qNumber: this.questionNumber,
       qTarget: targetItem.itemName,
       promptText: '',
       bucket: this.currentBucket.bucketID,
       promptAudio: targetItem.itemName,
       correct: targetItem.itemText,
-      answers: [
-        {
-          answerName: answerOptions[0].itemName,
-          answerText: answerOptions[0].itemText,
-        },
-        {
-          answerName: answerOptions[1].itemName,
-          answerText: answerOptions[1].itemText,
-        },
-        {
-          answerName: answerOptions[2].itemName,
-          answerText: answerOptions[2].itemText,
-        },
-        {
-          answerName: answerOptions[3].itemName,
-          answerText: answerOptions[3].itemText,
-        },
-      ],
+      answers: answerOptions.map((option) => ({
+        answerName: option.itemName,
+        answerText: option.itemText,
+      })),
     };
-
-    this.currentQuestion = result;
-    this.questionNumber += 1;
-    return result;
   };
 
   public tryMoveBucket = (passed: boolean) => {
@@ -480,99 +505,133 @@ export class Assessment extends BaseQuiz {
   };
 
   public HasQuestionsLeft = () => {
-    //// TODO: check buckets, check if done
-    var hasQuestionsLeft = true;
-
     if (this.currentBucket.passed) return false;
 
     if (this.bucketGenMode === BucketGenMode.LinearArrayBased) {
-      if (
-        this.currentLinearBucketIndex >= this.buckets.length &&
-        this.currentLinearTargetIndex >= this.buckets[this.currentLinearBucketIndex].items.length
-      ) {
-        // No more questions left
-        return false;
-      } else {
-        return true;
-      }
+      return this.hasLinearQuestionsLeft();
     }
 
     if (this.currentBucket.numCorrect >= 4) {
-      //passed this bucket
-      console.log('Passed this bucket ' + this.currentBucket.bucketID);
-
-      if (this.currentBucket.bucketID >= this.numBuckets) {
-        //passed highest bucket
-        console.log('Passed highest bucket');
-        this.currentBucket.passed = true;
-        if (this.bucketGenMode === BucketGenMode.RandomBST) {
-          AnalyticsEvents.sendBucket(this.currentBucket, true);
-        }
-        UIController.ProgressChest();
-        hasQuestionsLeft = false;
-      } else {
-        //moved up to next bucket
-        console.log('Moving up bucket');
-        if (this.currentNode.right != null) {
-          //move down to right
-          UIController.ProgressChest();
-          console.log('Moving to right node');
-          if (this.bucketGenMode === BucketGenMode.RandomBST) {
-            this.currentNode = this.currentNode.right;
-          } else {
-            this.currentLinearBucketIndex++;
-          }
-          this.tryMoveBucket(true);
-        } else {
-          // Reached root node
-          console.log('Reached root node');
-          this.currentBucket.passed = true;
-          if (this.bucketGenMode === BucketGenMode.RandomBST) {
-            AnalyticsEvents.sendBucket(this.currentBucket, true);
-          }
-          UIController.ProgressChest();
-          hasQuestionsLeft = false;
-        }
-      }
+      return this.handlePassedBucket();
     } else if (this.currentBucket.numConsecutiveWrong >= 2 || this.currentBucket.numTried >= 5) {
-      // Failed this bucket
-      console.log('Failed this bucket ' + this.currentBucket.bucketID);
-      if (this.currentBucket.bucketID < this.basalBucket) {
-        // Update basal bucket number
-        this.basalBucket = this.currentBucket.bucketID;
-      }
-      if (this.currentBucket.bucketID <= 1) {
-        // Failed the lowest bucket
-        console.log('Failed lowest bucket !');
-        hasQuestionsLeft = false;
-        this.currentBucket.passed = false;
-        if (this.bucketGenMode === BucketGenMode.RandomBST) {
-          AnalyticsEvents.sendBucket(this.currentBucket, false);
-        }
-      } else {
-        console.log('Moving down bucket !');
-        if (this.currentNode.left != null) {
-          // Move down to left
-          console.log('Moving to left node');
-          if (this.bucketGenMode === BucketGenMode.RandomBST) {
-            this.currentNode = this.currentNode.left;
-          } else {
-            this.currentLinearBucketIndex++;
-          }
-          this.tryMoveBucket(false);
-        } else {
-          // Reached root node
-          console.log('Reached root node !');
-          hasQuestionsLeft = false;
-          this.currentBucket.passed = false;
-          if (this.bucketGenMode === BucketGenMode.RandomBST) {
-            AnalyticsEvents.sendBucket(this.currentBucket, false);
-          }
-        }
-      }
+      return this.handleFailedBucket();
     }
 
-    return hasQuestionsLeft;
+    return true;
+  };
+
+  private hasLinearQuestionsLeft = (): boolean => {
+    if (
+      this.currentLinearBucketIndex >= this.buckets.length &&
+      this.currentLinearTargetIndex >= this.buckets[this.currentLinearBucketIndex].items.length
+    ) {
+      // No more questions left
+      return false;
+    } else {
+      return true;
+    }
+  };
+
+  private handlePassedBucket = (): boolean => {
+    console.log('Passed this bucket ' + this.currentBucket.bucketID);
+
+    if (this.currentBucket.bucketID >= this.numBuckets) {
+      // Passed the highest bucket
+      return this.passHighestBucket();
+    } else {
+      return this.moveUpToNextBucket();
+    }
+  };
+
+  private handleFailedBucket = (): boolean => {
+    console.log('Failed this bucket ' + this.currentBucket.bucketID);
+
+    if (this.currentBucket.bucketID < this.basalBucket) {
+      this.basalBucket = this.currentBucket.bucketID;
+    }
+
+    if (this.currentBucket.bucketID <= 1) {
+      // Failed the lowest bucket
+      return this.failLowestBucket();
+    } else {
+      return this.moveDownToPreviousBucket();
+    }
+  };
+
+  private passHighestBucket = (): boolean => {
+    console.log('Passed highest bucket');
+    this.currentBucket.passed = true;
+
+    if (this.bucketGenMode === BucketGenMode.RandomBST) {
+      AnalyticsEvents.sendBucket(this.currentBucket, true);
+    }
+
+    UIController.ProgressChest();
+    return false;
+  };
+
+  private moveUpToNextBucket = (): boolean => {
+    if (this.currentNode.right != null) {
+      // Move down to the right
+      console.log('Moving to right node');
+      if (this.bucketGenMode === BucketGenMode.RandomBST) {
+        this.currentNode = this.currentNode.right;
+      } else {
+        this.currentLinearBucketIndex++;
+      }
+      this.tryMoveBucket(true);
+    } else {
+      // Reached root node
+      console.log('Reached root node');
+      this.currentBucket.passed = true;
+
+      if (this.bucketGenMode === BucketGenMode.RandomBST) {
+        AnalyticsEvents.sendBucket(this.currentBucket, true);
+      }
+
+      UIController.ProgressChest();
+      return false;
+    }
+
+    return true;
+  };
+
+  private failLowestBucket = (): boolean => {
+    console.log('Failed lowest bucket !');
+    this.currentBucket.passed = false;
+
+    if (this.bucketGenMode === BucketGenMode.RandomBST) {
+      AnalyticsEvents.sendBucket(this.currentBucket, false);
+    }
+
+    return false;
+  };
+
+  private moveDownToPreviousBucket = (): boolean => {
+    console.log('Moving down bucket !');
+
+    if (this.currentNode.left != null) {
+      // Move down to the left
+      console.log('Moving to left node');
+      if (this.bucketGenMode === BucketGenMode.RandomBST) {
+        this.currentNode = this.currentNode.left;
+      } else {
+        this.currentLinearBucketIndex++;
+      }
+      this.tryMoveBucket(false);
+    } else {
+      // Reached root node
+      console.log('Reached root node !');
+      this.currentBucket.passed = false;
+
+      if (this.bucketGenMode === BucketGenMode.RandomBST) {
+        AnalyticsEvents.sendBucket(this.currentBucket, false);
+      }
+
+      return false;
+    }
+
+    return true;
   };
 
   public override onEnd(): void {
