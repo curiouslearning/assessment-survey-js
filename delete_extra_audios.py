@@ -51,13 +51,14 @@ if __name__ == "__main__":
     root_folder = r"./data"
     
     language = input("Enter the language: ")
-    assessment_type = input("Enter the type of assessment: ")
+    assessment_type = input("Enter the type of assessment:")
     json_path = construct_json_path(root_folder, language, assessment_type)
     audios_folder = os.path.join("./audio", f"{language}-{assessment_type}")
     print("Constructed JSON path:", json_path)
     
     # Get distinct items from JSON data
     distinct_items = get_distinct_item_names(json_path)
+    distinct_items.append("answer_feedback")
     print("Distinct item names:", distinct_items)
     
     # Delete any extra audio files in the audio folder
