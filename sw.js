@@ -8,50 +8,48 @@ workbox.precaching.precacheAndRoute([{"revision":"76a23e80ae39c4a2aaa42c61e7ef33
 });
 
 const channel = new BroadcastChannel('as-message-channel');
-
-let version = 1.6;
+const version = 1.6;
 let cachingProgress = 0;
 let cachableAssetsCount = 0;
+const debugCaching = true;
 
 self.addEventListener('message', async (event) => {
-  console.log('Registration message received in the service worker ');
+  console.log('Registration message received in the service worker');
   if (event.data.type === 'Registration') {
-    if (!!!caches.keys().length) {
+    if (!(await caches.keys()).length) {
       cachingProgress = 0;
-      let cacheName = await getCacheName(event.data.value);
+      const cacheName = await getCacheName(event.data.value);
+      // Assuming there's more to do with cacheName later
     }
   }
 });
 
-self.addEventListener('install', async function (e) {
+self.addEventListener('install', (e) => {
   self.skipWaiting();
 });
 
-self.addEventListener('activate', function (event) {
+self.addEventListener('activate', (event) => {
   console.log('Service worker activated');
   event.waitUntil(self.clients.claim());
   channel.postMessage({ command: 'Activated', data: {} });
 });
 
-self.registration.addEventListener('updatefound', function (e) {
+self.registration.addEventListener('updatefound', () => {
   caches.keys().then((cacheNames) => {
     cacheNames.forEach((cacheName) => {
-      if (cacheName == workbox.core.cacheNames.precache) {
+      if (cacheName === workbox.core.cacheNames.precache) {
         // caches.delete(cacheName);
         self.clients.matchAll().then((clients) => {
-          clients.forEach((client) =>
-            client.postMessage({ msg: 'UpdateFound' })
-          );
+          clients.forEach((client) => client.postMessage({ msg: 'UpdateFound' }));
         });
       }
     });
   });
 });
 
-channel.addEventListener('message', async function (event) {
+channel.addEventListener('message', async (event) => {
   if (event.data.command === 'Cache') {
-    console.log('Caching request received in the service worker with data: ');
-    console.log(event.data);
+    console.log('Caching request received in the service worker with data:', event.data);
     cachingProgress = 0;
     await cacheTheBookJSONAndImages(event.data.data);
   }
@@ -59,7 +57,7 @@ channel.addEventListener('message', async function (event) {
 
 function updateCachingProgress(bookName) {
   cachingProgress++;
-  let progress = Math.round((cachingProgress / cachableAssetsCount) * 100);
+  const progress = Math.round((cachingProgress / cachableAssetsCount) * 100);
   self.clients.matchAll().then((clients) => {
     clients.forEach((client) =>
       client.postMessage({
@@ -70,67 +68,50 @@ function updateCachingProgress(bookName) {
   });
 }
 
-let debugCaching = true;
-
-function cacheTheBookJSONAndImages(data) {
+async function cacheTheBookJSONAndImages(data) {
   console.log('Caching the book JSON and images', data);
-  let appData = data['appData'];
-  let cachableAssets = [];
-
-  cachableAssets.push(appData['contentFilePath']);
-  cachableAssets.push(...appData['audioVisualResources']);
-
-  // let audioVisualResources = appData["audioVisualResources"];
-
-  // for (let i = 0; i < audioVisualResources.length; i++) {
-  //   cachableAssets.push(audioVisualResources[i]);
-  // }
-
+  const appData = data.appData;
+  const cachableAssets = [appData.contentFilePath, ...appData.audioVisualResources];
   cachableAssetsCount = cachableAssets.length;
 
-  console.log('Cachable app assets: ', cachableAssets);
+  console.log('Cachable app assets:', cachableAssets);
 
-  caches.open(appData['appName']).then((cache) => {
-    for (let i = 0; i < cachableAssets.length; i++) {
-      cache
-        .add(cachableAssets[i].toLowerCase())
-        .finally(() => {
-          updateCachingProgress(appData['appName']);
-        })
-        .catch((error) => {
-          if (debugCaching) {
-            console.log(
-              'Error while caching an asset: ',
-              cachableAssets[i],
-              error
-            );
-            cachableAssets[i] = cachableAssets[i] + ' ERROR WHILE CACHING!';
-          }
-        });
-    }
-    console.log('After caching: ', cachableAssets);
-  });
+  const cache = await caches.open(appData.appName);
+  await Promise.all(
+    cachableAssets.map(async (asset) => {
+      try {
+        await cache.add(asset.toLowerCase());
+        updateCachingProgress(appData.appName);
+      } catch (error) {
+        if (debugCaching) {
+          console.log('Error while caching an asset:', asset, error);
+        }
+      }
+    })
+  );
+  console.log('After caching:', cachableAssets);
 }
 
-self.addEventListener('fetch', function (event) {
+self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url);
-  if (requestUrl.protocol === 'chrome-extension:') {
-    return;
-  }
+  if (requestUrl.protocol === 'chrome-extension:') return;
+
   if (requestUrl.searchParams.has('cache-bust')) {
     return event.respondWith(fetch(event.request));
   }
+
   event.respondWith(
     caches
       .match(event.request)
-      .then(function (response) {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      })
-      .catch(function (error) {
-        console.log('Error while fetching: ', event.request.url, error);
+      .then((response) => response || fetch(event.request))
+      .catch((error) => {
+        console.log('Error while fetching:', event.request.url, error);
       })
   );
 });
+
+// Placeholder function to handle cache name
+async function getCacheName(value) {
+  // Implement logic for generating cache name based on the value
+  return `cache-${version}-${value}`;
+}
