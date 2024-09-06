@@ -38,7 +38,6 @@ self.registration.addEventListener('updatefound', () => {
   caches.keys().then((cacheNames) => {
     cacheNames.forEach((cacheName) => {
       if (cacheName === workbox.core.cacheNames.precache) {
-        // caches.delete(cacheName);
         self.clients.matchAll().then((clients) => {
           clients.forEach((client) => client.postMessage({ msg: 'UpdateFound' }));
         });
@@ -48,66 +47,83 @@ self.registration.addEventListener('updatefound', () => {
 });
 
 channel.addEventListener('message', async (event) => {
-  if (event.data.command === 'Cache') {
-    console.log('Caching request received in the service worker with data:', event.data);
-    cachingProgress = 0;
-    await cacheTheBookJSONAndImages(event.data.data);
+  try {
+    if (event.data.command === 'Cache') {
+      console.log('Caching request received in the service worker with data:', event.data);
+      cachingProgress = 0;
+      await cacheTheBookJSONAndImages(event.data.data);
+    }
+  } catch (error) {
+    console.log(error);
   }
 });
 
 function updateCachingProgress(bookName) {
-  cachingProgress++;
-  const progress = Math.round((cachingProgress / cachableAssetsCount) * 100);
-  self.clients.matchAll().then((clients) => {
-    clients.forEach((client) =>
-      client.postMessage({
-        msg: 'Loading',
-        data: { progress, bookName },
-      })
-    );
-  });
+  try {
+    cachingProgress++;
+    const progress = Math.round((cachingProgress / cachableAssetsCount) * 100);
+    self.clients.matchAll().then((clients) => {
+      clients.forEach((client) =>
+        client.postMessage({
+          msg: 'Loading',
+          data: { progress, bookName },
+        })
+      );
+    });
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 async function cacheTheBookJSONAndImages(data) {
-  console.log('Caching the book JSON and images', data);
-  const appData = data.appData;
-  const cachableAssets = [appData.contentFilePath, ...appData.audioVisualResources];
-  cachableAssetsCount = cachableAssets.length;
+  try {
+    console.log('Caching the book JSON and images', data);
+    const appData = data.appData;
+    const cachableAssets = [appData.contentFilePath, ...appData.audioVisualResources];
+    cachableAssetsCount = cachableAssets.length;
 
-  console.log('Cachable app assets:', cachableAssets);
+    console.log('Cachable app assets:', cachableAssets);
 
-  const cache = await caches.open(appData.appName);
-  await Promise.all(
-    cachableAssets.map(async (asset) => {
-      try {
-        await cache.add(asset.toLowerCase());
-        updateCachingProgress(appData.appName);
-      } catch (error) {
-        if (debugCaching) {
-          console.log('Error while caching an asset:', asset, error);
+    const cache = await caches.open(appData.appName);
+    await Promise.all(
+      cachableAssets.map(async (asset) => {
+        try {
+          await cache.add(asset.toLowerCase());
+        } catch (error) {
+          if (debugCaching) {
+            console.log('Error while caching an asset:', asset, error);
+          }
+        } finally {
+          updateCachingProgress(appData.appName);
         }
-      }
-    })
-  );
-  console.log('After caching:', cachableAssets);
+      })
+    );
+    console.log('After caching:', cachableAssets);
+  } catch (error) {
+    console.log("error", error);
+  }
 }
 
 self.addEventListener('fetch', (event) => {
-  const requestUrl = new URL(event.request.url);
-  if (requestUrl.protocol === 'chrome-extension:') return;
+  try {
+    const requestUrl = new URL(event.request.url);
+    if (requestUrl.protocol === 'chrome-extension:') return;
 
-  if (requestUrl.searchParams.has('cache-bust')) {
-    return event.respondWith(fetch(event.request));
+    if (requestUrl.searchParams.has('cache-bust')) {
+      return event.respondWith(fetch(event.request));
+    }
+
+    event.respondWith(
+      caches
+        .match(event.request)
+        .then((response) => response || fetch(event.request))
+        .catch((error) => {
+          console.log('Error while fetching:', event.request.url, error);
+        })
+    );
+  } catch (error) {
+    console.log("error", error);
   }
-
-  event.respondWith(
-    caches
-      .match(event.request)
-      .then((response) => response || fetch(event.request))
-      .catch((error) => {
-        console.log('Error while fetching:', event.request.url, error);
-      })
-  );
 });
 
 // Placeholder function to handle cache name
