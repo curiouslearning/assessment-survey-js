@@ -102,8 +102,12 @@ export class AnalyticsEvents {
   static getAppLanguageFromDataURL(appType: string): string {
     // Check if app type is not empty and split the string by the hyphen then return the first element
     if (appType && appType !== '' && appType.includes('-')) {
-      return appType.split('-')[0];
-    }
+      let language:string=appType.split('-').slice(0, -1).join('-');
+      if(language.includes("west-african")) {
+        return "west-african-english"
+      }else{
+      return language;
+    }}
 
     return 'NotAvailable';
   }
