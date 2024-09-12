@@ -3,7 +3,7 @@
   "appType": "assessment",
   "assessmentType": "letter-sounds",
   "feedbackText": "дивовижно!",
-  "contentVersion": "v0.3",
+  "contentVersion": "v0.2",
   "buckets": [
     {
       "bucketID": 1,
