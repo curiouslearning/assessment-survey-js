@@ -102,8 +102,12 @@ export class AnalyticsEvents {
   static getAppLanguageFromDataURL(appType: string): string {
     // Check if app type is not empty and split the string by the hyphen then return the first element
     if (appType && appType !== '' && appType.includes('-')) {
-      return appType.split('-')[0];
-    }
+      let language:string=appType.split('-').slice(0, -1).join('-');
+      if(language.includes("west-african")) {
+        return "west-african-english"
+      }else{
+      return language;
+    }}
 
     return 'NotAvailable';
   }
@@ -308,6 +312,22 @@ export class AnalyticsEvents {
     console.log('Content Version: ' + AnalyticsEvents.contentVersion);
 
     AnalyticsEvents.sendDataToThirdParty(score, AnalyticsEvents.uuid);
+
+    // Attempt to send the score to the parent curious frame if it exists
+    if (window.parent) {
+      window.parent.postMessage(
+        {
+          type: 'assessment_completed',
+          score: score,
+          // maxScore: maxScore,
+          // basalBucket: basalBucketID,
+          // ceilingBucket: ceilingBucketID,
+          // appVersion: AnalyticsEvents.appVersion,
+          // contentVersion: AnalyticsEvents.contentVersion,
+        },
+        'https://cr-frame-dev-testing.vercel.app/'
+      );
+    }
 
     logEvent(AnalyticsEvents.gana, 'completed', {
       type: 'completed',

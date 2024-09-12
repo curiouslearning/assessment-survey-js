@@ -15,8 +15,7 @@ import { Workbox } from 'workbox-window';
 import CacheModel from './components/cacheModel';
 import { UIController } from './components/uiController';
 
-const appVersion: string = 'v1.1.0';
-
+const appVersion: string = 'v1.1.2';
 
 /**
  * Content version from the data file in format v0.1
