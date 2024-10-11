@@ -325,7 +325,7 @@ export class AnalyticsEvents {
           // appVersion: AnalyticsEvents.appVersion,
           // contentVersion: AnalyticsEvents.contentVersion,
         },
-        'https://cr-frame-dev-testing.vercel.app/'
+        'https://synapse.curiouscontent.org/'
       );
     }
 
