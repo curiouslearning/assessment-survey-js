@@ -51,7 +51,7 @@ export class UIController {
 
   public nextQuestion = null;
 
-  private contentLoaded = false;
+  public contentLoaded: boolean = false;
 
   public qStart;
   public shown = false;
@@ -203,7 +203,7 @@ export class UIController {
     this.buttons.push(this.answerButton6);
 
     this.landingContainer.addEventListener('click', () => {
-      if (localStorage.getItem(getDataFile())) {
+      if (localStorage.getItem(getDataFile()) && UIController.getInstance().contentLoaded) {
         this.showGame();
       }
     });
@@ -342,7 +342,7 @@ export class UIController {
     const isBucketControlsEnabled = UIController.getInstance().devModeBucketControlsEnabled;
     if (isBucketControlsEnabled) {
       UIController.getInstance().externalBucketControlsGenerationHandler(UIController.getInstance().playButton, () => {
-        console.log("Call from inside click handler of external bucket controls");
+        console.log('Call from inside click handler of external bucket controls');
         UIController.ShowQuestion();
         //playquestionaudio
         AudioController.PlayAudio(
@@ -385,10 +385,10 @@ export class UIController {
     const isBucketControlsEnabled = UIController.getInstance().devModeBucketControlsEnabled;
     if (isBucketControlsEnabled) {
       UIController.getInstance().externalBucketControlsGenerationHandler(UIController.getInstance().playButton, () => {
-        console.log("Call from inside click handler of external bucket controls #2");
+        console.log('Call from inside click handler of external bucket controls #2');
         console.log('next question button pressed');
         console.log(newQuestion.promptAudio);
-  
+
         if ('promptAudio' in newQuestion) {
           AudioController.PlayAudio(newQuestion.promptAudio, undefined, UIController.ShowAudioAnimation);
         }
@@ -396,12 +396,12 @@ export class UIController {
     } else {
       UIController.getInstance().playButton.innerHTML =
         "<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='/img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>";
-  
+
       var nextQuestionButton = document.getElementById('nextqButton');
       nextQuestionButton.addEventListener('click', function () {
         console.log('next question button pressed');
         console.log(newQuestion.promptAudio);
-  
+
         if ('promptAudio' in newQuestion) {
           AudioController.PlayAudio(newQuestion.promptAudio, undefined, UIController.ShowAudioAnimation);
         }
@@ -538,7 +538,9 @@ export class UIController {
     UIController.getInstance().startPressCallback = callback;
   }
 
-  public static SetExternalBucketControlsGenerationHandler(handler: (container: HTMLElement, clickCallback: () => void) => void): void {
+  public static SetExternalBucketControlsGenerationHandler(
+    handler: (container: HTMLElement, clickCallback: () => void) => void
+  ): void {
     UIController.getInstance().externalBucketControlsGenerationHandler = handler;
   }
 

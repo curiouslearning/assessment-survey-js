@@ -116,7 +116,6 @@ export class AnalyticsEvents {
   static getAppTypeFromDataURL(appType: string): string {
     // Check if app type is not empty and split the string by the hyphen then return the last element
     if (appType && appType !== '' && appType.includes('-')) {
-      console.log(">>>>>>>>>>>.",appType.substring(appType.lastIndexOf('-')+1));
       return appType.substring(appType.lastIndexOf('-')+1)
     }
 
@@ -326,7 +325,7 @@ export class AnalyticsEvents {
           // appVersion: AnalyticsEvents.appVersion,
           // contentVersion: AnalyticsEvents.contentVersion,
         },
-        'https://cr-frame-dev-testing.vercel.app/'
+        'https://synapse.curiouscontent.org/'
       );
     }
 

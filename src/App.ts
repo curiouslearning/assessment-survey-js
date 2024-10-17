@@ -15,7 +15,7 @@ import { Workbox } from 'workbox-window';
 import CacheModel from './components/cacheModel';
 import { UIController } from './components/uiController';
 
-const appVersion: string = 'v1.1.2';
+const appVersion: string = 'v1.1.3';
 
 /**
  * Content version from the data file in format v0.1
@@ -25,9 +25,7 @@ let contentVersion: string = '';
 
 let loadingScreen = document.getElementById('loadingScreen');
 const progressBar = document.getElementById('progressBar');
-const broadcastChannel: BroadcastChannel = new BroadcastChannel(
-  'as-message-channel'
-);
+const broadcastChannel: BroadcastChannel = new BroadcastChannel('as-message-channel');
 
 export class App {
   /** Could be 'assessment' or 'survey' based on the data file */
@@ -47,11 +45,7 @@ export class App {
     console.log('Initializing app...');
 
     this.dataURL = getDataFile();
-    this.cacheModel = new CacheModel(
-      this.dataURL,
-      this.dataURL,
-      new Set<string>()
-    );
+    this.cacheModel = new CacheModel(this.dataURL, this.dataURL, new Set<string>());
 
     // console.log("Data file: " + this.dataURL);
 
@@ -106,32 +100,19 @@ export class App {
                 // Use to lower case for the Lugandan data
                 if (
                   data['quizName'].includes('Luganda') ||
-                  data['quizName']
-                    .toLowerCase()
-                    .includes('west african english')
+                  data['quizName'].toLowerCase().includes('west african english')
                 ) {
                   audioItemURL =
-                    '/audio/' +
-                    this.dataURL +
-                    '/' +
-                    buckets[i].items[j].itemName.toLowerCase().trim() +
-                    '.mp3';
+                    '/audio/' + this.dataURL + '/' + buckets[i].items[j].itemName.toLowerCase().trim() + '.mp3';
                 } else {
-                  audioItemURL =
-                    '/audio/' +
-                    this.dataURL +
-                    '/' +
-                    buckets[i].items[j].itemName.trim() +
-                    '.mp3';
+                  audioItemURL = '/audio/' + this.dataURL + '/' + buckets[i].items[j].itemName.trim() + '.mp3';
                 }
 
                 this.cacheModel.addItemToAudioVisualResources(audioItemURL);
               }
             }
 
-            this.cacheModel.addItemToAudioVisualResources(
-              '/audio/' + this.dataURL + '/answer_feedback.mp3'
-            );
+            this.cacheModel.addItemToAudioVisualResources('/audio/' + this.dataURL + '/answer_feedback.mp3');
 
             this.game = new Assessment(this.dataURL, this.unityBridge);
           }
@@ -168,10 +149,7 @@ export class App {
           console.log('Service worker registration failed: ' + err);
         });
 
-      navigator.serviceWorker.addEventListener(
-        'message',
-        handleServiceWorkerMessage
-      );
+      navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
 
       await navigator.serviceWorker.ready;
 
@@ -190,28 +168,30 @@ export class App {
           'Cache-Control': 'no-store',
         },
         cache: 'no-store',
-      }).then(async (response) => {
-        if (!response.ok) {
-          console.error('Failed to fetch the content file from the server!');
-          return;
-        }
-        const newContentFileData = await response.json();
-        const aheadContentVersion = newContentFileData['contentVersion'];
-        console.log('No Cache Content version: ' + aheadContentVersion);
+      })
+        .then(async (response) => {
+          if (!response.ok) {
+            console.error('Failed to fetch the content file from the server!');
+            return;
+          }
+          const newContentFileData = await response.json();
+          const aheadContentVersion = newContentFileData['contentVersion'];
+          console.log('No Cache Content version: ' + aheadContentVersion);
 
-        // We need to check here for the content version updates
-        // If there's a new content version, we need to remove the cached content and reload
-        // We are comparing here the contentVersion with the aheadContentVersion
-        if (aheadContentVersion && contentVersion != aheadContentVersion) {
-          console.log('Content version mismatch! Reloading...');
-          localStorage.removeItem(this.cacheModel.appName);
-          // Clear the cache for tht particular content
-          caches.delete(this.cacheModel.appName);
-          handleUpdateFoundMessage();
-        }
-      }).catch((error) => { 
-        console.error('Error fetching the content file: ' + error);
-      });
+          // We need to check here for the content version updates
+          // If there's a new content version, we need to remove the cached content and reload
+          // We are comparing here the contentVersion with the aheadContentVersion
+          if (aheadContentVersion && contentVersion != aheadContentVersion) {
+            console.log('Content version mismatch! Reloading...');
+            localStorage.removeItem(this.cacheModel.appName);
+            // Clear the cache for tht particular content
+            caches.delete(this.cacheModel.appName);
+            handleUpdateFoundMessage();
+          }
+        })
+        .catch((error) => {
+          console.error('Error fetching the content file: ' + error);
+        });
 
       if (localStorage.getItem(this.cacheModel.appName) == null) {
         console.log('Caching!' + this.cacheModel.appName);
@@ -226,15 +206,13 @@ export class App {
         progressBar!.style.width = 100 + '%';
         setTimeout(() => {
           loadingScreen!.style.display = 'none';
+          UIController.SetContentLoaded(true);
         }, 1500);
       }
 
       broadcastChannel.onmessage = (event) => {
         console.log(event.data.command + ' received from service worker!');
-        if (
-          event.data.command == 'Activated' &&
-          localStorage.getItem(this.cacheModel.appName) == null
-        ) {
+        if (event.data.command == 'Activated' && localStorage.getItem(this.cacheModel.appName) == null) {
           broadcastChannel.postMessage({
             command: 'Cache',
             data: {
@@ -248,9 +226,7 @@ export class App {
     }
   }
 
-  handleServiceWorkerRegistation(
-    registration: ServiceWorkerRegistration | undefined
-  ): void {
+  handleServiceWorkerRegistation(registration: ServiceWorkerRegistration | undefined): void {
     try {
       registration?.installing?.postMessage({
         type: 'Registartion',
@@ -286,9 +262,8 @@ function handleLoadingMessage(event, progressValue): void {
     progressBar!.style.width = 100 + '%';
     setTimeout(() => {
       loadingScreen!.style.display = 'none';
+      UIController.SetContentLoaded(true);
     }, 1500);
-
-    UIController.SetContentLoaded(true);
     // add book with a name to local storage as cached
     localStorage.setItem(event.data.data.bookName, 'true');
     readLanguageDataFromCacheAndNotifyAndroidApp(event.data.data.bookName);
