@@ -1,16 +1,28 @@
 {
   "compilerOptions": {
-    "module": "es6",
+    "module": "commonjs",
     "esModuleInterop": true,
     "target": "es2016",
-    "lib": ["es7", "dom"],
+    "lib": [
+      "es7",
+      "dom"
+    ],
     "moduleResolution": "node",
     "outDir": "dist",
     "sourceMap": true,
     "strict": false,
     "removeComments": true
   },
-  "include": ["src"],
-  "exclude": ["node_modules"],
-  "lib": ["es7", "dom"]
+  "include": [
+    "src",
+    "tests",
+    "test"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "lib": [
+    "es7",
+    "dom"
+  ]
 }
