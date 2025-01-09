@@ -1,3 +1,8 @@
+/**
+ * @jest-environment jsdom
+ * @jest-environment-options {"url": "https://localhost/"}
+ */
+
 // Import the utility functions
 import { getAppType, getUUID, getUserSource, getDataFile } from '../../src/components/urlUtils';
 
@@ -7,7 +12,7 @@ describe('Utility Function Tests', () => {
   beforeAll(() => {
     // Save the original window.location
     originalLocation = window.location;
-
+    
     // Mock the location object
     Object.defineProperty(window, 'location', {
       writable: true,
@@ -38,6 +43,11 @@ describe('Utility Function Tests', () => {
 
     it('should return undefined if appType is not present in the URL', () => {
       mockLocationSearch('?otherParam=value');
+      expect(getAppType()).toBeUndefined();
+    });
+
+    it('should return undefined if the URL search is empty', () => {
+      mockLocationSearch('');
       expect(getAppType()).toBeUndefined();
     });
   });
