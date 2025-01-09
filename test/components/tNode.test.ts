@@ -83,4 +83,14 @@ describe('sortedArrayToIDsBST', () => {
 
     expect(Math.abs(leftDepth - rightDepth)).toBeLessThanOrEqual(1); // Tree is balanced
   });
+
+  it('should return null when mid equals 0', () => {
+    const usedIndices = new Set<number>();
+    const start = 0;
+    const end = 0;
+
+    const result = sortedArrayToIDsBST(start, end, usedIndices);
+
+    expect(result).toBeNull();
+  });
 });
