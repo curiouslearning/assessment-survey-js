@@ -10,7 +10,7 @@ jest.mock('../../src/components/jsonUtils', () => ({
   fetchSurveyQuestions: jest.fn(),
 }));
 
-jest.mock('../components/uiController', () => ({
+jest.mock('../../src/components/uiController', () => ({
   SetButtonPressAction: jest.fn(),
   SetStartAction: jest.fn(),
   ReadyForNext: jest.fn(),
@@ -18,11 +18,11 @@ jest.mock('../components/uiController', () => ({
   AddStar: jest.fn(),
 }));
 
-jest.mock('../components/audioController', () => ({
+jest.mock('../../src/components/audioController', () => ({
   PrepareAudioAndImagesForSurvey: jest.fn(),
 }));
 
-jest.mock('../components/unityBridge', () => ({
+jest.mock('../../src/components/unityBridge', () => ({
   SendLoaded: jest.fn(),
 }));
 
