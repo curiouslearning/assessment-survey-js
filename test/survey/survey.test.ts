@@ -17,6 +17,15 @@ jest.mock('../../src/components/uiController', () => ({
   SetFeedbackVisibile: jest.fn(),
   AddStar: jest.fn(),
 }));
+jest.mock('firebase/app', () => ({
+  initializeApp: jest.fn(),
+}));
+jest.mock('firebase/analytics', () => ({
+  getAnalytics: jest.fn().mockReturnValue({
+    logEvent: jest.fn(),
+  }),
+  logEvent: jest.fn(),
+}));
 
 jest.mock('../../src/components/audioController', () => ({
   PrepareAudioAndImagesForSurvey: jest.fn(),
