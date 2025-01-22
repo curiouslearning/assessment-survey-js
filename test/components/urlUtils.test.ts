@@ -16,9 +16,9 @@ describe('URL Utils', () => {
     expect(getAppType()).toBe('testApp');
   });
 
-  test('getAppType should return undefined if appType is not present in the URL', () => {
+  test('getAppType should return null if appType is not present in the URL', () => {
     window.location.search = '?cr_user_id=12345';
-    expect(getAppType()).toBeUndefined();
+    expect(getAppType()).toBeNull();
   });
 
   test('getUUID should return the UUID from the URL', () => {
