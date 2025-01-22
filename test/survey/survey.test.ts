@@ -1,7 +1,6 @@
 import { Survey } from '../../src/survey/survey';
 import { UIController } from '../../src/components/uiController';
 import { AudioController } from '../../src/components/audioController';
-import { AnalyticsEvents } from '../../src/components/analyticsEvents';
 import { App } from '../../src/App';
 import { fetchSurveyQuestions } from '../../src/components/jsonUtils';
 import { UnityBridge } from '../../src/components/unityBridge';
@@ -17,9 +16,11 @@ jest.mock('../../src/components/uiController', () => ({
   SetFeedbackVisibile: jest.fn(),
   AddStar: jest.fn(),
 }));
+
 jest.mock('firebase/app', () => ({
   initializeApp: jest.fn(),
 }));
+
 jest.mock('firebase/analytics', () => ({
   getAnalytics: jest.fn().mockReturnValue({
     logEvent: jest.fn(),
@@ -32,7 +33,11 @@ jest.mock('../../src/components/audioController', () => ({
 }));
 
 jest.mock('../../src/components/unityBridge', () => ({
-  SendLoaded: jest.fn(),
+  UnityBridge: jest.fn().mockImplementation(() => ({
+    SendLoaded: jest.fn(),
+    SendMessage: jest.fn(),
+    SendClose: jest.fn(),
+  })),
 }));
 
 describe('Survey', () => {
@@ -41,6 +46,14 @@ describe('Survey', () => {
   let mockUnityBridge: UnityBridge;
 
   beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+
+    // Set up DOM elements required by Survey/BaseQuiz
+    document.body.innerHTML = `
+      <select id="bucketGenSelect"></select>
+    `;
+
     mockApp = new App();
     mockUnityBridge = new UnityBridge();
     survey = new Survey('testDataURL', mockUnityBridge);
@@ -49,6 +62,10 @@ describe('Survey', () => {
       { itemName: 'Question1', itemText: 'What is 1+1?' },
       { itemName: 'Question2', itemText: 'What is 2+2?' },
     ]);
+  });
+
+  afterEach(() => {
+    jest.clearAllTimers();
   });
 
   it('should initialize Survey correctly', () => {
@@ -86,24 +103,21 @@ describe('Survey', () => {
 
     expect(survey.HasQuestionsLeft()).toBe(true);
 
-    survey.currentQuestionIndex = 2; // Set index beyond the last question
+    survey.currentQuestionIndex = 2; // Beyond last question
     expect(survey.HasQuestionsLeft()).toBe(false);
   });
 
   it('should handle answer button press and trigger analytics and UI updates', async () => {
     await survey.Run(mockApp);
 
-    const mockSendAnswered = jest.fn();
-    jest.spyOn(mockUnityBridge, 'SendLoaded').mockImplementation(mockSendAnswered);
-
     survey.handleAnswerButtonPress(1, 1000);
 
     expect(UIController.SetFeedbackVisibile).toHaveBeenCalledWith(true, true);
     expect(UIController.AddStar).toHaveBeenCalled();
 
-    setTimeout(() => {
-      expect(mockSendAnswered).toHaveBeenCalled();
-    }, 2000);
+    jest.advanceTimersByTime(2000);
+
+    expect(mockUnityBridge.SendLoaded).toHaveBeenCalled();
   });
 
   it('should go to the next question after a question ends', async () => {
@@ -111,10 +125,10 @@ describe('Survey', () => {
 
     survey.onQuestionEnd();
 
-    setTimeout(() => {
-      expect(survey.currentQuestionIndex).toBe(1); // Next question index
-      expect(UIController.ReadyForNext).toHaveBeenCalledWith(survey.buildNewQuestion());
-    }, 500);
+    jest.advanceTimersByTime(500);
+
+    expect(survey.currentQuestionIndex).toBe(1); // Next question index
+    expect(UIController.ReadyForNext).toHaveBeenCalledWith(survey.buildNewQuestion());
   });
 
   it('should end the survey when no questions are left', async () => {
@@ -123,11 +137,11 @@ describe('Survey', () => {
 
     await survey.Run(mockApp);
 
-    survey.currentQuestionIndex = 2; // Set index beyond the last question
+    survey.currentQuestionIndex = 2; // Beyond last question
     survey.onQuestionEnd();
 
-    setTimeout(() => {
-      expect(mockOnEnd).toHaveBeenCalled();
-    }, 500);
+    jest.advanceTimersByTime(500);
+
+    expect(mockOnEnd).toHaveBeenCalled();
   });
 });

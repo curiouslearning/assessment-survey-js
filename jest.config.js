@@ -6,6 +6,7 @@ module.exports = {
   collectCoverageFrom: ['src/**/*.ts'],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov'],
+  setupFiles: ['./jest.setup.js'],
   coverageThreshold: {
     global: {
       branches: 80,
