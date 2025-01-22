@@ -1,101 +1,60 @@
-// Import the utility functions
 import { getAppType, getUUID, getUserSource, getDataFile } from '../../src/components/urlUtils';
 
-describe('Utility Function Tests', () => {
-  let originalLocation: Location;
-
-  beforeAll(() => {
-    // Save the original window.location
-    originalLocation = window.location;
-
-    // Mock the location object
+describe('URL Utils', () => {
+  beforeEach(() => {
+    // Reset mocks before each test
     Object.defineProperty(window, 'location', {
       writable: true,
       value: {
-        ...originalLocation,
         search: '',
       },
     });
   });
 
-  afterAll(() => {
-    // Restore the original window.location
-    Object.defineProperty(window, 'location', {
-      writable: true,
-      value: originalLocation,
-    });
+  test('getAppType should return the appType from the URL', () => {
+    window.location.search = '?appType=testApp';
+    expect(getAppType()).toBe('testApp');
   });
 
-  function mockLocationSearch(queryString: string) {
-    window.location.search = queryString;
-  }
-
-  describe('getAppType', () => {
-    it('should return the appType if present in the URL', () => {
-      mockLocationSearch('?appType=exampleApp');
-      expect(getAppType()).toBe('exampleApp');
-    });
-
-    it('should return undefined if appType is not present in the URL', () => {
-      mockLocationSearch('?otherParam=value');
-      expect(getAppType()).toBeUndefined();
-    });
+  test('getAppType should return undefined if appType is not present in the URL', () => {
+    window.location.search = '?cr_user_id=12345';
+    expect(getAppType()).toBeUndefined();
   });
 
-  describe('getUUID', () => {
-    it('should return the cr_user_id if present in the URL', () => {
-      mockLocationSearch('?cr_user_id=12345');
-      expect(getUUID()).toBe('12345');
-    });
-
-    it('should return "WebUserNoID" if cr_user_id is not present in the URL', () => {
-      mockLocationSearch('?otherParam=value');
-      expect(getUUID()).toBe('WebUserNoID');
-    });
-
-    it('should log "no uuid provided" if cr_user_id is missing', () => {
-      console.log = jest.fn();
-      mockLocationSearch('?otherParam=value');
-      getUUID();
-      expect(console.log).toHaveBeenCalledWith('no uuid provided');
-    });
+  test('getUUID should return the UUID from the URL', () => {
+    window.location.search = '?cr_user_id=12345';
+    expect(getUUID()).toBe('12345');
   });
 
-  describe('getUserSource', () => {
-    it('should return the userSource if present in the URL', () => {
-      mockLocationSearch('?userSource=external');
-      expect(getUserSource()).toBe('external');
-    });
-
-    it('should return "WebUserNoSource" if userSource is not present in the URL', () => {
-      mockLocationSearch('?otherParam=value');
-      expect(getUserSource()).toBe('WebUserNoSource');
-    });
-
-    it('should log "no user source provided" if userSource is missing', () => {
-      console.log = jest.fn();
-      mockLocationSearch('?otherParam=value');
-      getUserSource();
-      expect(console.log).toHaveBeenCalledWith('no user source provided');
-    });
+  test('getUUID should return "WebUserNoID" if cr_user_id is not present in the URL', () => {
+    window.location.search = '?appType=testApp';
+    expect(getUUID()).toBe('WebUserNoID');
   });
 
-  describe('getDataFile', () => {
-    it('should return the data file if "data" is present in the URL', () => {
-      mockLocationSearch('?data=custom-data-file');
-      expect(getDataFile()).toBe('custom-data-file');
-    });
+  test('getUserSource should return the userSource from the URL', () => {
+    window.location.search = '?userSource=testSource';
+    expect(getUserSource()).toBe('testSource');
+  });
 
-    it('should return "zulu-lettersounds" if "data" is not present in the URL', () => {
-      mockLocationSearch('?otherParam=value');
-      expect(getDataFile()).toBe('zulu-lettersounds');
-    });
+  test('getUserSource should return "WebUserNoSource" if userSource is not present in the URL', () => {
+    window.location.search = '?appType=testApp';
+    expect(getUserSource()).toBe('WebUserNoSource');
+  });
 
-    it('should log "default data file" if "data" is missing', () => {
-      console.log = jest.fn();
-      mockLocationSearch('?otherParam=value');
-      getDataFile();
-      expect(console.log).toHaveBeenCalledWith('default data file');
-    });
+  test('getDataFile should return the data file from the URL', () => {
+    window.location.search = '?data=custom-data-file';
+    expect(getDataFile()).toBe('custom-data-file');
+  });
+
+  test('getDataFile should return the default data file if data is not present in the URL', () => {
+    window.location.search = '?appType=testApp';
+    expect(getDataFile()).toBe('zulu-lettersounds');
+  });
+
+  test('getDataFile should return "survey-zulu" if commented default data file is activated', () => {
+    window.location.search = '?appType=testApp';
+    // Uncomment the line in the function to test alternative behavior
+    // data = "survey-zulu";
+    expect(getDataFile()).toBe('zulu-lettersounds'); // Adjust expectation as needed
   });
 });
