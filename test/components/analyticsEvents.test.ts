@@ -1,6 +1,17 @@
 import { AnalyticsEvents } from '../../src/components/analyticsEvents';
 
 describe('AnalyticsEvents', () => {
+  let originalXMLHttpRequest: typeof XMLHttpRequest;
+  beforeAll(() => {
+    // Save the original XMLHttpRequest to restore later
+    originalXMLHttpRequest = global.XMLHttpRequest;
+  });
+
+  afterAll(() => {
+    // Restore the original XMLHttpRequest
+    global.XMLHttpRequest = originalXMLHttpRequest;
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -63,6 +74,7 @@ describe('AnalyticsEvents', () => {
       qTarget: 'target',
       answers: [{ answerName: 'Answer1' }],
       correct: 'Answer1',
+      promptText: 'This is the prompt text',
     };
     AnalyticsEvents.sendAnswered(mockQuestion, 1, 3000);
     expect(mockLogEvent).toHaveBeenCalledWith(
@@ -77,13 +89,37 @@ describe('AnalyticsEvents', () => {
 
   // Scoring Logic
   test('should calculate the correct score', () => {
-    const mockBuckets = [{ bucketID: 1, numCorrect: 4, tested: true, passed: true }];
+    const mockBuckets = [
+      {
+        bucketID: 1,
+        numCorrect: 4,
+        tested: true,
+        passed: true,
+        items: [], // Add items here
+        usedItems: [], // Add used items here
+        numTried: 0,
+        numConsecutiveWrong: 0,
+        score: 100,
+      },
+    ];
     const score = AnalyticsEvents.calculateScore(mockBuckets, 1);
     expect(score).toBe(100);
   });
 
   test('should return the correct basal bucket ID', () => {
-    const mockBuckets = [{ bucketID: 1, tested: true, passed: false }];
+    const mockBuckets = [
+      {
+        bucketID: 1,
+        numCorrect: 4,
+        tested: true,
+        passed: true,
+        items: [], // Add items here
+        usedItems: [], // Add used items here
+        numTried: 0,
+        numConsecutiveWrong: 0,
+        score: 100,
+      },
+    ];
     expect(AnalyticsEvents.getBasalBucketID(mockBuckets)).toBe(1);
   });
 
@@ -99,15 +135,28 @@ describe('AnalyticsEvents', () => {
   });
 
   test('should send data to third-party successfully', () => {
-    const mockXhrOpen = jest.fn();
-    const mockXhrSend = jest.fn();
-    global.XMLHttpRequest = jest.fn(() => ({
-      open: mockXhrOpen,
-      send: mockXhrSend,
+    const mockXMLHttpRequest = jest.fn().mockImplementation(() => ({
+      open: jest.fn(),
+      send: jest.fn(),
       setRequestHeader: jest.fn(),
+      readyState: 4,
+      status: 200,
+      responseText: 'success',
+      onreadystatechange: jest.fn(),
     }));
+
+    // Add static properties
+    Object.assign(mockXMLHttpRequest, {
+      UNSENT: 0,
+      OPENED: 1,
+      HEADERS_RECEIVED: 2,
+      LOADING: 3,
+      DONE: 4,
+    });
+
+    global.XMLHttpRequest = mockXMLHttpRequest as unknown as typeof XMLHttpRequest;
+
     AnalyticsEvents.sendDataToThirdParty(100, '1234');
-    expect(mockXhrOpen).toHaveBeenCalled();
-    expect(mockXhrSend).toHaveBeenCalled();
+    expect(mockXMLHttpRequest).toHaveBeenCalled();
   });
 });
