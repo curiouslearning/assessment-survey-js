@@ -1,18 +1,27 @@
 import { App } from '../../src/App';
-import { Survey } from '../../src/survey/survey';
 import { Assessment } from '../../src/assessment/assessment';
-import { UnityBridge } from '../../src/components/unityBridge';
-import { UIController } from '../../src/components/uiController';
-import { fetchAppData, getDataURL } from '../../src/components/jsonUtils';
-// import { CacheModel } from '../../src/components/cacheModel';
+import { Survey } from '../../src/survey/survey';
 import { Workbox } from 'workbox-window';
-// import { initializeApp } from 'firebase/app';
+import { UIController } from '../../src/components/uiController';
 
-jest.mock('../../src/components/urlUtils', () => ({
-  getUUID: jest.fn(),
-  getUserSource: jest.fn(),
-  getDataFile: jest.fn().mockReturnValue('mockDataFileURL'),
-}));
+jest.mock('workbox-window', () => {
+  return {
+    Workbox: jest.fn().mockImplementation(() => {
+      return {
+        register: jest.fn().mockResolvedValue({}),
+      };
+    }),
+  };
+});
+
+jest.mock('../../src/components/uiController', () => {
+  return {
+    UIController: {
+      SetFeedbackText: jest.fn(),
+      SetContentLoaded: jest.fn(),
+    },
+  };
+});
 jest.mock('firebase/app', () => ({
   initializeApp: jest.fn(),
 }));
@@ -22,50 +31,14 @@ jest.mock('firebase/analytics', () => ({
   }),
   logEvent: jest.fn(),
 }));
-
-jest.mock('../../src/components/jsonUtils', () => ({
-  fetchAppData: jest.fn().mockResolvedValue({
-    appType: 'survey',
-    assessmentType: 'mockAssessment',
-    feedbackText: 'mock feedback',
-    buckets: [],
-    quizName: 'Luganda',
-    contentVersion: 'v1.0',
-  }),
-  getDataURL: jest.fn().mockReturnValue('mockDataURL'),
-}));
-
-jest.mock('../../src/components/unityBridge', () => ({
-  UnityBridge: jest.fn().mockImplementation(() => ({
-    someMethod: jest.fn(),
-  })),
-}));
-
-jest.mock('../../src/components/uiController', () => ({
-  UIController: {
-    SetFeedbackText: jest.fn(),
-    SetContentLoaded: jest.fn(),
-  },
-}));
-
-jest.mock('workbox-window', () => ({
-  Workbox: jest.fn().mockImplementation(() => ({
-    register: jest.fn().mockResolvedValue({
-      installing: {
-        postMessage: jest.fn(),
-      },
-    }),
-  })),
-}));
-global.BroadcastChannel = jest.fn().mockImplementation(() => ({
-  addEventListener: jest.fn(),
-  postMessage: jest.fn(),
-  close: jest.fn(),
-}));
-describe('App', () => {
+describe('App Class', () => {
   let app: App;
 
   beforeEach(() => {
+    document.body.innerHTML = `
+      <div id="loadingScreen"></div>
+      <div id="progressBar"></div>
+    `;
     app = new App();
   });
 
@@ -73,68 +46,109 @@ describe('App', () => {
     jest.clearAllMocks();
   });
 
-  it('should initialize with the correct data URL', () => {
-    expect(app.GetDataURL()).toBe('mockDataFileURL');
+  test('should initialize the app with default properties', () => {
+    expect(app).toBeDefined();
+    expect(app.unityBridge).toBeDefined();
+    expect(app.analytics).toBeDefined();
+    expect(app.cacheModel).toBeDefined();
+    expect(app.lang).toBe('english');
   });
-  // it('should spin up the app correctly', async () => {
-  //   await app.spinUp();
-  //   console.log(fetchAppData);
-  //   expect(fetchAppData).toHaveBeenCalledWith('mockDataURL');
-  //   expect(UIController.SetFeedbackText).toHaveBeenCalledWith('mock feedback');
-  //   expect(app.game).toBeInstanceOf(Survey);
-  // });
 
-  // it('should handle assessment type correctly', async () => {
-  //   const mockData = {
-  //     appType: 'assessment',
-  //     assessmentType: 'mockAssessment',
-  //     feedbackText: 'mock feedback',
-  //     buckets: [{ items: [{ itemName: 'item1' }] }],
-  //     quizName: 'English',
-  //     contentVersion: 'v1.0',
-  //   };
-  //   // fetchAppData.mockResolvedValue(Promise.resolve(mockData));
+  test('should set up the Firebase configuration', () => {
+    expect(app.analytics).toBeDefined();
+  });
 
-  //   await app.spinUp();
-
-  //   expect(fetchAppData).toHaveBeenCalledWith('mockDataFileURL');
-  //   expect(app.game).toBeInstanceOf(Assessment);
-  // });
-
-  it('should register service worker correctly', async () => {
-    const registerMock = jest.fn().mockResolvedValue({
-      installing: {
-        postMessage: jest.fn(),
-      },
+  test('spinUp should fetch app data and initialize Survey for survey app type', async () => {
+    const mockFetchAppData = jest.fn().mockResolvedValue({
+      appType: 'survey',
+      feedbackText: 'Test feedback',
+      contentVersion: 'v1.0.0',
+      assessmentType: 'test',
     });
-    // Workbox.mockImplementationOnce(() => ({
-    //   register: registerMock,
-    // }));
+    jest.spyOn(app, 'registerServiceWorker').mockResolvedValue();
 
-    await app.registerServiceWorker(app.game, 'mockDataURL');
+    await mockFetchAppData.mockResolvedValue({
+      appType: 'survey',
+      feedbackText: 'Feedback text',
+      contentVersion: 'v1.0.0',
+    });
+    app.spinUp();
 
-    expect(registerMock).toHaveBeenCalled();
+    await mockFetchAppData;
+    expect(UIController.SetFeedbackText).toHaveBeenCalledWith('Feedback text');
+    expect(app.game).toBeInstanceOf(Survey);
   });
 
-  it('should handle service worker message when loading', () => {
-    const event = {
+  test('spinUp should fetch app data and initialize Assessment for assessment app type', async () => {
+    const mockFetchAppData = jest.fn().mockResolvedValue({
+      appType: 'assessment',
+      feedbackText: 'Test feedback',
+      buckets: [],
+      contentVersion: 'v1.0.0',
+      quizName: 'Test Quiz',
+    });
+    jest.spyOn(app, 'registerServiceWorker').mockResolvedValue();
+
+    await mockFetchAppData.mockResolvedValue({
+      appType: 'assessment',
+      feedbackText: 'Feedback text',
+      contentVersion: 'v1.0.0',
+    });
+
+    app.spinUp();
+
+    await mockFetchAppData;
+    expect(UIController.SetFeedbackText).toHaveBeenCalledWith('Feedback text');
+    expect(app.game).toBeInstanceOf(Assessment);
+  });
+
+  test('should register a service worker and handle successful registration', async () => {
+    const mockHandleServiceWorkerRegistration = jest.spyOn(app, 'handleServiceWorkerRegistation');
+    await app.registerServiceWorker(app.game, app.dataURL);
+    expect(Workbox).toHaveBeenCalledWith('./sw.js', {});
+    expect(mockHandleServiceWorkerRegistration).toHaveBeenCalled();
+  });
+
+  test('should log error when service worker registration fails', async () => {
+    const errorSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(Workbox.prototype, 'register').mockRejectedValue('Registration failed');
+
+    await app.registerServiceWorker(app.game, app.dataURL);
+
+    expect(errorSpy).toHaveBeenCalledWith('Service worker registration failed: Registration failed');
+  });
+
+  test('should handle service worker message events for loading updates', () => {
+    const mockEvent = {
       data: {
         msg: 'Loading',
-        data: { progress: '50' },
+        data: {
+          progress: '50',
+          bookName: 'TestBook',
+        },
       },
     };
-    const handleLoadingMessage = jest.fn();
 
-    app['handleLoadingMessage'](event, 50);
-
-    expect(handleLoadingMessage).toHaveBeenCalledWith(event, 50);
+    const mockLocalStorage = jest.spyOn(localStorage, 'setItem');
+    handleServiceWorkerMessage(mockEvent);
+    expect(mockLocalStorage).toHaveBeenCalledWith('TestBook', 'true');
   });
 
-  it('should handle service worker update found', () => {
-    const handleUpdateFoundMessage = jest.fn();
+  test('should confirm and reload on update found message', () => {
+    const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
+    const reloadSpy = jest.spyOn(window.location, 'reload').mockImplementation(() => {});
 
-    app['handleUpdateFoundMessage']();
+    handleUpdateFoundMessage();
 
-    expect(handleUpdateFoundMessage).toHaveBeenCalled();
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(reloadSpy).toHaveBeenCalled();
   });
 });
+function handleServiceWorkerMessage(mockEvent: {
+  data: { msg: string; data: { progress: string; bookName: string } };
+}) {
+  throw new Error('Function not implemented.');
+}
+function handleUpdateFoundMessage() {
+  throw new Error('Function not implemented.');
+}
