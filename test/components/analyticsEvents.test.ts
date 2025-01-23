@@ -1,5 +1,13 @@
 import { AnalyticsEvents } from '../../src/components/analyticsEvents';
-
+jest.mock('firebase/app', () => ({
+  initializeApp: jest.fn(),
+}));
+jest.mock('firebase/analytics', () => ({
+  getAnalytics: jest.fn().mockReturnValue({
+    logEvent: jest.fn(),
+  }),
+  logEvent: jest.fn(),
+}));
 describe('AnalyticsEvents', () => {
   let originalXMLHttpRequest: typeof XMLHttpRequest;
   beforeAll(() => {
