@@ -18,7 +18,7 @@ enum searchStage {
   LinearSearchDown,
 }
 
-enum BucketGenMode {
+export enum BucketGenMode {
   RandomBST,
   LinearArrayBased,
 }

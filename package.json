@@ -6,6 +6,7 @@
   "scripts": {
     "webpack": "webpack && live-server",
     "build": "webpack",
+    "test": "jest",
     "dev": "webpack && npx workbox injectManifest && live-server --no-browser",
     "tsc-build": "tsc && tsc-bundle tsconfig.json --exportAs Bundle --entryPoint App --outFile bundle.js",
     "tsc-run": "tsc && tsc-bundle tsconfig.json --exportAs Bundle --entryPoint App --outFile bundle.js && live-server",
@@ -21,8 +22,11 @@
     "url": "https://github.com/curiouslearning/assessment-survey-js/issues"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "jest": "^29.7.0",
     "live-server": "^1.2.2",
     "prettier": "^3.3.3",
+    "ts-jest": "^29.2.5",
     "ts-loader": "^9.4.1",
     "typescript": "~4.8.3",
     "typescript-bundle": "^1.0.18",
