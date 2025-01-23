@@ -18,14 +18,6 @@
 
 `tsc-bundle tsconfig.json`
 
-## Testing
-
-### Running Tests
-
-Run tests with Jest:
-
-`npm test`
-
 ## [ ] Running the Project
 
 ### - Currently the preferred way of running the project is by using the `live-server` command line application that creates a localhost server and hosts the project and enables, more on that [here](https://www.npmjs.com/package/live-server).
