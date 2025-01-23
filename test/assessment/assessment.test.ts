@@ -1,334 +1,194 @@
+import { Assessment, BucketGenMode } from '../../src/assessment/assessment';
 import { UIController } from '../../src/components/uiController';
-import { qData, answerData } from '../../src/components/questionData';
 import { AnalyticsEvents } from '../../src/components/analyticsEvents';
-import { App } from '../../src/App';
-import { bucket, bucketItem } from '../../src//assessment/bucketData';
-import { BaseQuiz } from '../../src/baseQuiz';
-import { fetchAssessmentBuckets } from '../../src/components/jsonUtils';
-import { TreeNode, sortedArrayToIDsBST } from '../../src/components/tNode';
-import { randFrom, shuffleArray } from '../../src/components/mathUtils';
 import { AudioController } from '../../src/components/audioController';
+import { App } from '../../src/App';
 
-enum searchStage {
-  BinarySearch,
-  LinearSearchUp,
-  LinearSearchDown,
-}
+jest.mock('../../src/components/uiController');
+jest.mock('../../src/components/analyticsEvents');
+jest.mock('../../src/components/audioController');
+jest.mock('../../src/App');
+jest.mock('firebase/app', () => ({
+  initializeApp: jest.fn(),
+}));
+jest.mock('firebase/analytics', () => ({
+  getAnalytics: jest.fn().mockReturnValue({
+    logEvent: jest.fn(),
+  }),
+  logEvent: jest.fn(),
+}));
 
-export enum BucketGenMode {
-  RandomBST,
-  LinearArrayBased,
-}
+describe('Assessment Class', () => {
+  let assessment;
+  let mockApp;
 
-export class Assessment extends BaseQuiz {
-  public HasQuestionsLeft(): boolean {
-    throw new Error('Method not implemented.');
-  }
-  public unityBridge;
+  beforeEach(() => {
+    const mockSelectElement = document.createElement('select');
+    mockSelectElement.id = 'expected-id'; // Ensure this matches `this.devModeBucketGenSelectId` in your class
+    document.body.appendChild(mockSelectElement);
+    mockApp = new App();
+    assessment = new Assessment('http://test-url.com', {});
+  });
+  afterEach(() => {
+    // Clean up the DOM
+    document.body.innerHTML = '';
+  });
+  it('should initialize with default values', () => {
+    expect(assessment.bucketGenMode).toBe(BucketGenMode.RandomBST);
+    expect(assessment.currentNode).toBeUndefined();
+    expect(assessment.bucketArray).toEqual([]);
+    expect(assessment.questionNumber).toBe(0);
+  });
 
-  public currentNode: TreeNode;
-  public currentQuestion: qData;
-  public bucketArray: number[];
-  public questionNumber: number;
+  describe('buildBuckets', () => {
+    it('should load buckets correctly for RandomBST mode', async () => {
+      assessment.bucketGenMode = BucketGenMode.RandomBST;
+      const result = await assessment.buildBuckets(BucketGenMode.RandomBST);
 
-  public buckets: bucket[];
-  public currentBucket: bucket;
-  public numBuckets: number;
-  public basalBucket: number;
-  public ceilingBucket: number;
-
-  public currentLinearBucketIndex: number;
-  public currentLinearTargetIndex: number;
-
-  protected bucketGenMode: BucketGenMode = BucketGenMode.RandomBST;
-
-  private MAX_STARS_COUNT_IN_LINEAR_MODE = 20;
-
-  constructor(dataURL: string, unityBridge: any) {
-    super();
-    this.dataURL = dataURL;
-    this.unityBridge = unityBridge;
-    this.questionNumber = 0;
-    console.log('app initialized');
-    this.setupUIHandlers();
-  }
-  private setupUIHandlers(): void {
-    UIController.SetButtonPressAction(this.handleAnswerButtonPress);
-    UIController.SetStartAction(this.startAssessment);
-    UIController.SetExternalBucketControlsGenerationHandler(this.generateDevModeBucketControlsInContainer);
-  }
-  public Run(applink: App): void {
-    this.app = applink;
-    this.buildBuckets(this.bucketGenMode).then((result) => {
-      console.log(this.currentBucket);
-      this.unityBridge.SendLoaded();
+      // Check that bucket generation logic was executed (mocked)
+      expect(result).toBeUndefined();
+      expect(assessment.buckets).not.toHaveLength(0);
+      expect(assessment.currentNode).toBeDefined();
     });
-  }
 
-  public handleBucketGenModeChange(event: Event): void {
-    this.bucketGenMode = parseInt(this.devModeBucketGenSelect.value) as BucketGenMode;
-    this.buildBuckets(this.bucketGenMode).then(() => {
-      this.updateBucketInfo();
+    it('should load buckets correctly for LinearArrayBased mode', async () => {
+      assessment.bucketGenMode = BucketGenMode.LinearArrayBased;
+      const result = await assessment.buildBuckets(BucketGenMode.LinearArrayBased);
+
+      // Check that the correct bucket generation logic is executed (mocked)
+      expect(result).toBeUndefined();
+      expect(assessment.currentLinearBucketIndex).toBe(0);
     });
-  }
+  });
 
-  public handleCorrectLabelShownChange(): void {
-    UIController.getInstance().SetCorrectLabelVisibility(this.isCorrectLabelShown);
-  }
+  describe('handleBucketGenModeChange', () => {
+    it('should change bucketGenMode and rebuild buckets', async () => {
+      // Simulate bucketGenMode change
+      const event = { target: { value: BucketGenMode.LinearArrayBased } };
+      assessment.handleBucketGenModeChange(event);
 
-  public handleAnimationSpeedMultiplierChange(): void {
-    UIController.getInstance().SetAnimationSpeedMultiplier(this.animationSpeedMultiplier);
-  }
+      // Wait for buckets to be rebuilt
+      await assessment.buildBuckets(BucketGenMode.LinearArrayBased);
 
-  public handleBucketInfoShownChange(): void {
-    this.updateBucketInfo();
-  }
+      expect(assessment.bucketGenMode).toBe(BucketGenMode.LinearArrayBased);
+      expect(assessment.currentLinearBucketIndex).toBe(0);
+    });
+  });
 
-  public handleBucketControlsShownChange(): void {
-    UIController.getInstance().SetBucketControlsVisibility(this.isBucketControlsEnabled);
-  }
+  describe('handleAnswerButtonPress', () => {
+    it('should update bucket values after an answer is pressed', () => {
+      const answer = 1;
+      const elapsed = 500;
+      const mockQuestion = {
+        answers: [{ answerName: 'Correct Answer' }],
+        correct: 'Correct Answer',
+      };
 
-  public generateDevModeBucketControlsInContainer = (container: HTMLElement, clickHandler: () => void) => {
-    if (this.isInDevMode && this.bucketGenMode === BucketGenMode.LinearArrayBased) {
-      container.innerHTML = '';
-      for (let i = 0; i < this.currentBucket.items.length; i++) {
-        let item = this.currentBucket.items[i];
-        let itemButton = document.createElement('button');
-        let index = i;
-        itemButton.innerText = item.itemName;
-        itemButton.style.margin = '2px';
-        itemButton.onclick = () => {
-          this.currentLinearTargetIndex = index;
-          this.currentBucket.usedItems = [];
-          console.log('Clicked on item ' + item.itemName + ' at index ' + this.currentLinearTargetIndex);
-          const newQ = this.buildNewQuestion();
-          UIController.getInstance().answersContainer.style.visibility = 'hidden';
-          for (let b in UIController.getInstance().buttons) {
-            UIController.getInstance().buttons[b].style.visibility = 'hidden';
-          }
-          UIController.getInstance().shown = false;
-          UIController.getInstance().nextQuestion = newQ;
-          UIController.getInstance().questionsContainer.innerHTML = '';
-          UIController.getInstance().questionsContainer.style.display = 'none';
-          UIController.ShowQuestion(newQ);
-          AudioController.PlayAudio(
-            this.buildNewQuestion().promptAudio,
-            UIController.getInstance().showOptions,
-            UIController.ShowAudioAnimation
-          );
-        };
-        container.append(itemButton);
-      }
+      assessment.currentBucket = { numTried: 0, numCorrect: 0, numConsecutiveWrong: 0 };
+      assessment.currentQuestion = mockQuestion;
+      assessment.handleAnswerButtonPress(answer, elapsed);
 
-      let prevButton = document.createElement('button');
-      prevButton.innerText = 'Prev Bucket';
-      if (this.currentLinearBucketIndex == 0) {
-        prevButton.disabled = true;
-      }
-      prevButton.addEventListener('click', () => {
-        if (this.currentLinearBucketIndex > 0) {
-          this.currentLinearBucketIndex--;
-          this.currentLinearTargetIndex = 0;
-          this.tryMoveBucket(false);
-          UIController.ReadyForNext(this.buildNewQuestion());
-          this.updateBucketInfo();
-        }
-        if (this.currentLinearBucketIndex == 0) {
-          prevButton.disabled = true;
-        }
-      });
+      expect(assessment.currentBucket.numTried).toBe(1);
+      expect(assessment.currentBucket.numCorrect).toBe(1);
+      expect(assessment.currentBucket.numConsecutiveWrong).toBe(0);
+    });
+  });
 
-      let nextButton = document.createElement('button');
-      nextButton.innerText = 'Next Bucket';
-      if (this.currentLinearBucketIndex == this.buckets.length - 1) {
-        nextButton.disabled = true;
-      }
-      nextButton.addEventListener('click', () => {
-        if (this.currentLinearBucketIndex < this.buckets.length - 1) {
-          this.currentLinearBucketIndex++;
-          this.currentLinearTargetIndex = 0;
-          this.tryMoveBucket(false);
-          UIController.ReadyForNext(this.buildNewQuestion());
-          this.updateBucketInfo();
-        }
-      });
+  describe('updateCurrentBucketValuesAfterAnswering', () => {
+    it('should update the bucket state after answering correctly', () => {
+      const mockQuestion = {
+        answers: [{ answerName: 'Correct Answer' }],
+        correct: 'Correct Answer',
+      };
 
-      let buttonsContainer = document.createElement('div');
-      buttonsContainer.style.display = 'flex';
-      buttonsContainer.style.flexDirection = 'row';
-      buttonsContainer.style.justifyContent = 'center';
-      buttonsContainer.style.alignItems = 'center';
-      buttonsContainer.appendChild(prevButton);
-      buttonsContainer.appendChild(nextButton);
+      assessment.currentBucket = { numTried: 0, numCorrect: 0, numConsecutiveWrong: 0 };
+      assessment.updateCurrentBucketValuesAfterAnswering(1);
 
-      container.appendChild(buttonsContainer);
-    }
-  };
+      expect(assessment.currentBucket.numTried).toBe(1);
+      expect(assessment.currentBucket.numCorrect).toBe(1);
+      expect(assessment.currentBucket.numConsecutiveWrong).toBe(0);
+    });
 
-  public updateBucketInfo = () => {
-    if (this.currentBucket != null) {
-      this.devModeBucketInfoContainer.innerHTML = `Bucket: ${this.currentBucket.bucketID}<br/>Correct: ${this.currentBucket.numCorrect}<br/>Tried: ${this.currentBucket.numTried}<br/>Failed: ${this.currentBucket.numConsecutiveWrong}`;
-    }
-  };
+    it('should update the bucket state after answering incorrectly', () => {
+      const mockQuestion = {
+        answers: [{ answerName: 'Correct Answer' }],
+        correct: 'Correct Answer',
+      };
 
-  public startAssessment = () => {
-    UIController.ReadyForNext(this.buildNewQuestion());
-    if (this.isInDevMode) {
-      this.hideDevModeButton();
-    }
-  };
+      assessment.currentBucket = { numTried: 0, numCorrect: 0, numConsecutiveWrong: 0 };
+      assessment.updateCurrentBucketValuesAfterAnswering(2); // Wrong answer
 
-  public buildBuckets = async (bucketGenMode: BucketGenMode) => {
-    if (this.buckets === undefined || this.buckets.length === 0) {
-      const res = fetchAssessmentBuckets(this.app.GetDataURL()).then((result) => {
-        this.buckets = result;
-        this.numBuckets = result.length;
-        this.bucketArray = Array.from(Array(this.numBuckets), (_, i) => i + 1);
-        let usedIndices = new Set<number>();
-        usedIndices.add(0);
-        let rootOfIDs = sortedArrayToIDsBST(
-          this.buckets[0].bucketID - 1,
-          this.buckets[this.buckets.length - 1].bucketID,
-          usedIndices
-        );
-        let bucketsRoot = this.convertToBucketBST(rootOfIDs, this.buckets);
-        this.basalBucket = this.numBuckets + 1;
-        this.ceilingBucket = -1;
-        this.currentNode = bucketsRoot;
-        this.tryMoveBucket(false);
-      });
-      return res;
-    } else {
-      if (bucketGenMode === BucketGenMode.RandomBST) {
-        return new Promise<void>((resolve, reject) => {
-          let usedIndices = new Set<number>();
-          usedIndices.add(0);
-          let rootOfIDs = sortedArrayToIDsBST(
-            this.buckets[0].bucketID - 1,
-            this.buckets[this.buckets.length - 1].bucketID,
-            usedIndices
-          );
-          let bucketsRoot = this.convertToBucketBST(rootOfIDs, this.buckets);
-          this.basalBucket = this.numBuckets + 1;
-          this.ceilingBucket = -1;
-          this.currentNode = bucketsRoot;
-          this.tryMoveBucket(false);
-          resolve();
-        });
-      } else if (bucketGenMode === BucketGenMode.LinearArrayBased) {
-        return new Promise<void>((resolve, reject) => {
-          this.currentLinearBucketIndex = 0;
-          this.currentLinearTargetIndex = 0;
-          this.tryMoveBucket(false);
-          resolve();
-        });
-      }
-    }
-  };
+      expect(assessment.currentBucket.numTried).toBe(1);
+      expect(assessment.currentBucket.numCorrect).toBe(0);
+      expect(assessment.currentBucket.numConsecutiveWrong).toBe(1);
+    });
+  });
 
-  public convertToBucketBST = (node: TreeNode, buckets: bucket[]) => {
-    if (node === null) return node;
+  describe('generateDevModeBucketControlsInContainer', () => {
+    it('should generate bucket control buttons in dev mode', () => {
+      // Enable dev mode and simulate bucket control creation
+      assessment.isInDevMode = true;
+      assessment.bucketGenMode = BucketGenMode.LinearArrayBased;
 
-    let bucketId = node.value;
-    node.value = buckets.find((bucket) => bucket.bucketID === bucketId);
-    if (node.left !== null) node.left = this.convertToBucketBST(node.left, buckets);
-    if (node.right !== null) node.right = this.convertToBucketBST(node.right, buckets);
+      const mockContainer = document.createElement('div');
+      const mockClickHandler = jest.fn();
 
-    return node;
-  };
+      assessment.generateDevModeBucketControlsInContainer(mockContainer, mockClickHandler);
 
-  public initBucket = (bucket: bucket) => {
-    this.currentBucket = bucket;
-    this.currentBucket.usedItems = [];
-    this.currentBucket.numTried = 0;
-    this.currentBucket.numCorrect = 0;
-    this.currentBucket.numConsecutiveWrong = 0;
-    this.currentBucket.tested = true;
-    this.currentBucket.passed = false;
-  };
+      // Check that buttons were generated
+      expect(mockContainer.innerHTML).not.toBe('');
+      expect(mockContainer.querySelectorAll('button').length).toBeGreaterThan(0);
+    });
+  });
 
-  public handleAnswerButtonPress = (answer: number, elapsed: number) => {
-    if (this.bucketGenMode === BucketGenMode.RandomBST) {
-      AnalyticsEvents.sendAnswered(this.currentQuestion, answer, elapsed);
-    }
-    this.updateCurrentBucketValuesAfterAnswering(answer);
-    const isAnswerCorrect = this.currentQuestion.answer.correct === answer;
+  describe('tryMoveBucket', () => {
+    it('should move the bucket in RandomBST mode', () => {
+      const passed = true;
+      const mockBucket = { bucketID: 1, passed: false };
+      assessment.currentBucket = mockBucket;
 
-    if (isAnswerCorrect) {
-      UIController.updateFeedbackAfterAnswer(this.bucketGenMode === BucketGenMode.LinearArrayBased, isAnswerCorrect);
-      AudioController.playCorrectSound();
-    } else {
-      UIController.updateFeedbackAfterAnswer(this.bucketGenMode === BucketGenMode.LinearArrayBased, isAnswerCorrect);
-      AudioController.playWrongSound();
-    }
+      assessment.tryMoveBucket(passed);
 
-    if (this.bucketGenMode === BucketGenMode.RandomBST) {
-      if (this.currentBucket.numTried >= 1) {
-        this.moveToNextBucket();
-      }
-    }
+      expect(assessment.currentBucket.passed).toBe(true);
+    });
 
-    if (this.bucketGenMode === BucketGenMode.LinearArrayBased) {
-      if (this.currentLinearTargetIndex < this.currentBucket.items.length - 1) {
-        this.currentLinearTargetIndex++;
-        UIController.ReadyForNext(this.buildNewQuestion());
-      } else {
-        this.currentLinearBucketIndex++;
-        this.currentLinearTargetIndex = 0;
-        this.tryMoveBucket(false);
-        UIController.ReadyForNext(this.buildNewQuestion());
-      }
-    }
-  };
+    it('should move the bucket in LinearArrayBased mode', () => {
+      const passed = true;
+      const mockBucket = { bucketID: 1, passed: false };
+      assessment.currentBucket = mockBucket;
 
-  public updateCurrentBucketValuesAfterAnswering = (answer: number) => {
-    const isAnswerCorrect = this.currentQuestion.answer.correct === answer;
-    this.currentBucket.numTried++;
+      assessment.bucketGenMode = BucketGenMode.LinearArrayBased;
+      assessment.tryMoveBucket(passed);
 
-    if (isAnswerCorrect) {
-      this.currentBucket.numCorrect++;
-      this.currentBucket.numConsecutiveWrong = 0;
-    } else {
-      this.currentBucket.numConsecutiveWrong++;
-    }
-  };
+      expect(assessment.currentBucket.passed).toBe(true);
+    });
+  });
 
-  public buildNewQuestion = (): qData => {
-    const targetItem = this.currentBucket.items[this.currentLinearTargetIndex];
-    const foils = this.generateFoils(this.currentBucket.items, targetItem);
-    return new qData(targetItem, foils, this.unityBridge);
-  };
+  describe('buildNewQuestion', () => {
+    it('should build a new question with shuffled answers', () => {
+      const mockItem = { itemName: 'Item A', itemText: 'Item Text A' };
+      const mockFoils = [
+        { itemName: 'Foil 1', itemText: 'Foil Text 1' },
+        { itemName: 'Foil 2', itemText: 'Foil Text 2' },
+      ];
 
-  private generateFoils(items: bucketItem[], target: bucketItem): bucketItem[] {
-    let foils = shuffleArray(items)
-      .filter((item) => item !== target)
-      .slice(0, 3);
-    foils.push(target);
-    return shuffleArray(foils);
-  }
+      assessment.currentBucket = { items: [mockItem] };
+      const newQuestion = assessment.buildNewQuestion();
 
-  private moveToNextBucket(): void {
-    const bucketId = this.currentBucket.bucketID;
-    if (this.currentBucket.numConsecutiveWrong >= 2) {
-      this.ceilingBucket = Math.min(bucketId, this.ceilingBucket);
-      this.tryMoveBucket(false);
-    } else if (this.currentBucket.numCorrect >= 2) {
-      this.basalBucket = Math.max(bucketId, this.basalBucket);
-      this.tryMoveBucket(true);
-    }
-  }
+      expect(newQuestion).toHaveProperty('qTarget', 'Item A');
+      expect(newQuestion.answers.length).toBe(4); // Target + 3 foils
+    });
+  });
 
-  private tryMoveBucket(moveDown: boolean): void {
-    while (true) {
-      const nextNode = moveDown ? this.currentNode.left : this.currentNode.right;
-      if (nextNode) {
-        this.currentNode = nextNode;
-        this.initBucket(this.currentNode.value as bucket);
-        break;
-      } else {
-        UIController.getInstance().EndAssessment();
-        break;
-      }
-    }
-  }
-}
+  describe('HasQuestionsLeft', () => {
+    it('should return true if there are still questions left', () => {
+      assessment.currentBucket = { passed: false, numCorrect: 0, numConsecutiveWrong: 0, numTried: 0 };
+      expect(assessment.HasQuestionsLeft()).toBe(true);
+    });
+
+    it('should return false if no questions are left', () => {
+      assessment.currentBucket = { passed: true, numCorrect: 4, numConsecutiveWrong: 0, numTried: 5 };
+      expect(assessment.HasQuestionsLeft()).toBe(false);
+    });
+  });
+});
