@@ -27,3 +27,10 @@ global.BroadcastChannel = class {
     }
   }
 };
+
+global.UnityBridge = class {
+  constructor(channel) {
+    this._channel = channel;
+    this._message = null;
+  }
+};
