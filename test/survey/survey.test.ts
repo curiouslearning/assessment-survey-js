@@ -1,9 +1,9 @@
 import { Survey } from '../../src/survey/survey';
-import { UIController } from '../../src/components/uiController';
+import { UIController } from '../../src/ui/uiController';
 import { AudioController } from '../../src/components/audioController';
 import { App } from '../../src/App';
-import { fetchSurveyQuestions } from '../../src/components/jsonUtils';
-import { UnityBridge } from '../../src/components/unityBridge';
+import { fetchSurveyQuestions } from '../../src/utils/jsonUtils';
+import { UnityBridge } from '../../src/utils/unityBridge';
 
 jest.mock('../../src/components/jsonUtils', () => ({
   fetchSurveyQuestions: jest.fn(),

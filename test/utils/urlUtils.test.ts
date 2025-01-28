@@ -1,4 +1,4 @@
-import { getAppType, getUUID, getUserSource, getDataFile } from '../../src/components/urlUtils';
+import { getAppType, getUUID, getUserSource, getDataFile } from '../../src/utils/urlUtils';
 
 describe('URL Utils', () => {
   beforeEach(() => {

@@ -2,7 +2,7 @@ import { App } from '../../src/App';
 import { Assessment } from '../../src/assessment/assessment';
 import { Survey } from '../../src/survey/survey';
 import { Workbox } from 'workbox-window';
-import { UIController } from '../../src/components/uiController';
+import { UIController } from '../../src/ui/uiController';
 
 jest.mock('workbox-window', () => {
   return {

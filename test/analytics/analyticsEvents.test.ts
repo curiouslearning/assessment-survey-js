@@ -1,4 +1,4 @@
-import { AnalyticsEvents } from '../../src/components/analyticsEvents';
+import { AnalyticsEvents } from '../../src/analytics/analyticsEvents';
 jest.mock('firebase/app', () => ({
   initializeApp: jest.fn(),
 }));

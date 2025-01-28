@@ -6,7 +6,7 @@ import {
   fetchAssessmentBuckets,
   getDataURL,
   getCaseIndependentLangList,
-} from '../../src/components/jsonUtils';
+} from '../../src/utils/jsonUtils';
 
 // Mock the global fetch function
 global.fetch = jest.fn();
