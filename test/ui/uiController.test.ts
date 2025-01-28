@@ -1,4 +1,4 @@
-import { UIController } from '../../src/components/uiController'; // Adjust the path as needed
+import { UIController } from '../../src/ui/uiController'; // Adjust the path as needed
 
 describe('UIController', () => {
   let uiController;

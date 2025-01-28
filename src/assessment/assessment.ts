@@ -1,15 +1,15 @@
 //this is where the logic for handling the buckets will go
 //
 //once we start adding in the assessment functionality
-import { UIController } from '../components/uiController';
+import { UIController } from '../ui/uiController';
 import { qData, answerData } from '../components/questionData';
-import { AnalyticsEvents } from '../components/analyticsEvents';
+import { AnalyticsEvents } from '../analytics/analyticsEvents';
 import { App } from '../App';
 import { bucket, bucketItem } from './bucketData';
 import { BaseQuiz } from '../baseQuiz';
-import { fetchAssessmentBuckets } from '../components/jsonUtils';
+import { fetchAssessmentBuckets } from '../utils/jsonUtils';
 import { TreeNode, sortedArrayToIDsBST } from '../components/tNode';
-import { randFrom, shuffleArray } from '../components/mathUtils';
+import { randFrom, shuffleArray } from '../utils/mathUtils';
 import { AudioController } from '../components/audioController';
 
 enum searchStage {

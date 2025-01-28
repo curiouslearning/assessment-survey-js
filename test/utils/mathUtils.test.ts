@@ -1,4 +1,4 @@
-import { randFrom, shuffleArray } from '../../src/components/mathUtils';
+import { randFrom, shuffleArray } from '../../src/utils/mathUtils';
 
 describe('Array Utility Functions', () => {
   describe('randFrom', () => {

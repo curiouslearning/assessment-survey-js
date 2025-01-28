@@ -1,7 +1,7 @@
 import { BaseQuiz } from '../../src/baseQuiz';
 import { App } from '../../src/App';
-import { UIController } from '../../src/components/uiController';
-import { UnityBridge } from '../../src/components/unityBridge';
+import { UIController } from '../../src/ui/uiController';
+import { UnityBridge } from '../../src/utils/unityBridge';
 
 class MockQuiz extends BaseQuiz {
   public handleBucketGenModeChange(event: Event): void {}

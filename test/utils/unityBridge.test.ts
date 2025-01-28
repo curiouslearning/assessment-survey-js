@@ -1,4 +1,4 @@
-import { UnityBridge } from '../../src/components/unityBridge';
+import { UnityBridge } from '../../src/utils/unityBridge';
 
 describe('UnityBridge Class', () => {
   let unityBridge: UnityBridge;

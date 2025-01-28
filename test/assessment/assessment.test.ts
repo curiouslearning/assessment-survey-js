@@ -1,6 +1,6 @@
 import { Assessment, BucketGenMode } from '../../src/assessment/assessment';
-import { UIController } from '../../src/components/uiController';
-import { AnalyticsEvents } from '../../src/components/analyticsEvents';
+import { UIController } from '../../src/ui/uiController';
+import { AnalyticsEvents } from '../../src/analytics/analyticsEvents';
 import { AudioController } from '../../src/components/audioController';
 import { App } from '../../src/App';
 

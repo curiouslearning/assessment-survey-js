@@ -1,7 +1,7 @@
 // this is where we can have the classes and functions for building the events
 // to send to an analytics recorder (firebase? lrs?)
 
-import { qData, answerData } from './questionData';
+import { qData, answerData } from '../components/questionData';
 import { logEvent } from 'firebase/analytics';
 import { bucket } from '../assessment/bucketData';
 
@@ -102,12 +102,13 @@ export class AnalyticsEvents {
   static getAppLanguageFromDataURL(appType: string): string {
     // Check if app type is not empty and split the string by the hyphen then return the first element
     if (appType && appType !== '' && appType.includes('-')) {
-      let language:string=appType.split('-').slice(0, -1).join('-');
-      if(language.includes("west-african")) {
-        return "west-african-english"
-      }else{
-      return language;
-    }}
+      let language: string = appType.split('-').slice(0, -1).join('-');
+      if (language.includes('west-african')) {
+        return 'west-african-english';
+      } else {
+        return language;
+      }
+    }
 
     return 'NotAvailable';
   }
@@ -116,7 +117,7 @@ export class AnalyticsEvents {
   static getAppTypeFromDataURL(appType: string): string {
     // Check if app type is not empty and split the string by the hyphen then return the last element
     if (appType && appType !== '' && appType.includes('-')) {
-      return appType.substring(appType.lastIndexOf('-')+1)
+      return appType.substring(appType.lastIndexOf('-') + 1);
     }
 
     return 'NotAvailable';
@@ -125,33 +126,19 @@ export class AnalyticsEvents {
   // Send Location
   static sendLocation(): void {
     var eventString =
-      'Sending User coordinates: ' +
-      AnalyticsEvents.uuid +
-      ' : ' +
-      AnalyticsEvents.clat +
-      ', ' +
-      AnalyticsEvents.clon;
+      'Sending User coordinates: ' + AnalyticsEvents.uuid + ' : ' + AnalyticsEvents.clat + ', ' + AnalyticsEvents.clon;
     console.log(eventString);
 
     logEvent(AnalyticsEvents.gana, 'user_location', {
       user: AnalyticsEvents.uuid,
       lang: AnalyticsEvents.getAppLanguageFromDataURL(AnalyticsEvents.dataURL),
       app: AnalyticsEvents.getAppTypeFromDataURL(AnalyticsEvents.dataURL),
-      latlong: AnalyticsEvents.joinLatLong(
-        AnalyticsEvents.clat,
-        AnalyticsEvents.clon
-      ),
+      latlong: AnalyticsEvents.joinLatLong(AnalyticsEvents.clat, AnalyticsEvents.clon),
     });
 
     console.log('INITIALIZED EVENT SENT');
-    console.log(
-      'App Language: ' +
-        AnalyticsEvents.getAppLanguageFromDataURL(AnalyticsEvents.dataURL)
-    );
-    console.log(
-      'App Type: ' +
-        AnalyticsEvents.getAppTypeFromDataURL(AnalyticsEvents.dataURL)
-    );
+    console.log('App Language: ' + AnalyticsEvents.getAppLanguageFromDataURL(AnalyticsEvents.dataURL));
+    console.log('App Type: ' + AnalyticsEvents.getAppTypeFromDataURL(AnalyticsEvents.dataURL));
     console.log('App Version: ' + AnalyticsEvents.appVersion);
     console.log('Content Version: ' + AnalyticsEvents.contentVersion);
 
@@ -159,10 +146,7 @@ export class AnalyticsEvents {
       type: 'initialized',
       clUserId: AnalyticsEvents.uuid,
       userSource: AnalyticsEvents.userSource,
-      latLong: AnalyticsEvents.joinLatLong(
-        AnalyticsEvents.clat,
-        AnalyticsEvents.clon
-      ),
+      latLong: AnalyticsEvents.joinLatLong(AnalyticsEvents.clat, AnalyticsEvents.clon),
       appVersion: AnalyticsEvents.appVersion,
       contentVersion: AnalyticsEvents.contentVersion,
       // city: city,
@@ -191,13 +175,7 @@ export class AnalyticsEvents {
     if ('bucket' in theQ) {
       bucket = theQ.bucket;
     }
-    var eventString =
-      'user ' +
-      AnalyticsEvents.uuid +
-      ' answered ' +
-      theQ.qName +
-      ' with ' +
-      ans.answerName;
+    var eventString = 'user ' + AnalyticsEvents.uuid + ' answered ' + theQ.qName + ' with ' + ans.answerName;
     eventString += ', all answers were [';
     var opts = '';
     for (var aNum in theQ.answers) {
@@ -215,10 +193,7 @@ export class AnalyticsEvents {
       type: 'answered',
       clUserId: AnalyticsEvents.uuid,
       userSource: AnalyticsEvents.userSource,
-      latLong: AnalyticsEvents.joinLatLong(
-        AnalyticsEvents.clat,
-        AnalyticsEvents.clon
-      ),
+      latLong: AnalyticsEvents.joinLatLong(AnalyticsEvents.clat, AnalyticsEvents.clon),
       // city: city,
       // region: region,
       // country: country,
@@ -263,10 +238,7 @@ export class AnalyticsEvents {
       type: 'bucketCompleted',
       clUserId: AnalyticsEvents.uuid,
       userSource: AnalyticsEvents.userSource,
-      latLong: AnalyticsEvents.joinLatLong(
-        AnalyticsEvents.clat,
-        AnalyticsEvents.clon
-      ),
+      latLong: AnalyticsEvents.joinLatLong(AnalyticsEvents.clat, AnalyticsEvents.clon),
       // city: city,
       // region: region,
       // country: country,
@@ -282,13 +254,8 @@ export class AnalyticsEvents {
   }
 
   // Send Finished
-  static sendFinished(
-    buckets: bucket[] = null,
-    basalBucket: number,
-    ceilingBucket: number
-  ): void {
-    let eventString =
-      'user ' + AnalyticsEvents.uuid + ' finished the assessment';
+  static sendFinished(buckets: bucket[] = null, basalBucket: number, ceilingBucket: number): void {
+    let eventString = 'user ' + AnalyticsEvents.uuid + ' finished the assessment';
     console.log(eventString);
 
     let basalBucketID = AnalyticsEvents.getBasalBucketID(buckets);
@@ -335,10 +302,7 @@ export class AnalyticsEvents {
       userSource: AnalyticsEvents.userSource,
       app: AnalyticsEvents.getAppTypeFromDataURL(AnalyticsEvents.dataURL),
       lang: AnalyticsEvents.getAppLanguageFromDataURL(AnalyticsEvents.dataURL),
-      latLong: AnalyticsEvents.joinLatLong(
-        AnalyticsEvents.clat,
-        AnalyticsEvents.clon
-      ),
+      latLong: AnalyticsEvents.joinLatLong(AnalyticsEvents.clat, AnalyticsEvents.clon),
       // city: city,
       // region: region,
       // country: country,
@@ -422,11 +386,7 @@ export class AnalyticsEvents {
       }
     }
 
-    console.log(
-      'Num Correct: ' + numCorrect,
-      ' basal: ' + basalBucketID,
-      ' buckets: ' + buckets.length
-    );
+    console.log('Num Correct: ' + numCorrect, ' basal: ' + basalBucketID, ' buckets: ' + buckets.length);
 
     if (basalBucketID === buckets.length && numCorrect >= 4) {
       // If the user has enough correct answers in the last bucket, give them a perfect score

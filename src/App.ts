@@ -2,18 +2,18 @@
  * App class that represents an entry point of the application.
  */
 
-import { getUUID, getUserSource, getDataFile } from './components/urlUtils';
+import { getUUID, getUserSource, getDataFile } from './utils/urlUtils';
 import { Survey } from './survey/survey';
 import { Assessment } from './assessment/assessment';
-import { UnityBridge } from './components/unityBridge';
-import { AnalyticsEvents } from './components/analyticsEvents';
+import { UnityBridge } from './utils/unityBridge';
+import { AnalyticsEvents } from './analytics/analyticsEvents';
 import { BaseQuiz } from './baseQuiz';
-import { fetchAppData, getDataURL } from './components/jsonUtils';
+import { fetchAppData, getDataURL } from './utils/jsonUtils';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics, logEvent } from 'firebase/analytics';
 import { Workbox } from 'workbox-window';
 import CacheModel from './components/cacheModel';
-import { UIController } from './components/uiController';
+import { UIController } from './ui/uiController';
 
 const appVersion: string = 'v1.1.3';
 

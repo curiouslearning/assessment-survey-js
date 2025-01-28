@@ -1,7 +1,7 @@
 import { App } from './App';
-import { AnalyticsEvents } from './components/analyticsEvents';
-import { UIController } from './components/uiController';
-import { UnityBridge } from './components/unityBridge';
+import { AnalyticsEvents } from './analytics/analyticsEvents';
+import { UIController } from './ui/uiController';
+import { UnityBridge } from './utils/unityBridge';
 
 export abstract class BaseQuiz {
   protected app: App;
