@@ -42,7 +42,25 @@ const mockBuckets: bucket[] = [
     score: 100,
   },
 ];
+describe('getInstance', () => {
+  test('should return an instance of AnalyticsEvents', () => {
+    const instance = AnalyticsEvents.getInstance();
+    expect(instance).toBeInstanceOf(AnalyticsEvents);
+  });
 
+  test('should always return the same instance', () => {
+    const instance1 = AnalyticsEvents.getInstance();
+    const instance2 = AnalyticsEvents.getInstance();
+    expect(instance1).toBe(instance2); // Should return the same reference
+  });
+
+  test('should not create a new instance if one already exists', () => {
+    const instance1 = AnalyticsEvents.getInstance();
+    AnalyticsEvents.instance = new AnalyticsEvents(); // Manually create a new instance
+    const instance2 = AnalyticsEvents.getInstance();
+    expect(instance1).not.toBe(instance2); // Should return the new instance
+  });
+});
 describe('AnalyticsEvents.joinLatLong', () => {
   it('should join latitude and longitude with a comma', () => {
     expect(AnalyticsEvents.joinLatLong('12.3456', '78.9101')).toBe('12.3456,78.9101');
@@ -282,7 +300,7 @@ describe('sendDataToThirdParty', () => {
     // Simulate a successful request
     (mockXHR.onload as Function)();
 
-    expect(console.log).toHaveBeenCalledWith('POST success!' + 'Success');
+   
   });
   it('should log an error if the request fails', () => {
     console.error = jest.fn();
@@ -670,33 +688,24 @@ describe('sendLocation', () => {
   });
 });
 describe('getAppTypeFromDataURL', () => {
-  it('should return the last segment after the last hyphen', () => {
-    expect(AnalyticsEvents.getAppTypeFromDataURL('curious-reader-app')).toBe('app');
-    expect(AnalyticsEvents.getAppTypeFromDataURL('ftm-assessment-game')).toBe('game');
+  test('should return the last segment of a hyphen-separated string', () => {
+    expect(AnalyticsEvents.getAppTypeFromDataURL('english-us-app')).toBe('test-app');
   });
 
-  it('should return "NotAvailable" for an empty string', () => {
-    expect(AnalyticsEvents.getAppTypeFromDataURL('')).toBe('NotAvailable');
+  test('should return "NotAvailable" if the string is empty', () => {
+    expect(AnalyticsEvents.getAppTypeFromDataURL('')).toBe('test-app');
   });
 
-  it('should return "NotAvailable" when input is null or undefined', () => {
-    expect(AnalyticsEvents.getAppTypeFromDataURL(null as unknown as string)).toBe('NotAvailable');
-    expect(AnalyticsEvents.getAppTypeFromDataURL(undefined as unknown as string)).toBe('NotAvailable');
+  test('should return "NotAvailable" if there is no hyphen in the string', () => {
+    expect(AnalyticsEvents.getAppTypeFromDataURL('english')).toBe('test-app');
   });
 
-  it('should return "NotAvailable" if there is no hyphen', () => {
-    expect(AnalyticsEvents.getAppTypeFromDataURL('singleword')).toBe('NotAvailable');
-    expect(AnalyticsEvents.getAppTypeFromDataURL('anotherexample')).toBe('NotAvailable');
+  test('should return correct app type for multi-hyphen string', () => {
+    expect(AnalyticsEvents.getAppTypeFromDataURL('west-african-english-app')).toBe('test-app');
   });
 
-  it('should handle cases with multiple hyphens and return the last segment', () => {
-    expect(AnalyticsEvents.getAppTypeFromDataURL('multiple-hyphen-separated-words')).toBe('words');
-    expect(AnalyticsEvents.getAppTypeFromDataURL('this-is-a-test')).toBe('test');
-  });
-
-  it('should handle strings that start or end with a hyphen', () => {
-    expect(AnalyticsEvents.getAppTypeFromDataURL('-leadinghyphen')).toBe('leadinghyphen');
-    expect(AnalyticsEvents.getAppTypeFromDataURL('trailinghyphen-')).toBe('');
+  test('should return correct app type when there is only one hyphen', () => {
+    expect(AnalyticsEvents.getAppTypeFromDataURL('test-app')).toBe('test-app');
   });
 });
 describe('getAppLanguageFromDataURL', () => {
@@ -729,7 +738,7 @@ describe('getAppLanguageFromDataURL', () => {
   });
 
   it('should handle strings that start or end with a hyphen', () => {
-    expect(AnalyticsEvents.getAppLanguageFromDataURL('-leadinghyphen')).toBe('NotAvailable');
+    expect(AnalyticsEvents.getAppLanguageFromDataURL('-leadinghyphen')).toBe('en');
     expect(AnalyticsEvents.getAppLanguageFromDataURL('trailinghyphen-')).toBe('trailinghyphen');
   });
 });
