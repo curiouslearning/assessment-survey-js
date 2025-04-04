@@ -2,7 +2,7 @@
   "quizName": "hausa letter sounds",
   "appType": "assessment",
   "assessmentType": "letter-sounds",
-  "feedbackText": "Yayi!",
+  "feedbackText": "Gwanin sha’awa!",
   "contentVersion": "v0.1",
   "buckets": [
     {
