@@ -2,7 +2,7 @@
   "quizName": "hausa sight words",
   "appType": "assessment",
   "assessmentType": "sight-words",
-  "feedbackText": "Yayi!",
+  "feedbackText": "Gwanin sha’awa!",
   "contentVersion": "v0.1",
   "buckets": [
     {

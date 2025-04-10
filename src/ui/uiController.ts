@@ -1,7 +1,7 @@
-import { qData, answerData } from './questionData';
-import { AudioController } from './audioController';
-import { randFrom, shuffleArray } from './mathUtils';
-import { getDataFile } from './urlUtils';
+import { qData, answerData } from '../components/questionData';
+import { AudioController } from '../components/audioController';
+import { randFrom, shuffleArray } from '../utils/mathUtils';
+import { getDataFile } from '../utils/urlUtils';
 
 export class UIController {
   private static instance: UIController | null = null;

@@ -2,8 +2,8 @@
   "quizName": "hausa letter sounds",
   "appType": "assessment",
   "assessmentType": "letter-sounds",
-  "feedbackText": "Yayi!",
-  "contentVersion": "v0.1",
+  "feedbackText": "Gwanin sha’awa!",
+  "contentVersion": "v0.2",
   "buckets": [
     {
       "bucketID": 1,
@@ -11,44 +11,44 @@
       "usedItems": [],
       "items": [
         {
-          "itemName": "O",
-          "itemText": "O"
+          "itemName": "h",
+          "itemText": "h"
         },
         {
-          "itemName": "R",
-          "itemText": "R"
+          "itemName": "S",
+          "itemText": "S"
         },
         {
-          "itemName": "u",
-          "itemText": "u"
+          "itemName": "z",
+          "itemText": "z"
         },
         {
-          "itemName": "M",
-          "itemText": "M"
+          "itemName": "o",
+          "itemText": "o"
         },
         {
-          "itemName": "c",
-          "itemText": "c"
+          "itemName": "k",
+          "itemText": "k"
         },
         {
-          "itemName": "d",
-          "itemText": "d"
+          "itemName": "N",
+          "itemText": "N"
         },
         {
-          "itemName": "G",
-          "itemText": "G"
+          "itemName": "A",
+          "itemText": "A"
         },
         {
-          "itemName": "W",
-          "itemText": "W"
+          "itemName": "K",
+          "itemText": "K"
+        },
+        {
+          "itemName": "y",
+          "itemText": "y"
         },
         {
           "itemName": "s",
           "itemText": "s"
-        },
-        {
-          "itemName": "a",
-          "itemText": "a"
         }
       ]
     },
@@ -58,44 +58,44 @@
       "usedItems": [],
       "items": [
         {
-          "itemName": "b",
-          "itemText": "b"
-        },
-        {
-          "itemName": "H",
-          "itemText": "H"
-        },
-        {
-          "itemName": "j",
-          "itemText": "j"
+          "itemName": "N",
+          "itemText": "N"
         },
         {
           "itemName": "A",
           "itemText": "A"
         },
         {
-          "itemName": "T",
-          "itemText": "T"
+          "itemName": "K",
+          "itemText": "K"
+        },
+        {
+          "itemName": "y",
+          "itemText": "y"
         },
         {
           "itemName": "s",
           "itemText": "s"
         },
         {
-          "itemName": "u",
-          "itemText": "u"
+          "itemName": "Y",
+          "itemText": "Y"
         },
         {
-          "itemName": "i",
-          "itemText": "i"
+          "itemName": "Z",
+          "itemText": "Z"
         },
         {
-          "itemName": "E",
-          "itemText": "E"
+          "itemName": "H",
+          "itemText": "H"
         },
         {
-          "itemName": "kw",
-          "itemText": "kw"
+          "itemName": "m",
+          "itemText": "m"
+        },
+        {
+          "itemName": "G",
+          "itemText": "G"
         }
       ]
     },
@@ -105,44 +105,44 @@
       "usedItems": [],
       "items": [
         {
-          "itemName": "e",
-          "itemText": "e"
+          "itemName": "Z",
+          "itemText": "Z"
         },
         {
-          "itemName": "gw",
-          "itemText": "gw"
+          "itemName": "H",
+          "itemText": "H"
         },
         {
-          "itemName": "a",
-          "itemText": "a"
+          "itemName": "m",
+          "itemText": "m"
         },
         {
-          "itemName": "i",
-          "itemText": "i"
+          "itemName": "G",
+          "itemText": "G"
         },
         {
-          "itemName": "N",
-          "itemText": "N"
+          "itemName": "D",
+          "itemText": "D"
         },
         {
-          "itemName": "y",
-          "itemText": "y"
+          "itemName": "w",
+          "itemText": "w"
         },
         {
-          "itemName": "ƙ",
-          "itemText": "ƙ"
+          "itemName": "O",
+          "itemText": "O"
         },
         {
-          "itemName": "ɓ",
-          "itemText": "ɓ"
+          "itemName": "U",
+          "itemText": "U"
         },
         {
-          "itemName": "M",
-          "itemText": "M"
+          "itemName": "W",
+          "itemText": "W"
         },
         {
-          "itemName": "r",
-          "itemText": "r"
+          "itemName": "R",
+          "itemText": "R"
         }
       ]
     },
@@ -152,44 +152,44 @@
       "usedItems": [],
       "items": [
         {
-          "itemName": "h",
-          "itemText": "h"
+          "itemName": "O",
+          "itemText": "O"
         },
         {
-          "itemName": "ɓ",
-          "itemText": "ɓ"
+          "itemName": "U",
+          "itemText": "U"
         },
         {
-          "itemName": "t",
-          "itemText": "t"
+          "itemName": "W",
+          "itemText": "W"
         },
         {
-          "itemName": "n",
-          "itemText": "n"
+          "itemName": "R",
+          "itemText": "R"
         },
         {
           "itemName": "B",
           "itemText": "B"
         },
         {
-          "itemName": "o",
-          "itemText": "o"
+          "itemName": "b",
+          "itemText": "b"
         },
         {
-          "itemName": "l",
-          "itemText": "l"
+          "itemName": "L",
+          "itemText": "L"
         },
         {
-          "itemName": "C",
-          "itemText": "C"
+          "itemName": "g",
+          "itemText": "g"
         },
         {
-          "itemName": "ai",
-          "itemText": "ai"
+          "itemName": "n",
+          "itemText": "n"
         },
         {
-          "itemName": "k",
-          "itemText": "k"
+          "itemName": "i",
+          "itemText": "i"
         }
       ]
     },
@@ -199,28 +199,12 @@
       "usedItems": [],
       "items": [
         {
-          "itemName": "K",
-          "itemText": "K"
+          "itemName": "L",
+          "itemText": "L"
         },
         {
-          "itemName": "D",
-          "itemText": "D"
-        },
-        {
-          "itemName": "m",
-          "itemText": "m"
-        },
-        {
-          "itemName": "Z",
-          "itemText": "Z"
-        },
-        {
-          "itemName": "f",
-          "itemText": "f"
-        },
-        {
-          "itemName": "T",
-          "itemText": "T"
+          "itemName": "g",
+          "itemText": "g"
         },
         {
           "itemName": "n",
@@ -231,12 +215,28 @@
           "itemText": "i"
         },
         {
-          "itemName": "y",
-          "itemText": "y"
+          "itemName": "M",
+          "itemText": "M"
         },
         {
-          "itemName": "A",
-          "itemText": "A"
+          "itemName": "j",
+          "itemText": "j"
+        },
+        {
+          "itemName": "d",
+          "itemText": "d"
+        },
+        {
+          "itemName": "t",
+          "itemText": "t"
+        },
+        {
+          "itemName": "ɗ",
+          "itemText": "ɗ"
+        },
+        {
+          "itemName": "u",
+          "itemText": "u"
         }
       ]
     },
@@ -246,44 +246,44 @@
       "usedItems": [],
       "items": [
         {
-          "itemName": "c",
-          "itemText": "c"
-        },
-        {
-          "itemName": "U",
-          "itemText": "U"
-        },
-        {
           "itemName": "d",
           "itemText": "d"
         },
         {
-          "itemName": "au",
-          "itemText": "au"
+          "itemName": "t",
+          "itemText": "t"
         },
         {
-          "itemName": "m",
-          "itemText": "m"
+          "itemName": "ɗ",
+          "itemText": "ɗ"
         },
         {
-          "itemName": "z",
-          "itemText": "z"
+          "itemName": "u",
+          "itemText": "u"
         },
         {
-          "itemName": "sh",
-          "itemText": "sh"
+          "itemName": "T",
+          "itemText": "T"
         },
         {
-          "itemName": "L",
-          "itemText": "L"
+          "itemName": "f",
+          "itemText": "f"
+        },
+        {
+          "itemName": "F",
+          "itemText": "F"
+        },
+        {
+          "itemName": "ƙ",
+          "itemText": "ƙ"
+        },
+        {
+          "itemName": "l",
+          "itemText": "l"
         },
         {
           "itemName": "a",
           "itemText": "a"
-        },
-        {
-          "itemName": "ts",
-          "itemText": "ts"
         }
       ]
     },
@@ -293,44 +293,44 @@
       "usedItems": [],
       "items": [
         {
-          "itemName": "w",
-          "itemText": "w"
+          "itemName": "F",
+          "itemText": "F"
         },
         {
-          "itemName": "d",
-          "itemText": "d"
+          "itemName": "ƙ",
+          "itemText": "ƙ"
         },
         {
-          "itemName": "u",
-          "itemText": "u"
-        },
-        {
-          "itemName": "b",
-          "itemText": "b"
+          "itemName": "l",
+          "itemText": "l"
         },
         {
           "itemName": "a",
           "itemText": "a"
         },
         {
-          "itemName": "K",
-          "itemText": "K"
+          "itemName": "r",
+          "itemText": "r"
         },
         {
           "itemName": "c",
           "itemText": "c"
         },
         {
-          "itemName": "R",
-          "itemText": "R"
+          "itemName": "E",
+          "itemText": "E"
         },
         {
-          "itemName": "N",
-          "itemText": "N"
+          "itemName": "kw",
+          "itemText": "kw"
         },
         {
-          "itemName": "G",
-          "itemText": "G"
+          "itemName": "sh",
+          "itemText": "sh"
+        },
+        {
+          "itemName": "au",
+          "itemText": "au"
         }
       ]
     },
@@ -340,138 +340,44 @@
       "usedItems": [],
       "items": [
         {
-          "itemName": "k",
-          "itemText": "k"
+          "itemName": "E",
+          "itemText": "E"
         },
         {
-          "itemName": "ɗ",
-          "itemText": "ɗ"
-        },
-        {
-          "itemName": "N",
-          "itemText": "N"
-        },
-        {
-          "itemName": "ai",
-          "itemText": "ai"
-        },
-        {
-          "itemName": "o",
-          "itemText": "o"
-        },
-        {
-          "itemName": "t",
-          "itemText": "t"
-        },
-        {
-          "itemName": "i",
-          "itemText": "i"
-        },
-        {
-          "itemName": "Y",
-          "itemText": "Y"
-        },
-        {
-          "itemName": "L",
-          "itemText": "L"
-        },
-        {
-          "itemName": "j",
-          "itemText": "j"
-        }
-      ]
-    },
-    {
-      "bucketID": 9,
-      "bucketName": "hausalet-b-9",
-      "usedItems": [],
-      "items": [
-        {
-          "itemName": "ƙw",
-          "itemText": "ƙw"
-        },
-        {
-          "itemName": "g",
-          "itemText": "g"
-        },
-        {
-          "itemName": "A",
-          "itemText": "A"
-        },
-        {
-          "itemName": "K",
-          "itemText": "K"
+          "itemName": "kw",
+          "itemText": "kw"
         },
         {
           "itemName": "sh",
           "itemText": "sh"
         },
         {
-          "itemName": "y",
-          "itemText": "y"
+          "itemName": "au",
+          "itemText": "au"
         },
         {
-          "itemName": "o",
-          "itemText": "o"
+          "itemName": "ai",
+          "itemText": "ai"
         },
         {
-          "itemName": "H",
-          "itemText": "H"
+          "itemName": "ts",
+          "itemText": "ts"
         },
         {
-          "itemName": "n",
-          "itemText": "n"
+          "itemName": "ƙw",
+          "itemText": "ƙw"
         },
         {
-          "itemName": "r",
-          "itemText": "r"
-        }
-      ]
-    },
-    {
-      "bucketID": 10,
-      "bucketName": "hausalet-b-10",
-      "usedItems": [],
-      "items": [
-        {
-          "itemName": "S",
-          "itemText": "S"
+          "itemName": "gw",
+          "itemText": "gw"
         },
         {
-          "itemName": "U",
-          "itemText": "U"
+          "itemName": "ɓ",
+          "itemText": "ɓ"
         },
         {
-          "itemName": "Y",
-          "itemText": "Y"
-        },
-        {
-          "itemName": "n",
-          "itemText": "n"
-        },
-        {
-          "itemName": "L",
-          "itemText": "L"
-        },
-        {
-          "itemName": "K",
-          "itemText": "K"
-        },
-        {
-          "itemName": "W",
-          "itemText": "W"
-        },
-        {
-          "itemName": "F",
-          "itemText": "F"
-        },
-        {
-          "itemName": "A",
-          "itemText": "A"
-        },
-        {
-          "itemName": "E",
-          "itemText": "E"
+          "itemName": "e",
+          "itemText": "e"
         }
       ]
     }

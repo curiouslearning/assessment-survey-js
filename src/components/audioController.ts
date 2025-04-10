@@ -2,7 +2,7 @@
 
 import { qData } from './questionData';
 import { bucket, bucketItem } from '../assessment/bucketData';
-import { getCaseIndependentLangList } from './jsonUtils';
+import { getCaseIndependentLangList } from '../utils/jsonUtils';
 
 export class AudioController {
   private static instance: AudioController | null = null;
@@ -25,13 +25,9 @@ export class AudioController {
     this.correctAudio = new Audio();
   }
 
-  public static PrepareAudioAndImagesForSurvey(
-    questionsData: qData[],
-    dataURL: string
-  ): void {
+  public static PrepareAudioAndImagesForSurvey(questionsData: qData[], dataURL: string): void {
     AudioController.getInstance().dataURL = dataURL;
-    const feedbackSoundPath =
-      'audio/' + AudioController.getInstance().dataURL + '/answer_feedback.mp3';
+    const feedbackSoundPath = 'audio/' + AudioController.getInstance().dataURL + '/answer_feedback.mp3';
 
     AudioController.getInstance().wavToCache.push(feedbackSoundPath);
     AudioController.getInstance().correctAudio.src = feedbackSoundPath;
@@ -39,9 +35,7 @@ export class AudioController {
     for (var questionIndex in questionsData) {
       let questionData = questionsData[questionIndex];
       if (questionData.promptAudio != null) {
-        AudioController.FilterAndAddAudioToAllAudios(
-          questionData.promptAudio.toLowerCase()
-        );
+        AudioController.FilterAndAddAudioToAllAudios(questionData.promptAudio.toLowerCase());
       }
 
       if (questionData.promptImg != null) {
@@ -79,16 +73,10 @@ export class AudioController {
     console.log('Filtered: ' + newAudioURL);
 
     let newAudio = new Audio();
-    if (
-      getCaseIndependentLangList().includes(
-        AudioController.getInstance().dataURL.split('-')[0]
-      )
-    ) {
-      newAudio.src =
-        'audio/' + AudioController.getInstance().dataURL + '/' + newAudioURL;
+    if (getCaseIndependentLangList().includes(AudioController.getInstance().dataURL.split('-')[0])) {
+      newAudio.src = 'audio/' + AudioController.getInstance().dataURL + '/' + newAudioURL;
     } else {
-      newAudio.src =
-        'audio/' + AudioController.getInstance().dataURL + '/' + newAudioURL;
+      newAudio.src = 'audio/' + AudioController.getInstance().dataURL + '/' + newAudioURL;
     }
 
     AudioController.getInstance().allAudios[newAudioURL] = newAudio;
@@ -106,11 +94,7 @@ export class AudioController {
     }
   }
 
-  public static PlayAudio(
-    audioName: string,
-    finishedCallback?: Function,
-    audioAnim?: Function
-  ): void {
+  public static PlayAudio(audioName: string, finishedCallback?: Function, audioAnim?: Function): void {
     audioName = audioName.toLowerCase();
     console.log('trying to play ' + audioName);
     if (audioName.includes('.mp3')) {
