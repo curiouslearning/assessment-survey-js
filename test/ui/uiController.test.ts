@@ -1,6 +1,7 @@
 // test/ui/uiController.test.ts
 import { setupDom } from './_mock_/dom';
 import { UIController } from '../../src/ui/uiController';
+import { AudioController } from '../../src/components/audioController';
 
 describe('UIController', () => {
   let uiController: UIController;
@@ -8,15 +9,24 @@ describe('UIController', () => {
   let mockButtonPressCallback: jest.Mock;
   let mockPlayDing: jest.Mock;
   let chestImage: HTMLImageElement;
+
+
   beforeEach(() => {
     setupDom();
     feedbackContainer = document.getElementById('feedbackWrap') as HTMLElement;
     UIController.instance = null;
+
     uiController = UIController.getInstance(); // Getting the singleton instance
     uiController.initEventListeners();
+    feedbackContainer.classList.add('hidden');
     uiController['feedbackContainer'] = feedbackContainer;
     uiController.playButton = document.getElementById('playButton')!;
     uiController.devModeBucketControlsEnabled = false;
+    uiController = UIController.getInstance();
+    uiController.landingContainer = document.getElementById('landWrap')!;
+    uiController.gameContainer = document.getElementById('gameWrap')!;
+    uiController.endContainer = document.getElementById('endWrap')!;
+    uiController.startPressCallback = jest.fn();
 
     chestImage = document.getElementById('chestImage') as HTMLImageElement;
   });
@@ -430,5 +440,113 @@ describe('UIController', () => {
 
     expect(img!.src).toContain('/img/SoundButton_Idle.png');
   });
+  it('should hide landingContainer, show gameContainer, and hide endContainer', () => {
+    uiController.showGame();
 
+    expect(uiController.landingContainer.style.display).toBe('none');
+    expect(uiController.gameContainer.style.display).toBe('grid');
+    expect(uiController.endContainer.style.display).toBe('none');
+  });
+
+  it('should set allStart timestamp to now (approximately)', () => {
+    const before = Date.now();
+    uiController.showGame();
+    const after = Date.now();
+
+    expect(uiController.allStart).toBeGreaterThanOrEqual(before);
+    expect(uiController.allStart).toBeLessThanOrEqual(after);
+  });
+
+  it('should call startPressCallback', () => {
+    uiController.showGame();
+    expect(uiController.startPressCallback).toHaveBeenCalled();
+  });
+
+  it('should set landingContainer display to flex', () => {
+    uiController.showLanding();
+    expect(uiController.landingContainer.style.display).toBe('flex');
+  });
+
+  it('should set gameContainer display to none', () => {
+    uiController.showLanding();
+    expect(uiController.gameContainer.style.display).toBe('none');
+  });
+
+  it('should set endContainer display to none', () => {
+    uiController.showLanding();
+    expect(uiController.endContainer.style.display).toBe('none');
+  });
+  it('should hide the landing container', () => {
+    UIController.ShowEnd();
+    expect(uiController.landingContainer.style.display).toBe('none');
+  });
+
+  it('should hide the game container', () => {
+    UIController.ShowEnd();
+    expect(uiController.gameContainer.style.display).toBe('none');
+  });
+
+  it('should show the end container', () => {
+    UIController.ShowEnd();
+    expect(uiController.endContainer.style.display).toBe('flex');
+  });
+  it('should hide the landing container', () => {
+    uiController.showGame();
+    expect(uiController.landingContainer.style.display).toBe('none');
+  });
+
+  it('should show the game container with display set to grid', () => {
+    uiController.showGame();
+    expect(uiController.gameContainer.style.display).toBe('grid');
+  });
+
+  it('should hide the end container', () => {
+    uiController.showGame();
+    expect(uiController.endContainer.style.display).toBe('none');
+  });
+
+  it('should set allStart to the current timestamp', () => {
+    const before = Date.now();
+    uiController.showGame();
+    const after = Date.now();
+    expect(uiController.allStart).toBeGreaterThanOrEqual(before);
+    expect(uiController.allStart).toBeLessThanOrEqual(after);
+  });
+
+  it('should call startPressCallback', () => {
+    uiController.showGame();
+    expect(uiController.startPressCallback).toHaveBeenCalled();
+  });
+  it('should make feedback container visible and set color to green for correct answer', () => {
+    UIController.SetFeedbackVisibile(true, true);
+
+    expect(UIController.getInstance().feedbackContainer.classList.contains('visible')).toBe(true);
+    expect(UIController.getInstance().feedbackContainer.classList.contains('hidden')).toBe(false);
+    expect(UIController.getInstance().feedbackContainer.style.color).toBe('rgb(109, 204, 122)'); // green
+    expect(UIController.getInstance().buttonsActive).toBe(false);
+    expect(AudioController.PlayCorrect).toHaveBeenCalled();
+  });
+
+  it('should make feedback container visible and set color to red for incorrect answer', () => {
+    UIController.SetFeedbackVisibile(true, false);
+
+    expect(UIController.getInstance().feedbackContainer.classList.contains('visible')).toBe(true);
+    expect(UIController.getInstance().feedbackContainer.classList.contains('hidden')).toBe(false);
+    expect(UIController.getInstance().feedbackContainer.style.color).toBe('red');
+    expect(UIController.getInstance().buttonsActive).toBe(false);
+    expect(AudioController.PlayCorrect).not.toHaveBeenCalled();
+  });
+
+  it('should hide feedback container when visible is false', () => {
+    UIController.SetFeedbackVisibile(false, true);
+
+    expect(UIController.getInstance().feedbackContainer.classList.contains('visible')).toBe(false);
+    expect(UIController.getInstance().feedbackContainer.classList.contains('hidden')).toBe(true);
+    expect(UIController.getInstance().buttonsActive).toBe(false);
+  });
+
+  it('should not play correct audio when visible is false', () => {
+    UIController.SetFeedbackVisibile(false, true);
+    expect(AudioController.PlayCorrect).not.toHaveBeenCalled();
+  });
 });
