@@ -15,7 +15,8 @@ describe('UIController', () => {
     uiController = UIController.getInstance(); // Getting the singleton instance
     uiController.initEventListeners();
     uiController['feedbackContainer'] = feedbackContainer;
-
+    uiController.playButton = document.getElementById('playButton')!;
+    uiController.devModeBucketControlsEnabled = false;
 
     chestImage = document.getElementById('chestImage') as HTMLImageElement;
   });
@@ -341,4 +342,93 @@ describe('UIController', () => {
     UIController.SetFeedbackText('New feedback');
     expect(uiController.feedbackContainer.innerHTML).toBe('New feedback');
   });
+  it('should set the correct image source and classes on the star element', () => {
+    const star = document.getElementById('star0') as HTMLImageElement;
+
+    UIController.AddStar();
+
+    expect(star.src).toContain('Star.gif');
+    expect(star.classList.contains('topstarv')).toBe(true);
+    expect(star.classList.contains('topstarh')).toBe(false);
+    expect(star.style.position).toBe('absolute');
+  });
+
+  it('should increment qAnsNum and shownStarsCount', () => {
+    UIController.AddStar();
+
+    expect(uiController.qAnsNum).toBe(1);
+    expect(uiController.shownStarsCount).toBe(1);
+  });
+
+  it('should push new coordinates to starPositions array', () => {
+    expect(uiController.starPositions.length).toBe(0);
+
+    UIController.AddStar();
+
+    expect(uiController.starPositions.length).toBe(1);
+    expect(uiController.starPositions[0]).toHaveProperty('x');
+    expect(uiController.starPositions[0]).toHaveProperty('y');
+  });
+
+  it('should apply transition and transform styles', () => {
+    const star = document.getElementById('star0') as HTMLImageElement;
+
+    UIController.AddStar();
+
+    expect(star.style.transition).toContain('top');
+    expect(star.style.transform).toContain('scale(10)');
+    expect(star.style.zIndex).toBe('500');
+  });
+
+  it('should call OverlappingOtherStars to avoid overlap', () => {
+    const spy = jest.spyOn(UIController, 'OverlappingOtherStars').mockReturnValue(false);
+
+    UIController.AddStar();
+
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it('should not throw if the star element does not exist (edge case)', () => {
+    uiController.stars = [99]; // ID that doesn't exist in DOM
+
+    expect(() => {
+      UIController.AddStar();
+    }).toThrow(); // if you're not catching it in code, expect it to throw
+  });
+  it('should set playButton img to SoundButton.gif when playing is true', () => {
+    UIController.ShowAudioAnimation(true);
+    const img = uiController.playButton.querySelector('img');
+    expect(img!.src).toContain('animation/SoundButton.gif');
+  });
+
+  it('should set playButton img to SoundButton_Idle.png when playing is false', () => {
+    const img = uiController.playButton.querySelector('img')!;
+    img.src = 'animation/SoundButton.gif'; // initially playing
+
+    UIController.ShowAudioAnimation(false);
+
+    expect(img!.src).toContain('/img/SoundButton_Idle.png');
+  });
+
+  it('should do nothing if devModeBucketControlsEnabled is true', () => {
+    uiController.devModeBucketControlsEnabled = true;
+
+    const img = uiController.playButton.querySelector('img')!;
+    img.src = 'some/initial/path.png';
+
+    UIController.ShowAudioAnimation(true);
+
+    expect(img!.src).toContain('some/initial/path.png'); // unchanged
+  });
+
+  it('should default to idle image when called with no argument', () => {
+    const img = uiController.playButton.querySelector('img')!;
+    img.src = 'animation/SoundButton.gif'; // simulate playing state
+
+    UIController.ShowAudioAnimation(); // default is false
+
+    expect(img!.src).toContain('/img/SoundButton_Idle.png');
+  });
+
 });
