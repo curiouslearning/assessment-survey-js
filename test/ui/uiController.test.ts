@@ -2,6 +2,7 @@
 import { setupDom } from './_mock_/dom';
 import { UIController } from '../../src/ui/uiController';
 import { AudioController } from '../../src/components/audioController';
+import { jest } from '@jest/globals';
 
 describe('UIController', () => {
   let uiController: UIController;
@@ -16,13 +17,30 @@ describe('UIController', () => {
     feedbackContainer = document.getElementById('feedbackWrap') as HTMLElement;
     UIController.instance = null;
 
+
     uiController = UIController.getInstance(); // Getting the singleton instance
     uiController.initEventListeners();
     feedbackContainer.classList.add('hidden');
+    uiController.stars = [1, 2, 3, 4, 5];
+    uiController.qAnsNum = 1;
+    uiController.starContainer = document.getElementById('starWrapper')!;
+    uiController.gameContainer = document.getElementById('gameWrap')!;
+    uiController.shownStarsCount = 0;
+    uiController.starPositions = [];
+    uiController.animationSpeedMultiplier = 1;
     uiController['feedbackContainer'] = feedbackContainer;
     uiController.playButton = document.getElementById('playButton')!;
     uiController.devModeBucketControlsEnabled = false;
     uiController = UIController.getInstance();
+    uiController.answersContainer = document.getElementById('aWrap')!;
+    uiController.questionsContainer = document.getElementById('qWrap')!;
+    uiController.playButton = document.createElement('div');
+    document.body.appendChild(uiController.playButton);
+    uiController.answerButton1 = document.getElementById("answerButton1")!;
+    uiController.answerButton2 = document.getElementById("answerButton2")!;
+
+    uiController.devModeBucketControlsEnabled = false;
+    uiController.externalBucketControlsGenerationHandler = jest.fn();
     uiController.landingContainer = document.getElementById('landWrap')!;
     uiController.gameContainer = document.getElementById('gameWrap')!;
     uiController.endContainer = document.getElementById('endWrap')!;
@@ -418,18 +436,18 @@ describe('UIController', () => {
 
     UIController.ShowAudioAnimation(false);
 
-    expect(img!.src).toContain('/img/SoundButton_Idle.png');
+    expect(img!.src).toContain('../../img/SoundButton_Idle.png');
   });
 
   it('should do nothing if devModeBucketControlsEnabled is true', () => {
     uiController.devModeBucketControlsEnabled = true;
 
     const img = uiController.playButton.querySelector('img')!;
-    img.src = 'some/initial/path.png';
+    img.src = '../../img/SoundButton_Idle.png';
 
     UIController.ShowAudioAnimation(true);
 
-    expect(img!.src).toContain('some/initial/path.png'); // unchanged
+    expect(img!.src).toContain('../../img/SoundButton_Idle.png'); // unchanged
   });
 
   it('should default to idle image when called with no argument', () => {
@@ -438,7 +456,7 @@ describe('UIController', () => {
 
     UIController.ShowAudioAnimation(); // default is false
 
-    expect(img!.src).toContain('/img/SoundButton_Idle.png');
+    expect(img!.src).toContain('../../img/SoundButton_Idle.png');
   });
   it('should hide landingContainer, show gameContainer, and hide endContainer', () => {
     uiController.showGame();
@@ -549,4 +567,29 @@ describe('UIController', () => {
     UIController.SetFeedbackVisibile(false, true);
     expect(AudioController.PlayCorrect).not.toHaveBeenCalled();
   });
+  test('should change star image to star_after_animation.gif', () => {
+    const star = document.getElementById('star1') as HTMLImageElement;
+    star.src = 'initial.gif';
+
+    UIController.getInstance().qAnsNum = 1;
+    UIController.getInstance().stars = [1, 2, 3, 4, 5];
+
+    UIController.ChangeStarImageAfterAnimation();
+
+    expect(star.src).toContain('star_after_animation.gif');
+  });
+  test('should add a star with gif and correct style changes', () => {
+    const ui = UIController.getInstance();
+    ui.qAnsNum = 0;
+
+    UIController.AddStar();
+
+    const star = document.getElementById('star1') as HTMLImageElement;
+    expect(star.src).toContain('Star.gif');
+    expect(star.classList.contains('topstarv')).toBe(true);
+    expect(star.style.position).toBe('absolute');
+    expect(ui.shownStarsCount).toBe(1);
+  });
+
+
 });
