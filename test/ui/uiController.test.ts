@@ -683,5 +683,109 @@ describe('UIController', () => {
 
     expect(uiController.externalBucketControlsGenerationHandler).not.toHaveBeenCalled();
   });
+  it('should set img src to animation gif when playing is true and devModeBucketControlsEnabled is false', () => {
+    UIController.ShowAudioAnimation(true);
 
+    expect(playButtonImg.src).toContain('../../animation/SoundButton.gif');
+  });
+
+  it('should set img src to idle image when playing is false and devModeBucketControlsEnabled is false', () => {
+    UIController.ShowAudioAnimation(false);
+
+    expect(playButtonImg.src).toContain('../../img/SoundButton_Idle.png');
+  });
+
+  it('should not change img src if devModeBucketControlsEnabled is true', () => {
+    uiController.devModeBucketControlsEnabled = true;
+    playButtonImg.src = '../../img/sound-play-button.svg'; // Set an initial src
+
+    UIController.ShowAudioAnimation(true);
+
+    expect(playButtonImg.src).toContain('../../img/sound-play-button.svg'); // Should remain unchanged
+  });
+
+  it('should handle case when img element is not found gracefully (no crash)', () => {
+    // Remove img
+    uiController.playButton.innerHTML = '';
+
+    expect(() => UIController.ShowAudioAnimation(true)).not.toThrow();
+  });
+  it('should call externalBucketControlsGenerationHandler if devModeBucketControlsEnabled is true', () => {
+    uiController.devModeBucketControlsEnabled = true;
+
+    UIController.ShowQuestion(mockQData);
+
+    expect(uiController.externalBucketControlsGenerationHandler).toHaveBeenCalledWith(
+      uiController.playButton,
+      expect.any(Function)
+    );
+  });
+
+  it('should create a next question button if devModeBucketControlsEnabled is false', () => {
+    uiController.devModeBucketControlsEnabled = false;
+
+    UIController.ShowQuestion(mockQData);
+
+    const nextQuestionButton = document.getElementById('nextqButton');
+    expect(nextQuestionButton).not.toBeNull();
+  });
+
+  it('should play audio when clicking the next question button (non-dev mode)', () => {
+    uiController.devModeBucketControlsEnabled = false;
+
+    UIController.ShowQuestion(mockQData);
+
+    const nextQuestionButton = document.getElementById('nextqButton');
+    nextQuestionButton?.click();
+
+    expect(AudioController.PlayAudio).toHaveBeenCalledWith(
+      mockQData.promptAudio,
+      undefined,
+      UIController.ShowAudioAnimation
+    );
+  });
+
+  it('should set answersContainer visibility to visible', () => {
+    UIController.ShowQuestion(mockQData);
+
+    expect(uiController.answersContainer.style.visibility).toBe('visible');
+  });
+
+  it('should clear and add prompt text and prompt image to questionsContainer', () => {
+    UIController.ShowQuestion(mockQData);
+
+    expect(uiController.questionsContainer.innerHTML).toContain(mockQData.promptText);
+    expect(uiController.questionsContainer.querySelector('img')?.src).toContain(mockQData.promptImg);
+  });
+
+  it('should not crash if promptImg is missing', () => {
+    const qDataWithoutImg: qData = {
+      ...mockQData,
+      promptImg: undefined,
+    };
+
+    expect(() => UIController.ShowQuestion(qDataWithoutImg)).not.toThrow();
+  });
+
+  it('should not crash if promptAudio is missing', () => {
+    const qDataWithoutAudio: qData = {
+      ...mockQData,
+      promptAudio: undefined,
+    };
+
+    UIController.ShowQuestion(qDataWithoutAudio);
+
+    const nextQuestionButton = document.getElementById('nextqButton');
+    nextQuestionButton?.click();
+
+    expect(AudioController.PlayAudio).not.toHaveBeenCalled();
+  });
+
+  it('should set qStart to a timestamp', () => {
+    expect(uiController.qStart).toBeUndefined();
+
+    uiController.showOptions();
+
+    expect(typeof uiController.qStart).toBe('number');
+  });
 });
