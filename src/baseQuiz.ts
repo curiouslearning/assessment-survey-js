@@ -1,5 +1,5 @@
 import { App } from './App';
-import { AnalyticsEvents } from './firebase/analyticsEvents';
+import { AnalyticsEvents } from './analytics/analyticsEvents';
 import { UIController } from './ui/uiController';
 import { UnityBridge } from './utils/unityBridge';
 
