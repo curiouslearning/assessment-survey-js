@@ -3,7 +3,7 @@
 //once we start adding in the assessment functionality
 import { UIController } from '../ui/uiController';
 import { qData, answerData } from '../components/questionData';
-import { AnalyticsEvents } from '../analytics/analyticsEvents';
+import { AnalyticsEvents } from '../firebase/analyticsEvents';
 import { App } from '../App';
 import { bucket, bucketItem } from './bucketData';
 import { BaseQuiz } from '../baseQuiz';

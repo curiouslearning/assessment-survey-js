@@ -6,7 +6,7 @@ import { getUUID, getUserSource, getDataFile } from './utils/urlUtils';
 import { Survey } from './survey/survey';
 import { Assessment } from './assessment/assessment';
 import { UnityBridge } from './utils/unityBridge';
-import { AnalyticsEvents } from './analytics/analyticsEvents';
+import { AnalyticsEvents } from './firebase/analyticsEvents';
 import { BaseQuiz } from './baseQuiz';
 import { fetchAppData, getDataURL } from './utils/jsonUtils';
 import { initializeApp } from 'firebase/app';

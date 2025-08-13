@@ -4,7 +4,7 @@
 import { UIController } from '../ui/uiController';
 import { AudioController } from '../components/audioController';
 import { qData, answerData } from '../components/questionData';
-import { AnalyticsEvents } from '../analytics/analyticsEvents';
+import { AnalyticsEvents } from '../firebase/analyticsEvents';
 import { App } from '../App';
 import { BaseQuiz } from '../baseQuiz';
 import { fetchSurveyQuestions } from '../utils/jsonUtils';
