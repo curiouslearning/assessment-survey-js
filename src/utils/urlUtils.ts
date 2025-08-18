@@ -38,7 +38,12 @@ export function getDataFile(): string {
   }
   return data;
 }
+export function isItLastAssessment(): boolean {
 
+  let pathParams = getPathName();
+  let requiredScore = Number(pathParams.get("requiredScore"));
+  return requiredScore >= 640
+}
 function getPathName() {
   const queryString = window.location.search;
   const urlParams = new URLSearchParams(queryString);

@@ -4,6 +4,7 @@
 import { qData, answerData } from '../components/questionData';
 import { logEvent } from 'firebase/analytics';
 import { bucket } from '../assessment/bucketData';
+import { isItLastAssessment } from '../utils/urlUtils';
 
 // Create a singleton class for the analytics events
 export class AnalyticsEvents {
@@ -295,24 +296,46 @@ export class AnalyticsEvents {
         'https://synapse.curiouscontent.org/'
       );
     }
+    if (isItLastAssessment()) {
+      console.log(">>>>>>>>>>>>>>>>SAfasfasfaf");
+      logEvent(AnalyticsEvents.gana, 'completed', {
+        type: 'completed',
+        clUserId: AnalyticsEvents.uuid,
+        userSource: AnalyticsEvents.userSource,
+        app: AnalyticsEvents.getAppTypeFromDataURL(AnalyticsEvents.dataURL),
+        lang: AnalyticsEvents.getAppLanguageFromDataURL(AnalyticsEvents.dataURL),
+        latLong: AnalyticsEvents.joinLatLong(AnalyticsEvents.clat, AnalyticsEvents.clon),
+        // city: city,
+        // region: region,
+        // country: country,
+        score: score,
+        maxScore: maxScore,
+        basalBucket: basalBucketID,
+        ceilingBucket: ceilingBucketID,
+        appVersion: AnalyticsEvents.appVersion,
+        contentVersion: AnalyticsEvents.contentVersion,
+        nextAssessment: 'Null',
+      });
+    } else {
 
-    logEvent(AnalyticsEvents.gana, 'completed', {
-      type: 'completed',
-      clUserId: AnalyticsEvents.uuid,
-      userSource: AnalyticsEvents.userSource,
-      app: AnalyticsEvents.getAppTypeFromDataURL(AnalyticsEvents.dataURL),
-      lang: AnalyticsEvents.getAppLanguageFromDataURL(AnalyticsEvents.dataURL),
-      latLong: AnalyticsEvents.joinLatLong(AnalyticsEvents.clat, AnalyticsEvents.clon),
-      // city: city,
-      // region: region,
-      // country: country,
-      score: score,
-      maxScore: maxScore,
-      basalBucket: basalBucketID,
-      ceilingBucket: ceilingBucketID,
-      appVersion: AnalyticsEvents.appVersion,
-      contentVersion: AnalyticsEvents.contentVersion,
-    });
+      logEvent(AnalyticsEvents.gana, 'completed', {
+        type: 'completed',
+        clUserId: AnalyticsEvents.uuid,
+        userSource: AnalyticsEvents.userSource,
+        app: AnalyticsEvents.getAppTypeFromDataURL(AnalyticsEvents.dataURL),
+        lang: AnalyticsEvents.getAppLanguageFromDataURL(AnalyticsEvents.dataURL),
+        latLong: AnalyticsEvents.joinLatLong(AnalyticsEvents.clat, AnalyticsEvents.clon),
+        // city: city,
+        // region: region,
+        // country: country,
+        score: score,
+        maxScore: maxScore,
+        basalBucket: basalBucketID,
+        ceilingBucket: ceilingBucketID,
+        appVersion: AnalyticsEvents.appVersion,
+        contentVersion: AnalyticsEvents.contentVersion,
+      });
+    }
   }
 
   static sendDataToThirdParty(score: number, uuid: string): void {
