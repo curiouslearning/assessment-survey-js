@@ -300,7 +300,7 @@ export class AnalyticsEvents {
     let isSynapseUser = false;
     if (score >= requiredScore && requiredScore != 0) {
       isSynapseUser = true;
-      nextAssessment = 'Null';
+      nextAssessment = 'null';
     }
 
     const eventData = {
@@ -316,7 +316,7 @@ export class AnalyticsEvents {
       ceilingBucket: ceilingBucketID,
       appVersion: AnalyticsEvents.appVersion,
       contentVersion: AnalyticsEvents.contentVersion,
-      ...(isSynapseUser && { synapseAccess: true, nextAssessment }),
+      ...(isSynapseUser && { nextAssessment: 'null' }),
     };
     logEvent(AnalyticsEvents.gana, 'completed', eventData);
 
