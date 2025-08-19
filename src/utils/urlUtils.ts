@@ -44,6 +44,15 @@ export function isItLastAssessment(): boolean {
   let requiredScore = Number(pathParams.get("requiredScore"));
   return requiredScore >= 640
 }
+export function getRequiredScore() {
+  let pathParams = getPathName();
+  return Number(pathParams.get("requiredScore"));
+}
+export function getNextAssessment() {
+  let pathParams = getPathName();
+  return String(pathParams.get("nextAssessment"));
+}
+
 function getPathName() {
   const queryString = window.location.search;
   const urlParams = new URLSearchParams(queryString);
