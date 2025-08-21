@@ -4,7 +4,7 @@
 import { qData, answerData } from '../components/questionData';
 import { logEvent } from 'firebase/analytics';
 import { bucket } from '../assessment/bucketData';
-import { getNextAssessment, getRequiredScore, isItLastAssessment } from '../utils/urlUtils';
+import { getNextAssessment, getRequiredScore } from '../utils/urlUtils';
 
 // Create a singleton class for the analytics events
 export class AnalyticsEvents {
