@@ -38,6 +38,14 @@ export function getDataFile(): string {
   }
   return data;
 }
+export function getRequiredScore() {
+  let pathParams = getPathName();
+  return Number(pathParams.get("requiredScore"));
+}
+export function getNextAssessment() {
+  let pathParams = getPathName();
+  return String(pathParams.get("nextAssessment"));
+}
 
 function getPathName() {
   const queryString = window.location.search;

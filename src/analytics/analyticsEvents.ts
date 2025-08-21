@@ -4,6 +4,7 @@
 import { qData, answerData } from '../components/questionData';
 import { logEvent } from 'firebase/analytics';
 import { bucket } from '../assessment/bucketData';
+import { getNextAssessment, getRequiredScore } from '../utils/urlUtils';
 
 // Create a singleton class for the analytics events
 export class AnalyticsEvents {
@@ -257,7 +258,8 @@ export class AnalyticsEvents {
   static sendFinished(buckets: bucket[] = null, basalBucket: number, ceilingBucket: number): void {
     let eventString = 'user ' + AnalyticsEvents.uuid + ' finished the assessment';
     console.log(eventString);
-
+    let nextAssessment = getNextAssessment();
+    let requiredScore = getRequiredScore();
     let basalBucketID = AnalyticsEvents.getBasalBucketID(buckets);
     let ceilingBucketID = AnalyticsEvents.getCeilingBucketID(buckets);
 
@@ -295,24 +297,28 @@ export class AnalyticsEvents {
         'https://synapse.curiouscontent.org/'
       );
     }
+    let isSynapseUser = false;
+    if (score >= requiredScore && requiredScore != 0) {
+      isSynapseUser = true;
+    }
 
-    logEvent(AnalyticsEvents.gana, 'completed', {
+    const eventData = {
       type: 'completed',
       clUserId: AnalyticsEvents.uuid,
       userSource: AnalyticsEvents.userSource,
       app: AnalyticsEvents.getAppTypeFromDataURL(AnalyticsEvents.dataURL),
       lang: AnalyticsEvents.getAppLanguageFromDataURL(AnalyticsEvents.dataURL),
       latLong: AnalyticsEvents.joinLatLong(AnalyticsEvents.clat, AnalyticsEvents.clon),
-      // city: city,
-      // region: region,
-      // country: country,
       score: score,
       maxScore: maxScore,
       basalBucket: basalBucketID,
       ceilingBucket: ceilingBucketID,
       appVersion: AnalyticsEvents.appVersion,
       contentVersion: AnalyticsEvents.contentVersion,
-    });
+      ...(isSynapseUser && { nextAssessment: nextAssessment }),
+    };
+    logEvent(AnalyticsEvents.gana, 'completed', eventData);
+
   }
 
   static sendDataToThirdParty(score: number, uuid: string): void {
