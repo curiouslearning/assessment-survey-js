@@ -280,7 +280,7 @@ export class AnalyticsEvents {
     console.log('Completed App Version: ' + AnalyticsEvents.appVersion);
     console.log('Content Version: ' + AnalyticsEvents.contentVersion);
 
-    AnalyticsEvents.sendDataToThirdParty(score, AnalyticsEvents.uuid);
+    AnalyticsEvents.sendDataToThirdParty(score, AnalyticsEvents.uuid, nextAssessment, requiredScore);
 
     // Attempt to send the score to the parent curious frame if it exists
     if (window.parent) {
@@ -321,7 +321,7 @@ export class AnalyticsEvents {
 
   }
 
-  static sendDataToThirdParty(score: number, uuid: string): void {
+  static sendDataToThirdParty(score: number, uuid: string, nextAssessment: string, requiredScore: number): void {
     // Send data to the third party
     console.log('Attempting to send score to a third party! Score: ', score);
 
@@ -345,6 +345,8 @@ export class AnalyticsEvents {
           type: 'assessment',
           subType: AnalyticsEvents.assessmentType,
           score: score,
+          "requiredScore": requiredScore,
+          "nextAssessment": nextAssessment,
           completed: true,
         },
       },
