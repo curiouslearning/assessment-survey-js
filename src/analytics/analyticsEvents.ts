@@ -279,7 +279,17 @@ export class AnalyticsEvents {
     console.log('CEILING FROM ASSESSMENT: ' + ceilingBucket);
     console.log('Completed App Version: ' + AnalyticsEvents.appVersion);
     console.log('Content Version: ' + AnalyticsEvents.contentVersion);
-
+    let isSynapseUser = false;
+    let integerRequiredScore = 0;
+    if (nextAssessment === 'null' && requiredScore === 'null' || Number(requiredScore) >= score) {
+      isSynapseUser = true;
+      integerRequiredScore = null;
+    }
+    if (Number(requiredScore) < score && Number(requiredScore) != 0) {
+      isSynapseUser = true;
+      integerRequiredScore = Number(requiredScore);
+      nextAssessment = 'null';
+    }
     AnalyticsEvents.sendDataToThirdParty(score, AnalyticsEvents.uuid);
 
     // Attempt to send the score to the parent curious frame if it exists
@@ -297,15 +307,7 @@ export class AnalyticsEvents {
         'https://synapse.curiouscontent.org/'
       );
     }
-    let isSynapseUser = false;
-    if (score >= requiredScore && requiredScore != 0) {
-      requiredScore = null;
-      isSynapseUser = true;
-    }
-    if (requiredScore > score && requiredScore != 0) {
-      isSynapseUser = true;
-      nextAssessment = 'null';
-    }
+
 
     const eventData = {
       type: 'completed',
@@ -322,7 +324,7 @@ export class AnalyticsEvents {
       contentVersion: AnalyticsEvents.contentVersion,
       ...(isSynapseUser && {
         nextAssessment: nextAssessment,
-        requiredScore: requiredScore
+        requiredScore: integerRequiredScore
       }),
     };
     logEvent(AnalyticsEvents.gana, 'completed', eventData);
