@@ -40,11 +40,11 @@ export function getDataFile(): string {
 }
 export function getRequiredScore() {
   let pathParams = getPathName();
-  return Number(pathParams.get("requiredScore"));
+  return pathParams.get("requiredScore");
 }
 export function getNextAssessment() {
   let pathParams = getPathName();
-  return String(pathParams.get("nextAssessment"));
+  return pathParams.get("nextAssessment");
 }
 
 function getPathName() {

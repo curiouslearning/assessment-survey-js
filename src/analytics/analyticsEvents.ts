@@ -279,8 +279,18 @@ export class AnalyticsEvents {
     console.log('CEILING FROM ASSESSMENT: ' + ceilingBucket);
     console.log('Completed App Version: ' + AnalyticsEvents.appVersion);
     console.log('Content Version: ' + AnalyticsEvents.contentVersion);
-
-    AnalyticsEvents.sendDataToThirdParty(score, AnalyticsEvents.uuid, nextAssessment, requiredScore);
+    let isSynapseUser = false;
+    let integerRequiredScore = 0;
+    if (nextAssessment === 'null' && requiredScore === 'null' || Number(requiredScore) >= score) {
+      isSynapseUser = true;
+      integerRequiredScore = null;
+    }
+    if (Number(requiredScore) < score && Number(requiredScore) != 0) {
+      isSynapseUser = true;
+      integerRequiredScore = Number(requiredScore);
+      nextAssessment = 'null';
+    }
+    AnalyticsEvents.sendDataToThirdParty(score, AnalyticsEvents.uuid);
 
     // Attempt to send the score to the parent curious frame if it exists
     if (window.parent) {
@@ -297,10 +307,7 @@ export class AnalyticsEvents {
         'https://synapse.curiouscontent.org/'
       );
     }
-    let isSynapseUser = false;
-    if (score >= requiredScore && requiredScore != 0) {
-      isSynapseUser = true;
-    }
+
 
     const eventData = {
       type: 'completed',
@@ -315,13 +322,16 @@ export class AnalyticsEvents {
       ceilingBucket: ceilingBucketID,
       appVersion: AnalyticsEvents.appVersion,
       contentVersion: AnalyticsEvents.contentVersion,
-      ...(isSynapseUser && { nextAssessment: nextAssessment }),
+      ...(isSynapseUser && {
+        nextAssessment: nextAssessment,
+        requiredScore: integerRequiredScore
+      }),
     };
     logEvent(AnalyticsEvents.gana, 'completed', eventData);
 
   }
 
-  static sendDataToThirdParty(score: number, uuid: string, nextAssessment: string, requiredScore: number): void {
+  static sendDataToThirdParty(score: number, uuid: string): void {
     // Send data to the third party
     console.log('Attempting to send score to a third party! Score: ', score);
 
@@ -345,8 +355,6 @@ export class AnalyticsEvents {
           type: 'assessment',
           subType: AnalyticsEvents.assessmentType,
           score: score,
-          "requiredScore": requiredScore,
-          "nextAssessment": nextAssessment,
           completed: true,
         },
       },
