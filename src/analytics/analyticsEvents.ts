@@ -281,14 +281,18 @@ export class AnalyticsEvents {
     console.log('Content Version: ' + AnalyticsEvents.contentVersion);
     let isSynapseUser = false;
     let integerRequiredScore = 0;
-    if (nextAssessment === 'null' && requiredScore === 'null' || Number(requiredScore) >= score) {
+    if (nextAssessment === 'null' && requiredScore === 'null') {
       isSynapseUser = true;
-      integerRequiredScore = null;
+      integerRequiredScore = 0;
     }
-    if (Number(requiredScore) < score && Number(requiredScore) != 0) {
+    else if (Number(requiredScore) >= score) {
       isSynapseUser = true;
       integerRequiredScore = Number(requiredScore);
       nextAssessment = 'null';
+    }
+    else if (Number(requiredScore) < score && Number(requiredScore) != 0) {
+      isSynapseUser = true;
+      integerRequiredScore = Number(requiredScore);
     }
     AnalyticsEvents.sendDataToThirdParty(score, AnalyticsEvents.uuid, integerRequiredScore, nextAssessment);
 
