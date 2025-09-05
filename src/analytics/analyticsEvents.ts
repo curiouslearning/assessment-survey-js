@@ -285,7 +285,7 @@ export class AnalyticsEvents {
       isSynapseUser = true;
       integerRequiredScore = 0;
     }
-    else if (Number(requiredScore) >= score) {
+    else if (Number(requiredScore) >= score && Number(requiredScore) != 0) {
       isSynapseUser = true;
       integerRequiredScore = Number(requiredScore);
       nextAssessment = 'null';
@@ -295,7 +295,6 @@ export class AnalyticsEvents {
       integerRequiredScore = Number(requiredScore);
     }
     AnalyticsEvents.sendDataToThirdParty(score, AnalyticsEvents.uuid, integerRequiredScore, nextAssessment);
-
     // Attempt to send the score to the parent curious frame if it exists
     if (window.parent) {
       window.parent.postMessage(
