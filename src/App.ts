@@ -23,6 +23,8 @@ const appVersion: string = 'v1.1.3';
  */
 let contentVersion: string = '';
 
+const something: strng = '';
+
 let loadingScreen = document.getElementById('loadingScreen');
 const progressBar = document.getElementById('progressBar');
 const broadcastChannel: BroadcastChannel = new BroadcastChannel('as-message-channel');
