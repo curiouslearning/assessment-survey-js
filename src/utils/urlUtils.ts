@@ -38,6 +38,29 @@ export function getDataFile(): string {
   }
   return data;
 }
+// Get App Language From Data URL
+export function getAppLanguageFromDataURL(appType: string): string {
+  // Check if app type is not empty and split the string by the hyphen then return the first element
+  if (appType && appType !== '' && appType.includes('-')) {
+    let language: string = appType.split('-').slice(0, -1).join('-');
+    if (language.includes('west-african')) {
+      return 'west-african-english';
+    } else {
+      return language;
+    }
+  }
+
+  return 'NotAvailable';
+}
+// Get App Type From Data URL
+export function getAppTypeFromDataURL(appType: string): string {
+  // Check if app type is not empty and split the string by the hyphen then return the last element
+  if (appType && appType !== '' && appType.includes('-')) {
+    return appType.substring(appType.lastIndexOf('-') + 1);
+  }
+
+  return 'NotAvailable';
+}
 export function getRequiredScore() {
   let pathParams = getPathName();
   return pathParams.get("requiredScore");

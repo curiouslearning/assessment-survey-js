@@ -4,6 +4,8 @@ interface CommonEventProperties {
     app: string;
     lat_lang: string;
     user_source: string;
+    appVersion: string;
+    contentVersion: string;
 }
 
 export interface Opened extends CommonEventProperties {
@@ -14,8 +16,6 @@ export interface UserLocation extends CommonEventProperties {
 }
 export interface SessionStart extends CommonEventProperties {
     type: string;
-    appVersion: Number;
-    contentVersion: Number;
 
 
 }
@@ -26,21 +26,19 @@ export interface PuzzleCompleted extends CommonEventProperties {
     target: string;
     question: string;
     selected_answer: string;
-    iscorrect: string;
+    iscorrect: boolean;
     options: string;
     bucket: string;
-    appVersion: string;
-    contentVersion: Number;
+
 
 }
 export interface LevelCompleted extends CommonEventProperties {
     type: string;
     bucketNumber: Number;
     numberTriedInBucket: Number;
-    numberCorrectInBucket: boolean;
+    numberCorrectInBucket: Number;
     passedBucket: boolean;
-    appVersion: Number;
-    contentVersion: Number;
+
 }
 export interface SessionEnd extends CommonEventProperties {
     type: string;
@@ -48,6 +46,5 @@ export interface SessionEnd extends CommonEventProperties {
     maxScore: Number;
     basalBucket: Number;
     ceilingBucket: Number;
-    appVersion: Number;
-    contentVersion: Number;
+
 }

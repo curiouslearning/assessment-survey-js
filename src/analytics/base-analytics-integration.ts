@@ -1,6 +1,5 @@
 import { AnalyticsService, FirebaseStrategy, StatsigStrategy } from '@curiouslearning/analytics';
-import { firebaseConfig, statsigConfig } from "./analytics-config";
-import { getUUID } from '../utils/urlUtils';
+import { firebaseConfig } from "./analytics-config";
 
 export class BaseAnalyticsIntegration {
     private analyticsService: AnalyticsService;
@@ -39,15 +38,15 @@ export class BaseAnalyticsIntegration {
             this.analyticsService.register('firebase', this.firebaseStrategy);
 
             // Initialize Statsig Strategy
-            this.statsigStrategy = new StatsigStrategy({
-                clientKey: statsigConfig.clientKey,
-                statsigUser: {
-                    userID: getUUID() || statsigConfig.userId
-                }
-            });
+            // this.statsigStrategy = new StatsigStrategy({
+            //     clientKey: statsigConfig.clientKey,
+            //     statsigUser: {
+            //         userID: getUUID() || statsigConfig.userId
+            //     }
+            // });
 
-            await this.statsigStrategy.initialize();
-            this.analyticsService.register('statsig', this.statsigStrategy);
+            // await this.statsigStrategy.initialize();
+            // this.analyticsService.register('statsig', this.statsigStrategy);
 
             this.isInitialized = true;
             console.log("Analytics service initialized successfully with Firebase and Statsig");
