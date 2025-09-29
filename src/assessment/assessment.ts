@@ -358,7 +358,6 @@ export class Assessment extends BaseQuiz {
     }
   }
   public onQuestionEnd = () => {
-    this.onEnd();
     let questionEndTimeout = this.HasQuestionsLeft()
       ? 500 * this.animationSpeedMultiplier
       : 4000 * this.animationSpeedMultiplier;
