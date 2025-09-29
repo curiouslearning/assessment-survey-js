@@ -21,8 +21,8 @@ export interface SessionStart extends CommonEventProperties {
 }
 export interface PuzzleCompleted extends CommonEventProperties {
     type: string;
-    dt: Number;
-    question_number: Number;
+    dt: number;
+    question_number: number;
     target: string;
     question: string;
     selected_answer: string;
@@ -34,18 +34,18 @@ export interface PuzzleCompleted extends CommonEventProperties {
 }
 export interface LevelCompleted extends CommonEventProperties {
     type: string;
-    bucketNumber: Number;
-    numberTriedInBucket: Number;
-    numberCorrectInBucket: Number;
+    bucketNumber: number;
+    numberTriedInBucket: number;
+    numberCorrectInBucket: number;
     passedBucket: boolean;
 
 }
 export interface SessionEnd extends CommonEventProperties {
     type: string;
-    score: Number;
-    maxScore: Number;
-    basalBucket: Number;
-    ceilingBucket: Number;
+    score: number;
+    maxScore: number;
+    basalBucket: number;
+    ceilingBucket: number;
     nextAssessment?: string;
-    requiredScore?: Number;
+    requiredScore?: number;
 }

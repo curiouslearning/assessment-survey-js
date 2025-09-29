@@ -293,7 +293,7 @@ export class Assessment extends BaseQuiz {
       this.onQuestionEnd();
     }, 2000 * this.animationSpeedMultiplier);
   };
-  private logPuzzleCompletedEvent(answer: number, elapsed: Number, theQ: qData) {
+  private logPuzzleCompletedEvent(answer: number, elapsed: number, theQ: qData) {
     var ans = theQ.answers[answer - 1];
     let bucket = null;
     let options = '';
