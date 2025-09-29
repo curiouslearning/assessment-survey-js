@@ -15,8 +15,7 @@ import { Workbox } from 'workbox-window';
 import CacheModel from './components/cacheModel';
 import { UIController } from './ui/uiController';
 import { AnalyticsIntegration } from './analytics/analytics-integration';
-import { getLocation } from './utils/locationUtils';
-import { getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from './utils/AnalyticsUtils';
+import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from './utils/AnalyticsUtils';
 
 const appVersion: string = 'v1.1.3';
 
