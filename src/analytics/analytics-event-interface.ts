@@ -46,5 +46,6 @@ export interface SessionEnd extends CommonEventProperties {
     maxScore: Number;
     basalBucket: Number;
     ceilingBucket: Number;
-
+    nextAssessment?: string;
+    requiredScore?: Number;
 }
