@@ -2,7 +2,7 @@
  * App class that represents an entry point of the application.
  */
 
-import { getUUID, getUserSource, getDataFile } from './utils/urlUtils';
+import { getUUID, getUserSource, getDataFile, getAppLanguageFromDataURL, getAppTypeFromDataURL } from './utils/urlUtils';
 import { Survey } from './survey/survey';
 import { Assessment } from './assessment/assessment';
 import { UnityBridge } from './utils/unityBridge';
@@ -14,6 +14,8 @@ import { getAnalytics, logEvent } from 'firebase/analytics';
 import { Workbox } from 'workbox-window';
 import CacheModel from './components/cacheModel';
 import { UIController } from './ui/uiController';
+import { AnalyticsIntegration } from './analytics/analytics-integration';
+import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from './utils/AnalyticsUtils';
 
 const appVersion: string = 'v1.1.3';
 
@@ -34,7 +36,7 @@ export class App {
   public unityBridge;
   public analytics;
   public game: BaseQuiz;
-
+  public analyticsIntegration: AnalyticsIntegration;
   cacheModel: CacheModel;
 
   lang: string = 'english';
@@ -47,30 +49,12 @@ export class App {
     this.dataURL = getDataFile();
     this.cacheModel = new CacheModel(this.dataURL, this.dataURL, new Set<string>());
 
-    // console.log("Data file: " + this.dataURL);
 
-    const firebaseConfig = {
-      apiKey: 'AIzaSyB8c2lBVi26u7YRL9sxOP97Uaq3yN8hTl4',
-      authDomain: 'ftm-b9d99.firebaseapp.com',
-      databaseURL: 'https://ftm-b9d99.firebaseio.com',
-      projectId: 'ftm-b9d99',
-      storageBucket: 'ftm-b9d99.appspot.com',
-      messagingSenderId: '602402387941',
-      appId: '1:602402387941:web:7b1b1181864d28b49de10c',
-      measurementId: 'G-FF1159TGCF',
-    };
-
-    const fapp = initializeApp(firebaseConfig);
-    const fanalytics = getAnalytics(fapp);
-
-    this.analytics = fanalytics;
-    logEvent(fanalytics, 'notification_received');
-    logEvent(fanalytics, 'test initialization event', {});
-
-    console.log('firebase initialized');
   }
 
   public async spinUp() {
+    await AnalyticsIntegration.initializeAnalytics();
+    this.analyticsIntegration = AnalyticsIntegration.getInstance();
     window.addEventListener('load', () => {
       console.log('Window Loaded!');
       (async () => {
@@ -119,11 +103,11 @@ export class App {
 
           this.game.unityBridge = this.unityBridge;
 
-          AnalyticsEvents.setUuid(getUUID(), getUserSource());
-          AnalyticsEvents.linkAnalytics(this.analytics, this.dataURL);
-          AnalyticsEvents.setAssessmentType(assessmentType);
           contentVersion = data['contentVersion'];
-          AnalyticsEvents.sendInit(appVersion, data['contentVersion']);
+
+          this.setCommonProperties();
+          // AnalyticsEvents.sendInit(appVersion, data['contentVersion']);
+          this.logInitialAnalyticsEvents();
           // this.cacheModel.setAppName(this.cacheModel.appName + ':' + data["contentVersion"]);
 
           this.game.Run(this);
@@ -133,7 +117,44 @@ export class App {
       })();
     });
   }
+  async setCommonProperties() {
+    setCommonAnalyticsEventsProperties(getUUID(), getAppLanguageFromDataURL(this.dataURL), getAppTypeFromDataURL(this.dataURL), getUserSource(), contentVersion, appVersion);
+  }
+  async logInitialAnalyticsEvents() {
+    const latLang = await getLocation();
+    setLocationProperty(latLang ?? 'NotAvailable');
 
+    const commonProperties = getCommonAnalyticsEventsProperties();
+    this.analyticsIntegration.sendOpenedEvent({
+      clUserId: commonProperties.cr_user_id,
+      language: commonProperties.language,
+      app: commonProperties.app,
+      lat_lang: commonProperties.lat_lang,
+      user_source: commonProperties.user_source,
+      appVersion: commonProperties.app_version,
+      contentVersion: commonProperties.content_version,
+    });
+    this.analyticsIntegration.sendUserLocationEvent({
+      clUserId: commonProperties.cr_user_id,
+      language: commonProperties.language,
+      app: commonProperties.app,
+      lat_lang: commonProperties.lat_lang,
+      user_source: commonProperties.user_source,
+      appVersion: commonProperties.app_version,
+      contentVersion: commonProperties.content_version,
+    });
+    this.analyticsIntegration.sendSessionStartEvent({
+      clUserId: commonProperties.cr_user_id,
+      language: commonProperties.language,
+      app: commonProperties.app,
+      lat_lang: commonProperties.lat_lang,
+      user_source: commonProperties.user_source,
+
+      appVersion: commonProperties.app_version,
+      contentVersion: commonProperties.content_version,
+      type: "session_start"
+    });
+  }
   async registerServiceWorker(game: BaseQuiz, dataURL: string = '') {
     console.log('Registering service worker...');
 

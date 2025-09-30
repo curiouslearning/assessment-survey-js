@@ -11,6 +11,9 @@ import { fetchAssessmentBuckets } from '../utils/jsonUtils';
 import { TreeNode, sortedArrayToIDsBST } from '../components/tNode';
 import { randFrom, shuffleArray } from '../utils/mathUtils';
 import { AudioController } from '../components/audioController';
+import { AnalyticsIntegration } from '../analytics/analytics-integration';
+import { calculateScore, getBasalBucketID, getCeilingBucketID, getCommonAnalyticsEventsProperties } from '../utils/AnalyticsUtils';
+import { getNextAssessment, getRequiredScore } from '../utils/urlUtils';
 
 enum searchStage {
   BinarySearch,
@@ -25,12 +28,12 @@ enum BucketGenMode {
 
 export class Assessment extends BaseQuiz {
   public unityBridge;
-
+  public analyticsIntegration: AnalyticsIntegration;
   public currentNode: TreeNode;
   public currentQuestion: qData;
   public bucketArray: number[];
   public questionNumber: number;
-
+  public commonProperties;
   public buckets: bucket[];
   public currentBucket: bucket;
   public numBuckets: number;
@@ -51,8 +54,11 @@ export class Assessment extends BaseQuiz {
     this.questionNumber = 0;
     console.log('app initialized');
     this.setupUIHandlers();
+    this.analyticsIntegration = AnalyticsIntegration.getInstance();
   }
+
   private setupUIHandlers(): void {
+
     UIController.SetButtonPressAction(this.handleAnswerButtonPress);
     UIController.SetStartAction(this.startAssessment);
     UIController.SetExternalBucketControlsGenerationHandler(this.generateDevModeBucketControlsInContainer);
@@ -179,6 +185,7 @@ export class Assessment extends BaseQuiz {
   };
 
   public startAssessment = () => {
+    this.commonProperties = getCommonAnalyticsEventsProperties();
     UIController.ReadyForNext(this.buildNewQuestion());
     if (this.isInDevMode) {
       this.hideDevModeButton();
@@ -275,7 +282,8 @@ export class Assessment extends BaseQuiz {
 
   public handleAnswerButtonPress = (answer: number, elapsed: number) => {
     if (this.bucketGenMode === BucketGenMode.RandomBST) {
-      AnalyticsEvents.sendAnswered(this.currentQuestion, answer, elapsed);
+
+      this.logPuzzleCompletedEvent(answer, elapsed, this.currentQuestion);
     }
     this.updateCurrentBucketValuesAfterAnswering(answer);
     this.updateFeedbackAfterAnswer(answer);
@@ -285,7 +293,45 @@ export class Assessment extends BaseQuiz {
       this.onQuestionEnd();
     }, 2000 * this.animationSpeedMultiplier);
   };
+  private logPuzzleCompletedEvent(answer: number, elapsed: number, theQ: qData) {
+    var ans = theQ.answers[answer - 1];
+    let bucket = null;
+    let options = '';
+    let eventString = 'user ' + this.commonProperties.cr_user_id + ' answered ' + theQ.qName + ' with ' + ans.answerName;
+    if ('bucket' in theQ) {
+      bucket = theQ.bucket;
+    }
+    for (var aNum in theQ.answers) {
+      eventString += theQ.answers[aNum].answerName + ',';
+      options += theQ.answers[aNum].answerName + ',';
+    }
+    this.analyticsIntegration.sendPuzzleCompletedEvent({
+      clUserId: this.commonProperties.cr_user_id,
+      language: this.commonProperties.language,
+      app: this.commonProperties.app,
+      lat_lang: this.commonProperties.lat_lang,
+      user_source: this.commonProperties.user_source,
+      appVersion: this.commonProperties.app_version,
+      contentVersion: this.commonProperties.content_version,
+      type: 'puzzleCompleted',
+      dt: elapsed,
+      question_number: theQ.qNumber,
+      target: theQ.qTarget,
+      question: theQ.promptText,
+      selected_answer: ans.answerName,
+      iscorrect: this.isAnswerCorrect(answer),
+      options: options,
+      bucket: bucket,
+    })
 
+  }
+  private isAnswerCorrect(answer: number) {
+    if (this.currentQuestion.answers[answer - 1].answerName == this.currentQuestion.correct) {
+      return true;
+    } else {
+      return false;
+    }
+  }
   private updateFeedbackAfterAnswer(answer: number) {
     if (
       this.bucketGenMode === BucketGenMode.LinearArrayBased &&
@@ -485,7 +531,7 @@ export class Assessment extends BaseQuiz {
     const newBucket = this.currentNode.value as bucket;
     if (this.currentBucket != null) {
       this.currentBucket.passed = passed;
-      AnalyticsEvents.sendBucket(this.currentBucket, passed);
+      this.logLevelCompletedEvent(this.currentBucket, passed);
     }
     console.log('new  bucket is ' + newBucket.bucketID);
     AudioController.PreloadBucket(newBucket, this.app.GetDataURL());
@@ -494,11 +540,6 @@ export class Assessment extends BaseQuiz {
 
   public tryMoveBucketLinearArrayBased = (passed: boolean) => {
     const newBucket = this.buckets[this.currentLinearBucketIndex];
-    // Avoid passing bucketPassed event to the analytics when we are in linear dev mode
-    // if (this.currentBucket != null) {
-    // 	this.currentBucket.passed = passed;
-    // 	AnalyticsEvents.sendBucket(this.currentBucket, passed);
-    // }
     console.log('New Bucket: ' + newBucket.bucketID);
     AudioController.PreloadBucket(newBucket, this.app.GetDataURL());
     this.initBucket(newBucket);
@@ -563,7 +604,7 @@ export class Assessment extends BaseQuiz {
     this.currentBucket.passed = true;
 
     if (this.bucketGenMode === BucketGenMode.RandomBST) {
-      AnalyticsEvents.sendBucket(this.currentBucket, true);
+      this.logLevelCompletedEvent(this.currentBucket, true);
     }
 
     UIController.ProgressChest();
@@ -586,7 +627,7 @@ export class Assessment extends BaseQuiz {
       this.currentBucket.passed = true;
 
       if (this.bucketGenMode === BucketGenMode.RandomBST) {
-        AnalyticsEvents.sendBucket(this.currentBucket, true);
+        this.logLevelCompletedEvent(this.currentBucket, true);
       }
 
       UIController.ProgressChest();
@@ -601,7 +642,7 @@ export class Assessment extends BaseQuiz {
     this.currentBucket.passed = false;
 
     if (this.bucketGenMode === BucketGenMode.RandomBST) {
-      AnalyticsEvents.sendBucket(this.currentBucket, false);
+      this.logLevelCompletedEvent(this.currentBucket, false);
     }
 
     return false;
@@ -625,7 +666,7 @@ export class Assessment extends BaseQuiz {
       this.currentBucket.passed = false;
 
       if (this.bucketGenMode === BucketGenMode.RandomBST) {
-        AnalyticsEvents.sendBucket(this.currentBucket, false);
+        this.logLevelCompletedEvent(this.currentBucket, false);
       }
 
       return false;
@@ -633,10 +674,77 @@ export class Assessment extends BaseQuiz {
 
     return true;
   };
+  private logLevelCompletedEvent(bucket: bucket, passed: boolean) {
+    this.analyticsIntegration.sendLevelCompletedEvent({
+      clUserId: this.commonProperties.cr_user_id,
+      language: this.commonProperties.language,
+      app: this.commonProperties.app,
+      lat_lang: this.commonProperties.lat_lang,
+      user_source: this.commonProperties.user_source,
+      appVersion: this.commonProperties.app_version,
+      contentVersion: this.commonProperties.content_version,
+      type: 'levelCompleted',
+      bucketNumber: bucket.bucketID,
+      numberTriedInBucket: bucket.numTried,
+      numberCorrectInBucket: bucket.numCorrect,
+      passedBucket: passed,
+    })
+  }
 
   public override onEnd(): void {
+    this.LogSessionEndEvent(this.buckets, this.basalBucket, this.ceilingBucket);
     AnalyticsEvents.sendFinished(this.buckets, this.basalBucket, this.ceilingBucket);
     UIController.ShowEnd();
     this.app.unityBridge.SendClose();
+  }
+  private LogSessionEndEvent(buckets: bucket[] = null, basalBucket: number, ceilingBucket: number) {
+    let basalBucketID = getBasalBucketID(buckets);
+    let score = calculateScore(buckets, basalBucketID)
+    let nextAssessment = getNextAssessment();
+    let requiredScore = getRequiredScore();
+    let isSynapseUser = false;
+    let integerRequiredScore = 0;
+    if (nextAssessment === 'null' && requiredScore === 'null') {
+      isSynapseUser = true;
+      integerRequiredScore = 0;
+    }
+    else if (Number(requiredScore) >= score && Number(requiredScore) != 0) {
+      isSynapseUser = true;
+      integerRequiredScore = Number(requiredScore);
+      nextAssessment = 'null';
+    }
+    else if (Number(requiredScore) < score && Number(requiredScore) != 0) {
+      isSynapseUser = true;
+      integerRequiredScore = Number(requiredScore);
+    }
+    this.analyticsIntegration.sendDataToThirdParty(score, this.commonProperties.cr_user_id, integerRequiredScore, nextAssessment, this.commonProperties.app);
+    if (window.parent) {
+      window.parent.postMessage(
+        {
+          type: 'assessment_completed',
+          score: score,
+        },
+        'https://synapse.curiouscontent.org/'
+      );
+    }
+    this.analyticsIntegration.sendSessionEndEvent({
+      clUserId: this.commonProperties.cr_user_id,
+      language: this.commonProperties.language,
+      app: this.commonProperties.app,
+      lat_lang: this.commonProperties.lat_lang,
+      user_source: this.commonProperties.user_source,
+      appVersion: this.commonProperties.app_version,
+      contentVersion: this.commonProperties.content_version,
+      type: 'sessionEnd',
+      score: score,
+      maxScore: buckets.length * 100,
+      basalBucket: basalBucketID,
+      ceilingBucket: getCeilingBucketID(buckets),
+      ...(isSynapseUser && {
+        nextAssessment: nextAssessment,
+        requiredScore: integerRequiredScore
+      }),
+
+    })
   }
 }
