@@ -121,8 +121,8 @@ export class App {
     setCommonAnalyticsEventsProperties(getUUID(), getAppLanguageFromDataURL(this.dataURL), getAppTypeFromDataURL(this.dataURL), getUserSource(), contentVersion, appVersion);
   }
   async logInitialAnalyticsEvents() {
-    const latLang = await getLocation();
-    setLocationProperty(latLang ?? 'NotAvailable');
+    const lat_lang = await getLocation();
+    setLocationProperty(lat_lang ?? 'NotAvailable');
 
     const commonProperties = getCommonAnalyticsEventsProperties();
     this.analyticsIntegration.sendOpenedEvent({
