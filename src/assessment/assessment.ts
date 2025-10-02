@@ -693,7 +693,6 @@ export class Assessment extends BaseQuiz {
 
   public override onEnd(): void {
     this.LogSessionEndEvent(this.buckets, this.basalBucket, this.ceilingBucket);
-    AnalyticsEvents.sendFinished(this.buckets, this.basalBucket, this.ceilingBucket);
     UIController.ShowEnd();
     this.app.unityBridge.SendClose();
   }
