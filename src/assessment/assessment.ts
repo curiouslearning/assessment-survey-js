@@ -11,7 +11,7 @@ import { fetchAssessmentBuckets } from '../utils/jsonUtils';
 import { TreeNode, sortedArrayToIDsBST } from '../components/tNode';
 import { randFrom, shuffleArray } from '../utils/mathUtils';
 import { AudioController } from '../components/audioController';
-import { AnalyticsIntegration } from '../analytics/analytics-integration';
+import { AnalyticsEventsType, AnalyticsIntegration } from '../analytics/analytics-integration';
 import { calculateScore, getBasalBucketID, getCeilingBucketID, getCommonAnalyticsEventsProperties } from '../utils/AnalyticsUtils';
 import { getNextAssessment, getRequiredScore } from '../utils/urlUtils';
 
@@ -305,15 +305,8 @@ export class Assessment extends BaseQuiz {
       eventString += theQ.answers[aNum].answerName + ',';
       options += theQ.answers[aNum].answerName + ',';
     }
-    this.analyticsIntegration.sendPuzzleCompletedEvent({
-      clUserId: this.commonProperties.cr_user_id,
-      language: this.commonProperties.language,
-      app: this.commonProperties.app,
-      lat_lang: this.commonProperties.lat_lang,
-      user_source: this.commonProperties.user_source,
-      appVersion: this.commonProperties.app_version,
-      contentVersion: this.commonProperties.content_version,
-      type: 'puzzleCompleted',
+    this.analyticsIntegration.track(AnalyticsEventsType.ANSWERED, {
+      type: 'answered',
       dt: elapsed,
       question_number: theQ.qNumber,
       target: theQ.qTarget,
@@ -531,7 +524,7 @@ export class Assessment extends BaseQuiz {
     const newBucket = this.currentNode.value as bucket;
     if (this.currentBucket != null) {
       this.currentBucket.passed = passed;
-      this.logLevelCompletedEvent(this.currentBucket, passed);
+      this.logBucketCompletedEvent(this.currentBucket, passed);
     }
     console.log('new  bucket is ' + newBucket.bucketID);
     AudioController.PreloadBucket(newBucket, this.app.GetDataURL());
@@ -604,7 +597,7 @@ export class Assessment extends BaseQuiz {
     this.currentBucket.passed = true;
 
     if (this.bucketGenMode === BucketGenMode.RandomBST) {
-      this.logLevelCompletedEvent(this.currentBucket, true);
+      this.logBucketCompletedEvent(this.currentBucket, true);
     }
 
     UIController.ProgressChest();
@@ -627,7 +620,7 @@ export class Assessment extends BaseQuiz {
       this.currentBucket.passed = true;
 
       if (this.bucketGenMode === BucketGenMode.RandomBST) {
-        this.logLevelCompletedEvent(this.currentBucket, true);
+        this.logBucketCompletedEvent(this.currentBucket, true);
       }
 
       UIController.ProgressChest();
@@ -642,7 +635,7 @@ export class Assessment extends BaseQuiz {
     this.currentBucket.passed = false;
 
     if (this.bucketGenMode === BucketGenMode.RandomBST) {
-      this.logLevelCompletedEvent(this.currentBucket, false);
+      this.logBucketCompletedEvent(this.currentBucket, false);
     }
 
     return false;
@@ -666,7 +659,7 @@ export class Assessment extends BaseQuiz {
       this.currentBucket.passed = false;
 
       if (this.bucketGenMode === BucketGenMode.RandomBST) {
-        this.logLevelCompletedEvent(this.currentBucket, false);
+        this.logBucketCompletedEvent(this.currentBucket, false);
       }
 
       return false;
@@ -674,16 +667,9 @@ export class Assessment extends BaseQuiz {
 
     return true;
   };
-  private logLevelCompletedEvent(bucket: bucket, passed: boolean) {
-    this.analyticsIntegration.sendLevelCompletedEvent({
-      clUserId: this.commonProperties.cr_user_id,
-      language: this.commonProperties.language,
-      app: this.commonProperties.app,
-      lat_lang: this.commonProperties.lat_lang,
-      user_source: this.commonProperties.user_source,
-      appVersion: this.commonProperties.app_version,
-      contentVersion: this.commonProperties.content_version,
-      type: 'levelCompleted',
+  private logBucketCompletedEvent(bucket: bucket, passed: boolean) {
+    this.analyticsIntegration.track(AnalyticsEventsType.BUCKET_COMPLETED, {
+      type: 'bucketCompleted',
       bucketNumber: bucket.bucketID,
       numberTriedInBucket: bucket.numTried,
       numberCorrectInBucket: bucket.numCorrect,
@@ -692,13 +678,14 @@ export class Assessment extends BaseQuiz {
   }
 
   public override onEnd(): void {
-    this.LogSessionEndEvent(this.buckets, this.basalBucket, this.ceilingBucket);
+    this.LogCompletedEvent(this.buckets, this.basalBucket, this.ceilingBucket);
     UIController.ShowEnd();
     this.app.unityBridge.SendClose();
   }
-  private LogSessionEndEvent(buckets: bucket[] = null, basalBucket: number, ceilingBucket: number) {
+  private LogCompletedEvent(buckets: bucket[] = null, basalBucket: number, ceilingBucket: number) {
     let basalBucketID = getBasalBucketID(buckets);
-    let score = calculateScore(buckets, basalBucketID)
+    let score = calculateScore(buckets, basalBucketID);
+    console.log(">>>>>>>>>>>>>>", score)
     let nextAssessment = getNextAssessment();
     let requiredScore = getRequiredScore();
     let isSynapseUser = false;
@@ -726,15 +713,8 @@ export class Assessment extends BaseQuiz {
         'https://synapse.curiouscontent.org/'
       );
     }
-    this.analyticsIntegration.sendSessionEndEvent({
-      clUserId: this.commonProperties.cr_user_id,
-      language: this.commonProperties.language,
-      app: this.commonProperties.app,
-      lat_lang: this.commonProperties.lat_lang,
-      user_source: this.commonProperties.user_source,
-      appVersion: this.commonProperties.app_version,
-      contentVersion: this.commonProperties.content_version,
-      type: 'sessionEnd',
+    this.analyticsIntegration.track(AnalyticsEventsType.COMPLETED, {
+      type: 'completed',
       score: score,
       maxScore: buckets.length * 100,
       basalBucket: basalBucketID,
@@ -742,8 +722,7 @@ export class Assessment extends BaseQuiz {
       ...(isSynapseUser && {
         nextAssessment: nextAssessment,
         requiredScore: integerRequiredScore
-      }),
-
+      })
     })
   }
 }
