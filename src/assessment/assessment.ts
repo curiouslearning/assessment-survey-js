@@ -684,8 +684,11 @@ export class Assessment extends BaseQuiz {
   }
   private LogCompletedEvent(buckets: bucket[] = null, basalBucket: number, ceilingBucket: number) {
     let basalBucketID = getBasalBucketID(buckets);
+    let ceilingBucketID = getCeilingBucketID(buckets);
+    if (basalBucketID == 0) {
+      basalBucketID = ceilingBucketID;
+    }
     let score = calculateScore(buckets, basalBucketID);
-    console.log(">>>>>>>>>>>>>>", score)
     let nextAssessment = getNextAssessment();
     let requiredScore = getRequiredScore();
     let isSynapseUser = false;
@@ -718,7 +721,7 @@ export class Assessment extends BaseQuiz {
       score: score,
       maxScore: buckets.length * 100,
       basalBucket: basalBucketID,
-      ceilingBucket: getCeilingBucketID(buckets),
+      ceilingBucket: ceilingBucketID,
       ...(isSynapseUser && {
         nextAssessment: nextAssessment,
         requiredScore: integerRequiredScore
