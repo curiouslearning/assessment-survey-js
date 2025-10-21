@@ -14,7 +14,7 @@ import { getAnalytics, logEvent } from 'firebase/analytics';
 import { Workbox } from 'workbox-window';
 import CacheModel from './components/cacheModel';
 import { UIController } from './ui/uiController';
-import { AnalyticsIntegration } from './analytics/analytics-integration';
+import { AnalyticsEventsType, AnalyticsIntegration } from './analytics/analytics-integration';
 import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from './utils/AnalyticsUtils';
 
 const appVersion: string = 'v1.1.3';
@@ -123,37 +123,12 @@ export class App {
   async logInitialAnalyticsEvents() {
     const lat_lang = await getLocation();
     setLocationProperty(lat_lang ?? 'NotAvailable');
+    this.analyticsIntegration.track(AnalyticsEventsType.OPENED, {})
 
-    const commonProperties = getCommonAnalyticsEventsProperties();
-    this.analyticsIntegration.sendOpenedEvent({
-      clUserId: commonProperties.cr_user_id,
-      language: commonProperties.language,
-      app: commonProperties.app,
-      lat_lang: commonProperties.lat_lang,
-      user_source: commonProperties.user_source,
-      appVersion: commonProperties.app_version,
-      contentVersion: commonProperties.content_version,
-    });
-    this.analyticsIntegration.sendUserLocationEvent({
-      clUserId: commonProperties.cr_user_id,
-      language: commonProperties.language,
-      app: commonProperties.app,
-      lat_lang: commonProperties.lat_lang,
-      user_source: commonProperties.user_source,
-      appVersion: commonProperties.app_version,
-      contentVersion: commonProperties.content_version,
-    });
-    this.analyticsIntegration.sendSessionStartEvent({
-      clUserId: commonProperties.cr_user_id,
-      language: commonProperties.language,
-      app: commonProperties.app,
-      lat_lang: commonProperties.lat_lang,
-      user_source: commonProperties.user_source,
+    this.analyticsIntegration.track(AnalyticsEventsType.USER_LOCATION, {});
 
-      appVersion: commonProperties.app_version,
-      contentVersion: commonProperties.content_version,
-      type: "session_start"
-    });
+    this.analyticsIntegration.track(AnalyticsEventsType.INITIALIZE, { type: "session_start" })
+
   }
   async registerServiceWorker(game: BaseQuiz, dataURL: string = '') {
     console.log('Registering service worker...');

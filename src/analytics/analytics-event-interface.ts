@@ -1,7 +1,7 @@
 /**
  * Common properties included in all analytics events.
  */
-interface CommonEventProperties {
+export interface CommonEventProperties {
     /** Unique identifier for the user. */
     clUserId: string;
 
@@ -37,15 +37,15 @@ export interface UserLocation extends CommonEventProperties { }
 /**
  * Event triggered when a session starts.
  */
-export interface SessionStart extends CommonEventProperties {
+export interface Initialized extends CommonEventProperties {
     /** The type of session (e.g., "assessment", "practice"). */
     type: string;
 }
 
 /**
- * Event triggered when a puzzle is completed.
+ * Event triggered when a answer is completed.
  */
-export interface PuzzleCompleted extends CommonEventProperties {
+export interface Answered extends CommonEventProperties {
     /** Type of event (e.g., "puzzle"). */
     type: string;
 
@@ -75,9 +75,9 @@ export interface PuzzleCompleted extends CommonEventProperties {
 }
 
 /**
- * Event triggered when a level is completed.
+ * Event triggered when a bucket is completed.
  */
-export interface LevelCompleted extends CommonEventProperties {
+export interface BucketCompleted extends CommonEventProperties {
     /** Type of event (e.g., "level"). */
     type: string;
 
@@ -97,7 +97,7 @@ export interface LevelCompleted extends CommonEventProperties {
 /**
  * Event triggered when a session ends.
  */
-export interface SessionEnd extends CommonEventProperties {
+export interface Completed extends CommonEventProperties {
     /** Type of session end (e.g., "completed", "terminated"). */
     type: string;
 
