@@ -6,16 +6,16 @@ export interface CommonEventProperties {
     clUserId: string;
 
     /** The language the app is running in (e.g., "en", "hindi"). */
-    language: string;
+    lang: string;
 
     /** The name of the app generating the event. */
     app: string;
 
     /** The latitude and longitude of the user, formatted as a string. */
-    lat_lang: string;
+    latLong: string;
 
     /** The source from which the user originated (e.g., campaign, referral). */
-    user_source: string;
+    userSource: string;
 
     /** The version of the application. */
     appVersion: string;
