@@ -127,7 +127,7 @@ export class App {
 
     this.analyticsIntegration.track(AnalyticsEventsType.USER_LOCATION, {});
 
-    this.analyticsIntegration.track(AnalyticsEventsType.INITIALIZE, { type: "session_start" })
+    this.analyticsIntegration.track(AnalyticsEventsType.INITIALIZE, { type: "initialized" })
 
   }
   async registerServiceWorker(game: BaseQuiz, dataURL: string = '') {

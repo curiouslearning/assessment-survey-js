@@ -31,10 +31,10 @@ export class AnalyticsIntegration extends BaseAnalyticsIntegration {
         const commonProperties = getCommonAnalyticsEventsProperties();
         return {
             clUserId: commonProperties.cr_user_id,
-            language: commonProperties.language,
+            lang: commonProperties.language,
             app: commonProperties.app,
-            lat_lang: commonProperties.lat_lang,
-            user_source: commonProperties.user_source,
+            latLong: commonProperties.lat_lang,
+            userSource: commonProperties.user_source,
             appVersion: commonProperties.app_version,
             contentVersion: commonProperties.content_version,
         };
