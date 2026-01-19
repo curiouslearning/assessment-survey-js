@@ -16,6 +16,7 @@ import CacheModel from './components/cacheModel';
 import { UIController } from './ui/uiController';
 import { AnalyticsEventsType, AnalyticsIntegration } from './analytics/analytics-integration';
 import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from './utils/AnalyticsUtils';
+import { FinalScoreScreen } from './components/finalScoreScreen';
 
 const appVersion: string = 'v1.1.3';
 
@@ -58,6 +59,18 @@ export class App {
     window.addEventListener('load', () => {
       console.log('Window Loaded!');
       (async () => {
+        // Check for unconfirmed score on app startup
+        // This must happen after DOM is ready but before loading app data
+        const scoreScreen = FinalScoreScreen.getInstance();
+        const hasUnconfirmedScore = scoreScreen.checkAndRestore();
+        
+        // If there's an unconfirmed score, don't proceed with normal app initialization
+        // The score screen will handle navigation after confirmation
+        if (hasUnconfirmedScore) {
+          console.log('Unconfirmed score found. Showing score screen.');
+          return; // Exit early - score screen is now visible and navigation is locked
+        }
+        
         await fetchAppData(this.dataURL).then((data) => {
           console.log('Assessment/Survey ' + appVersion + ' initializing!');
           console.log('App data loaded!');

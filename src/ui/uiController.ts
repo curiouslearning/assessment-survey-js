@@ -2,6 +2,7 @@ import { qData, answerData } from '../components/questionData';
 import { AudioController } from '../components/audioController';
 import { randFrom, shuffleArray } from '../utils/mathUtils';
 import { getDataFile } from '../utils/urlUtils';
+import { FinalScoreScreen } from '../components/finalScoreScreen';
 
 export class UIController {
   private static instance: UIController | null = null;
@@ -291,6 +292,17 @@ export class UIController {
     UIController.getInstance().landingContainer.style.display = 'none';
     UIController.getInstance().gameContainer.style.display = 'none';
     UIController.getInstance().endContainer.style.display = 'flex';
+  }
+
+  /**
+   * Shows the final score screen with persistence and navigation locking
+   * @param score The final assessment score
+   * @param maxScore The maximum possible score
+   * @param assessmentType The assessment type (e.g., "letter-sounds", "sight-words")
+   */
+  public static ShowFinalScore(score: number, maxScore: number, assessmentType: string): void {
+    const scoreScreen = FinalScoreScreen.getInstance();
+    scoreScreen.show(score, maxScore, assessmentType);
   }
 
   private showGame(): void {

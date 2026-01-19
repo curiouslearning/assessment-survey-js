@@ -121,6 +121,155 @@ body {
   min-height: 700px;
 }
 
+/* Final Score Screen Styles */
+.finalScoreScreenWrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  background: linear-gradient(
+    180deg,
+    rgba(80, 90, 220, 1) 0%,
+    rgba(247, 247, 161, 1) 100%
+  );
+  background-size: 100% 100%;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.finalScoreCloseButton {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 40px;
+  height: 40px;
+  font-size: 32px;
+  font-weight: bold;
+  background: rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(0, 0, 0, 0.3);
+  border-radius: 50%;
+  cursor: not-allowed;
+  color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+.finalScoreContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 90%;
+  max-width: 400px;
+  padding: 40px 20px;
+}
+
+.finalScoreLabel {
+  font-size: 32px;
+  font-weight: bold;
+  color: #323232;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.finalScoreValue {
+  font-size: 96px;
+  font-weight: bold;
+  color: #323232;
+  margin-bottom: 30px;
+  text-align: center;
+  line-height: 1;
+}
+
+.finalAssessmentName {
+  font-size: 28px;
+  font-weight: 600;
+  color: #323232;
+  margin-bottom: 50px;
+  text-align: center;
+}
+
+.finalScoreConfirmButton {
+  position: relative;
+  width: 280px;
+  height: 70px;
+  font-size: 24px;
+  font-weight: bold;
+  color: #ffffff;
+  background: linear-gradient(135deg, #5060dc 0%, #7c8ef5 100%);
+  border: 3px solid #323232;
+  border-radius: 12px;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.finalScoreConfirmButton:active {
+  transform: scale(0.98);
+}
+
+.finalScoreConfirmButton.long-pressing {
+  background: linear-gradient(135deg, #4aaf50 0%, #66cc6a 100%);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.confirmButtonText {
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.confirmButtonProgressBar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background: rgba(255, 255, 255, 0.3);
+  z-index: 1;
+  transition: width 0.1s linear;
+}
+
+@media (max-width: 480px) {
+  .finalScoreValue {
+    font-size: 72px;
+  }
+  
+  .finalScoreLabel {
+    font-size: 28px;
+  }
+  
+  .finalAssessmentName {
+    font-size: 24px;
+  }
+  
+  .finalScoreConfirmButton {
+    width: 240px;
+    height: 60px;
+    font-size: 20px;
+  }
+}
+
 .bodyWrapper {
   margin: 0 auto;
   width: 100%;

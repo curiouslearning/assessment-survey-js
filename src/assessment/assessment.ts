@@ -7,7 +7,7 @@ import { AnalyticsEvents } from '../analytics/analyticsEvents';
 import { App } from '../App';
 import { bucket, bucketItem } from './bucketData';
 import { BaseQuiz } from '../baseQuiz';
-import { fetchAssessmentBuckets } from '../utils/jsonUtils';
+import { fetchAssessmentBuckets, fetchAppData } from '../utils/jsonUtils';
 import { TreeNode, sortedArrayToIDsBST } from '../components/tNode';
 import { randFrom, shuffleArray } from '../utils/mathUtils';
 import { AudioController } from '../components/audioController';
@@ -46,6 +46,7 @@ export class Assessment extends BaseQuiz {
   protected bucketGenMode: BucketGenMode = BucketGenMode.RandomBST;
 
   private MAX_STARS_COUNT_IN_LINEAR_MODE = 20;
+  private assessmentType: string = ''; // Stores assessment type (e.g., "letter-sounds", "sight-words")
 
   constructor(dataURL: string, unityBridge: any) {
     super();
@@ -55,6 +56,28 @@ export class Assessment extends BaseQuiz {
     console.log('app initialized');
     this.setupUIHandlers();
     this.analyticsIntegration = AnalyticsIntegration.getInstance();
+  }
+
+  /**
+   * Loads the assessment type from the data file
+   * This is called when buckets are built, as that's when we have the app data
+   */
+  private loadAssessmentTypeFromData(appData: any): void {
+    if (appData && appData['assessmentType']) {
+      this.assessmentType = appData['assessmentType'];
+    } else {
+      // Fallback: extract from dataURL
+      const { getAppTypeFromDataURL } = require('../utils/urlUtils');
+      const urlType = getAppTypeFromDataURL(this.dataURL);
+      if (urlType === 'lettersounds') {
+        this.assessmentType = 'letter-sounds';
+      } else if (urlType === 'sightwords') {
+        this.assessmentType = 'sight-words';
+      } else {
+        // Default fallback
+        this.assessmentType = 'letter-sounds';
+      }
+    }
   }
 
   private setupUIHandlers(): void {
@@ -195,6 +218,10 @@ export class Assessment extends BaseQuiz {
   public buildBuckets = async (bucketGenMode: BucketGenMode) => {
     // If we don't have the buckets loaded, load them and initialize the current node, which is the starting point
     if (this.buckets === undefined || this.buckets.length === 0) {
+      // Fetch full app data to get assessment type
+      const appData = await fetchAppData(this.app.GetDataURL());
+      this.loadAssessmentTypeFromData(appData);
+      
       const res = fetchAssessmentBuckets(this.app.GetDataURL()).then((result) => {
         this.buckets = result;
         this.numBuckets = result.length;
@@ -679,7 +706,20 @@ export class Assessment extends BaseQuiz {
 
   public override onEnd(): void {
     this.LogCompletedEvent(this.buckets, this.basalBucket, this.ceilingBucket);
-    UIController.ShowEnd();
+    
+    // Calculate score for display
+    let basalBucketID = getBasalBucketID(this.buckets);
+    let ceilingBucketID = getCeilingBucketID(this.buckets);
+    if (basalBucketID == 0) {
+      basalBucketID = ceilingBucketID;
+    }
+    let score = calculateScore(this.buckets, basalBucketID);
+    const maxScore = this.buckets.length * 100;
+    
+    // Show the persistent final score screen instead of the old end screen
+    // This screen will handle persistence, navigation locking, and confirmation
+    UIController.ShowFinalScore(score, maxScore, this.assessmentType || 'letter-sounds');
+    
     this.app.unityBridge.SendClose();
   }
   private LogCompletedEvent(buckets: bucket[] = null, basalBucket: number, ceilingBucket: number) {

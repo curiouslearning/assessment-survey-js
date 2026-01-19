@@ -62,6 +62,19 @@
 
       <div class="endingPageWrapper" id="endWrap" style="display: none">click to exit!</div>
 
+      <div class="finalScoreScreenWrapper" id="finalScoreScreen" style="display: none">
+        <button class="finalScoreCloseButton" id="finalScoreCloseButton" aria-label="Close">×</button>
+        <div class="finalScoreContent">
+          <div class="finalScoreLabel">Final Score</div>
+          <div class="finalScoreValue" id="finalScoreValue">0</div>
+          <div class="finalAssessmentName" id="finalAssessmentName">Assessment</div>
+          <button class="finalScoreConfirmButton" id="finalScoreConfirmButton">
+            <span class="confirmButtonText">Score recorded</span>
+            <div class="confirmButtonProgressBar" id="finalScoreProgressBar"></div>
+          </button>
+        </div>
+      </div>
+
       <!-- Bucket info container that later contains real-time details on the progress -->
       <div id="devModeBucketInfoContainer"></div>
 
