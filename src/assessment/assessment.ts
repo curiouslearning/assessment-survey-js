@@ -2,10 +2,12 @@
 //
 //once we start adding in the assessment functionality
 import { UIController } from '../ui/uiController';
-import { qData, answerData } from '../components/questionData';
+import { qData } from '../components/questionData';
 import { AnalyticsEvents } from '../analytics/analyticsEvents';
 import { App } from '../App';
 import { bucket, bucketItem } from './bucketData';
+import { logger } from '../utils/logger';
+import { BUCKET_CONSTANTS, TIMING } from '../utils/constants';
 import { BaseQuiz } from '../baseQuiz';
 import { fetchAssessmentBuckets, fetchAppData } from '../utils/jsonUtils';
 import { TreeNode, sortedArrayToIDsBST } from '../components/tNode';
@@ -440,12 +442,17 @@ export class Assessment extends BaseQuiz {
       }
     });
   };
-  public buildNewQuestion = () => {
+  public buildNewQuestion = (): qData | null => {
     if (this.isLinearArrayExhausted()) {
       return null;
     }
 
     const targetItem = this.selectTargetItem();
+    if (!targetItem) {
+      logger.error('Failed to select target item');
+      return null;
+    }
+
     const foils = this.generateFoils(targetItem);
     const answerOptions = this.shuffleAnswerOptions([targetItem, ...foils]);
 
@@ -463,21 +470,19 @@ export class Assessment extends BaseQuiz {
     );
   };
 
-  private selectTargetItem = (): any => {
-    let targetItem;
-
+  private selectTargetItem = (): bucketItem | null => {
     if (this.bucketGenMode === BucketGenMode.RandomBST) {
-      targetItem = this.selectRandomUnusedItem();
+      return this.selectRandomUnusedItem();
     } else if (this.bucketGenMode === BucketGenMode.LinearArrayBased) {
-      targetItem = this.buckets[this.currentLinearBucketIndex].items[this.currentLinearTargetIndex];
+      const targetItem = this.buckets[this.currentLinearBucketIndex].items[this.currentLinearTargetIndex];
       this.currentBucket.usedItems.push(targetItem);
+      return targetItem;
     }
-
-    return targetItem;
+    return null;
   };
 
-  private selectRandomUnusedItem = (): any => {
-    let item;
+  private selectRandomUnusedItem = (): bucketItem => {
+    let item: bucketItem;
     do {
       item = randFrom(this.currentBucket.items);
     } while (this.currentBucket.usedItems.includes(item));
@@ -486,44 +491,46 @@ export class Assessment extends BaseQuiz {
     return item;
   };
 
-  private generateFoils = (targetItem: any): any[] => {
-    let foil1, foil2, foil3;
+  /**
+   * Generates foil (distractor) items for a question
+   * Consolidates random and linear generation into a single method
+   */
+  private generateFoils = (targetItem: bucketItem): bucketItem[] => {
+    const existingItems: bucketItem[] = [targetItem];
+    const foils: bucketItem[] = [];
 
-    if (this.bucketGenMode === BucketGenMode.RandomBST) {
-      foil1 = this.generateRandomFoil(targetItem);
-      foil2 = this.generateRandomFoil(targetItem, foil1);
-      foil3 = this.generateRandomFoil(targetItem, foil1, foil2);
-    } else if (this.bucketGenMode === BucketGenMode.LinearArrayBased) {
-      foil1 = this.generateLinearFoil(targetItem);
-      foil2 = this.generateLinearFoil(targetItem, foil1);
-      foil3 = this.generateLinearFoil(targetItem, foil1, foil2);
+    // Generate 3 foils
+    for (let i = 0; i < 3; i++) {
+      const foil = this.generateFoil(targetItem, existingItems);
+      foils.push(foil);
+      existingItems.push(foil);
     }
 
-    return [foil1, foil2, foil3];
+    return foils;
   };
 
-  private generateRandomFoil = (targetItem: any, ...existingFoils: any[]): any => {
-    let foil;
+  /**
+   * Generates a single foil item that's different from target and existing items
+   */
+  private generateFoil = (targetItem: bucketItem, existingItems: bucketItem[]): bucketItem => {
+    const itemPool = this.bucketGenMode === BucketGenMode.RandomBST
+      ? this.currentBucket.items
+      : this.buckets[this.currentLinearBucketIndex].items;
+
+    let foil: bucketItem;
     do {
-      foil = randFrom(this.currentBucket.items);
-    } while ([targetItem, ...existingFoils].includes(foil));
+      foil = randFrom(itemPool);
+    } while (existingItems.includes(foil));
+
     return foil;
   };
 
-  private generateLinearFoil = (targetItem: any, ...existingFoils: any[]): any => {
-    let foil;
-    do {
-      foil = randFrom(this.buckets[this.currentLinearBucketIndex].items);
-    } while ([targetItem, ...existingFoils].includes(foil));
-    return foil;
-  };
-
-  private shuffleAnswerOptions = (options: any[]): any[] => {
+  private shuffleAnswerOptions = <T>(options: T[]): T[] => {
     shuffleArray(options);
     return options;
   };
 
-  private createQuestion = (targetItem: any, answerOptions: any[]): any => {
+  private createQuestion = (targetItem: bucketItem, answerOptions: bucketItem[]): qData => {
     return {
       qName: `question-${this.questionNumber}-${targetItem.itemName}`,
       qNumber: this.questionNumber,
@@ -553,14 +560,14 @@ export class Assessment extends BaseQuiz {
       this.currentBucket.passed = passed;
       this.logBucketCompletedEvent(this.currentBucket, passed);
     }
-    console.log('new  bucket is ' + newBucket.bucketID);
+    logger.debug(`New bucket: ${newBucket.bucketID}`);
     AudioController.PreloadBucket(newBucket, this.app.GetDataURL());
     this.initBucket(newBucket);
   };
 
   public tryMoveBucketLinearArrayBased = (passed: boolean) => {
     const newBucket = this.buckets[this.currentLinearBucketIndex];
-    console.log('New Bucket: ' + newBucket.bucketID);
+    logger.debug(`New Bucket: ${newBucket.bucketID}`);
     AudioController.PreloadBucket(newBucket, this.app.GetDataURL());
     this.initBucket(newBucket);
   };
@@ -572,9 +579,12 @@ export class Assessment extends BaseQuiz {
       return this.hasLinearQuestionsLeft();
     }
 
-    if (this.currentBucket.numCorrect >= 4) {
+    if (this.currentBucket.numCorrect >= BUCKET_CONSTANTS.MIN_CORRECT_TO_PASS) {
       return this.handlePassedBucket();
-    } else if (this.currentBucket.numConsecutiveWrong >= 2 || this.currentBucket.numTried >= 5) {
+    } else if (
+      this.currentBucket.numConsecutiveWrong >= BUCKET_CONSTANTS.MAX_CONSECUTIVE_WRONG ||
+      this.currentBucket.numTried >= BUCKET_CONSTANTS.MAX_TRIES_PER_BUCKET
+    ) {
       return this.handleFailedBucket();
     }
 

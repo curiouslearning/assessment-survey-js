@@ -17,8 +17,11 @@ import { UIController } from './ui/uiController';
 import { AnalyticsEventsType, AnalyticsIntegration } from './analytics/analytics-integration';
 import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from './utils/AnalyticsUtils';
 import { FinalScoreScreen } from './components/finalScoreScreen';
+import { APP_VERSION } from './utils/constants';
+import { logger } from './utils/logger';
+import { AppData } from './utils/types';
 
-const appVersion: string = 'v1.1.3';
+const appVersion: string = APP_VERSION;
 
 /**
  * Content version from the data file in format v0.1
@@ -45,7 +48,7 @@ export class App {
   constructor() {
     this.unityBridge = new UnityBridge();
 
-    console.log('Initializing app...');
+    logger.info('Initializing app...');
 
     this.dataURL = getDataFile();
     this.cacheModel = new CacheModel(this.dataURL, this.dataURL, new Set<string>());
@@ -57,28 +60,27 @@ export class App {
     await AnalyticsIntegration.initializeAnalytics();
     this.analyticsIntegration = AnalyticsIntegration.getInstance();
     window.addEventListener('load', () => {
-      console.log('Window Loaded!');
+      logger.info('Window Loaded!');
       (async () => {
         // Check for unconfirmed score on app startup
         // This must happen after DOM is ready but before loading app data
         const scoreScreen = FinalScoreScreen.getInstance();
         const hasUnconfirmedScore = scoreScreen.checkAndRestore();
-        
+
         // If there's an unconfirmed score, don't proceed with normal app initialization
         // The score screen will handle navigation after confirmation
         if (hasUnconfirmedScore) {
-          console.log('Unconfirmed score found. Showing score screen.');
+          logger.info('Unconfirmed score found. Showing score screen.');
           return; // Exit early - score screen is now visible and navigation is locked
         }
-        
-        await fetchAppData(this.dataURL).then((data) => {
-          console.log('Assessment/Survey ' + appVersion + ' initializing!');
-          console.log('App data loaded!');
-          console.log(data);
+
+        await fetchAppData(this.dataURL).then((data: AppData) => {
+          logger.info(`Assessment/Survey ${appVersion} initializing!`);
+          logger.debug('App data loaded!', data);
 
           this.cacheModel.setContentFilePath(getDataURL(this.dataURL));
 
-          // TODO: Why do we need to set the feedback text here?
+          // Set feedback text from app data
           UIController.SetFeedbackText(data['feedbackText']);
 
           let appType = data['appType'];
@@ -144,31 +146,30 @@ export class App {
 
   }
   async registerServiceWorker(game: BaseQuiz, dataURL: string = '') {
-    console.log('Registering service worker...');
+    logger.info('Registering service worker...');
 
     if ('serviceWorker' in navigator) {
       let wb = new Workbox('./sw.js', {});
 
       wb.register()
         .then((registration) => {
-          console.log('Service worker registered!');
+          logger.info('Service worker registered!');
           this.handleServiceWorkerRegistation(registration);
         })
         .catch((err) => {
-          console.log('Service worker registration failed: ' + err);
+          logger.error('Service worker registration failed', err);
         });
 
       navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
 
       await navigator.serviceWorker.ready;
 
-      console.log('Cache Model: ');
-      console.log(this.cacheModel);
+      logger.debug('Cache Model:', this.cacheModel);
 
       // We need to check if there's a new version of the content file and in that case
       // remove the localStorage content name and version value
 
-      console.log('Checking for content version updates...' + dataURL);
+      logger.debug(`Checking for content version updates... ${dataURL}`);
 
       fetch(this.cacheModel.contentFilePath + '?cache-bust=' + new Date().getTime(), {
         method: 'GET',
@@ -180,30 +181,30 @@ export class App {
       })
         .then(async (response) => {
           if (!response.ok) {
-            console.error('Failed to fetch the content file from the server!');
+            logger.error('Failed to fetch the content file from the server!');
             return;
           }
           const newContentFileData = await response.json();
           const aheadContentVersion = newContentFileData['contentVersion'];
-          console.log('No Cache Content version: ' + aheadContentVersion);
+          logger.debug(`No Cache Content version: ${aheadContentVersion}`);
 
           // We need to check here for the content version updates
           // If there's a new content version, we need to remove the cached content and reload
           // We are comparing here the contentVersion with the aheadContentVersion
-          if (aheadContentVersion && contentVersion != aheadContentVersion) {
-            console.log('Content version mismatch! Reloading...');
+          if (aheadContentVersion && contentVersion !== aheadContentVersion) {
+            logger.info('Content version mismatch! Reloading...');
             localStorage.removeItem(this.cacheModel.appName);
-            // Clear the cache for tht particular content
+            // Clear the cache for that particular content
             caches.delete(this.cacheModel.appName);
             handleUpdateFoundMessage();
           }
         })
         .catch((error) => {
-          console.error('Error fetching the content file: ' + error);
+          logger.error('Error fetching the content file', error);
         });
 
       if (localStorage.getItem(this.cacheModel.appName) == null) {
-        console.log('Caching!' + this.cacheModel.appName);
+        logger.info(`Caching! ${this.cacheModel.appName}`);
         loadingScreen!.style.display = 'flex';
         broadcastChannel.postMessage({
           command: 'Cache',
@@ -220,7 +221,7 @@ export class App {
       }
 
       broadcastChannel.onmessage = (event) => {
-        console.log(event.data.command + ' received from service worker!');
+        logger.debug(`${event.data.command} received from service worker!`);
         if (event.data.command == 'Activated' && localStorage.getItem(this.cacheModel.appName) == null) {
           broadcastChannel.postMessage({
             command: 'Cache',
@@ -231,7 +232,7 @@ export class App {
         }
       };
     } else {
-      console.warn('Service workers are not supported in this browser.');
+      logger.warn('Service workers are not supported in this browser.');
     }
   }
 
@@ -242,7 +243,7 @@ export class App {
         value: this.lang,
       });
     } catch (err) {
-      console.log('Service worker registration failed: ' + err);
+      logger.error('Service worker registration failed', err);
     }
   }
 
@@ -254,12 +255,12 @@ export class App {
 broadcastChannel.addEventListener('message', handleServiceWorkerMessage);
 
 function handleServiceWorkerMessage(event): void {
-  if (event.data.msg == 'Loading') {
-    let progressValue = parseInt(event.data.data.progress);
+  if (event.data.msg === 'Loading') {
+    const progressValue = parseInt(event.data.data.progress);
     handleLoadingMessage(event, progressValue);
   }
-  if (event.data.msg == 'UpdateFound') {
-    console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>.,update Found');
+  if (event.data.msg === 'UpdateFound') {
+    logger.info('Update Found');
     handleUpdateFoundMessage();
   }
 }
@@ -279,11 +280,9 @@ function handleLoadingMessage(event, progressValue): void {
   }
 }
 
-function readLanguageDataFromCacheAndNotifyAndroidApp(bookName: string) {
-  //@ts-ignore
-  if (window.Android) {
-    let isContentCached: boolean = localStorage.getItem(bookName) !== null;
-    //@ts-ignore
+function readLanguageDataFromCacheAndNotifyAndroidApp(bookName: string): void {
+  if (window.Android?.cachedStatus) {
+    const isContentCached: boolean = localStorage.getItem(bookName) !== null;
     window.Android.cachedStatus(isContentCached);
   }
 }

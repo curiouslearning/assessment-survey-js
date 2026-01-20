@@ -1,4 +1,6 @@
 import { bucket } from "../assessment/bucketData";
+import { logger } from './logger';
+import { BUCKET_CONSTANTS } from './constants';
 
 let cr_user_id: string;
 let language: string;
@@ -56,34 +58,33 @@ export function getBasalBucketID(buckets: bucket[]): number {
 }
 
 export function calculateScore(buckets: bucket[], basalBucketID: number): number {
-    console.log('Calculating score');
-    console.log(buckets);
+    logger.debug('Calculating score', buckets);
 
     let score = 0;
 
-    console.log('Basal Bucket ID: ' + basalBucketID);
+    logger.debug(`Basal Bucket ID: ${basalBucketID}`);
 
     // Get the numcorrect from the basal bucket based on looping through and finding the bucket id
     let numCorrect = 0;
 
-    for (const index in buckets) {
-        const bucket = buckets[index];
-        if (bucket.bucketID == basalBucketID) {
+    for (const bucket of buckets) {
+        if (bucket.bucketID === basalBucketID) {
             numCorrect = bucket.numCorrect;
             break;
         }
     }
 
-    console.log('Num Correct: ' + numCorrect, ' basal: ' + basalBucketID, ' buckets: ' + buckets.length);
+    logger.debug(`Num Correct: ${numCorrect}, basal: ${basalBucketID}, buckets: ${buckets.length}`);
 
-    if (basalBucketID === buckets.length && numCorrect >= 4) {
+    if (basalBucketID === buckets.length && numCorrect >= BUCKET_CONSTANTS.MIN_CORRECT_TO_PASS) {
         // If the user has enough correct answers in the last bucket, give them a perfect score
-        console.log('Perfect score');
+        logger.debug('Perfect score');
 
-        return buckets.length * 100;
+        return buckets.length * BUCKET_CONSTANTS.PERFECT_SCORE_MULTIPLIER;
     }
 
-    score = Math.round((basalBucketID - 1) * 100 + (numCorrect / 5) * 100) | 0;
+    score = Math.round((basalBucketID - 1) * BUCKET_CONSTANTS.PERFECT_SCORE_MULTIPLIER + 
+                      (numCorrect / BUCKET_CONSTANTS.SCORE_PER_CORRECT) * BUCKET_CONSTANTS.PERFECT_SCORE_MULTIPLIER) | 0;
 
     return score;
 }

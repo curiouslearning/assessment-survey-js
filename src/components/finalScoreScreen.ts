@@ -9,18 +9,12 @@
  * - Restores on app reopen if not confirmed
  */
 
-interface ScoreData {
-  score: number;
-  maxScore: number;
-  assessmentName: string;
-  scoreConfirmed: boolean;
-  timestamp: number;
-}
+import { ScoreData } from '../utils/types';
+import { STORAGE_KEYS, TIMING, ASSESSMENT_TYPES, ASSESSMENT_DISPLAY_NAMES } from '../utils/constants';
+import { logger } from '../utils/logger';
 
 export class FinalScoreScreen {
   private static instance: FinalScoreScreen | null = null;
-  private static readonly STORAGE_KEY = 'assessment_final_score';
-  private static readonly LONG_PRESS_DURATION = 3000; // 3 seconds in milliseconds
 
   private scoreContainer: HTMLElement;
   private scoreValueElement: HTMLElement;
@@ -78,7 +72,7 @@ export class FinalScoreScreen {
     // Check if all required elements exist
     if (!this.scoreContainer || !this.scoreValueElement || !this.assessmentNameElement ||
       !this.confirmButton || !this.progressBar) {
-      console.error('FinalScoreScreen: Required DOM elements not found');
+      logger.error('FinalScoreScreen: Required DOM elements not found');
       return;
     }
 
@@ -96,7 +90,7 @@ export class FinalScoreScreen {
 
     // Ensure elements exist before setting up listeners
     if (!this.confirmButton) {
-      console.warn('FinalScoreScreen: Confirm button not found, event listeners not set up');
+      logger.warn('FinalScoreScreen: Confirm button not found, event listeners not set up');
       return;
     }
 
@@ -181,7 +175,7 @@ export class FinalScoreScreen {
     this.isLongPressing = true;
     this.confirmButton.classList.add('long-pressing');
     this.progressBar.style.width = '0%';
-    this.progressBar.style.transition = `width ${FinalScoreScreen.LONG_PRESS_DURATION}ms linear`;
+    this.progressBar.style.transition = `width ${TIMING.LONG_PRESS_DURATION}ms linear`;
 
     // Trigger haptic feedback if available (Android WebView)
     this.triggerHapticFeedback();
@@ -189,7 +183,7 @@ export class FinalScoreScreen {
     // Start the long press timer
     this.longPressTimer = window.setTimeout(() => {
       this.onLongPressComplete();
-    }, FinalScoreScreen.LONG_PRESS_DURATION);
+    }, TIMING.LONG_PRESS_DURATION);
 
     // Animate progress bar
     setTimeout(() => {
@@ -220,9 +214,7 @@ export class FinalScoreScreen {
 
   private triggerHapticFeedback(): void {
     // Try to trigger haptic feedback via Android WebView interface
-    //@ts-ignore
-    if (window.Android && window.Android.vibrate) {
-      //@ts-ignore
+    if (window.Android?.vibrate) {
       window.Android.vibrate(50); // 50ms vibration
     } else if (navigator.vibrate) {
       // Standard Vibration API
@@ -260,20 +252,26 @@ export class FinalScoreScreen {
   private getAssessmentDisplayName(assessmentType: string): string {
     const normalizedType = assessmentType.toLowerCase().trim();
 
-    if (normalizedType.includes('letter-sound') || normalizedType.includes('lettersound')) {
-      return 'Letter Sounds';
-    } else if (normalizedType.includes('sight-word') || normalizedType.includes('sightword')) {
-      return 'Sight Words';
+    if (
+      normalizedType.includes(ASSESSMENT_TYPES.LETTER_SOUNDS) ||
+      normalizedType.includes('lettersound')
+    ) {
+      return ASSESSMENT_DISPLAY_NAMES.LETTER_SOUNDS;
+    } else if (
+      normalizedType.includes(ASSESSMENT_TYPES.SIGHT_WORDS) ||
+      normalizedType.includes('sightword')
+    ) {
+      return ASSESSMENT_DISPLAY_NAMES.SIGHT_WORDS;
     }
 
     // Fallback: try to parse from common patterns
     if (normalizedType.includes('letter')) {
-      return 'Letter Sounds';
+      return ASSESSMENT_DISPLAY_NAMES.LETTER_SOUNDS;
     } else if (normalizedType.includes('sight') || normalizedType.includes('word')) {
-      return 'Sight Words';
+      return ASSESSMENT_DISPLAY_NAMES.SIGHT_WORDS;
     }
 
-    return 'Assessment'; // Default fallback
+    return ASSESSMENT_DISPLAY_NAMES.DEFAULT;
   }
 
   /**
@@ -287,7 +285,7 @@ export class FinalScoreScreen {
 
     // Double-check elements exist
     if (!this.scoreContainer || !this.scoreValueElement || !this.assessmentNameElement) {
-      console.error('FinalScoreScreen: Cannot show - required elements not found');
+      logger.error('FinalScoreScreen: Cannot show - required elements not found');
       return;
     }
 
@@ -380,9 +378,7 @@ export class FinalScoreScreen {
     window.history.pushState(null, '', window.location.href);
 
     // Prevent Android back button via JavaScript bridge if available
-    //@ts-ignore
-    if (window.Android && window.Android.disableBackButton) {
-      //@ts-ignore
+    if (window.Android?.disableBackButton) {
       window.Android.disableBackButton(true);
     }
 
@@ -405,9 +401,7 @@ export class FinalScoreScreen {
     }
 
     // Re-enable Android back button if available
-    //@ts-ignore
-    if (window.Android && window.Android.disableBackButton) {
-      //@ts-ignore
+    if (window.Android?.disableBackButton) {
       window.Android.disableBackButton(false);
     }
 
@@ -461,9 +455,9 @@ export class FinalScoreScreen {
    */
   private saveScoreData(scoreData: ScoreData): void {
     try {
-      localStorage.setItem(FinalScoreScreen.STORAGE_KEY, JSON.stringify(scoreData));
+      localStorage.setItem(STORAGE_KEYS.FINAL_SCORE, JSON.stringify(scoreData));
     } catch (error) {
-      console.error('Failed to save score data:', error);
+      logger.error('Failed to save score data', error);
     }
   }
 
@@ -472,12 +466,12 @@ export class FinalScoreScreen {
    */
   private getStoredScoreData(): ScoreData | null {
     try {
-      const stored = localStorage.getItem(FinalScoreScreen.STORAGE_KEY);
+      const stored = localStorage.getItem(STORAGE_KEYS.FINAL_SCORE);
       if (stored) {
         return JSON.parse(stored) as ScoreData;
       }
     } catch (error) {
-      console.error('Failed to retrieve score data:', error);
+      logger.error('Failed to retrieve score data', error);
     }
     return null;
   }
@@ -487,9 +481,9 @@ export class FinalScoreScreen {
    */
   private clearStoredScoreData(): void {
     try {
-      localStorage.removeItem(FinalScoreScreen.STORAGE_KEY);
+      localStorage.removeItem(STORAGE_KEYS.FINAL_SCORE);
     } catch (error) {
-      console.error('Failed to clear score data:', error);
+      logger.error('Failed to clear score data', error);
     }
   }
 
