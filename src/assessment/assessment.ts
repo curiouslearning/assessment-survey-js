@@ -14,7 +14,7 @@ import { AudioController } from '../components/audioController';
 import { AnalyticsEventsType, AnalyticsIntegration } from '../analytics/analytics-integration';
 import { calculateScore, getBasalBucketID, getCeilingBucketID, getCommonAnalyticsEventsProperties } from '../utils/AnalyticsUtils';
 import { getNextAssessment, getRequiredScore } from '../utils/urlUtils';
-
+import { AndroidInterface } from '@curiouslearning/core';
 enum searchStage {
   BinarySearch,
   LinearSearchUp,
@@ -28,6 +28,9 @@ enum BucketGenMode {
 
 export class Assessment extends BaseQuiz {
   public unityBridge;
+  protected androidInterface;
+  protected timeStarted: number;
+  protected timeEnded: number;
   public analyticsIntegration: AnalyticsIntegration;
   public currentNode: TreeNode;
   public currentQuestion: qData;
@@ -55,6 +58,13 @@ export class Assessment extends BaseQuiz {
     console.log('app initialized');
     this.setupUIHandlers();
     this.analyticsIntegration = AnalyticsIntegration.getInstance();
+
+    const { cr_user_id } = getCommonAnalyticsEventsProperties();
+
+    this.androidInterface = new AndroidInterface({
+      app_id: 'assessment',
+      cr_user_id
+    });
   }
 
   private setupUIHandlers(): void {
@@ -190,6 +200,8 @@ export class Assessment extends BaseQuiz {
     if (this.isInDevMode) {
       this.hideDevModeButton();
     }
+
+    this.timeStarted = new Date().getTime();
   };
 
   public buildBuckets = async (bucketGenMode: BucketGenMode) => {
@@ -678,10 +690,12 @@ export class Assessment extends BaseQuiz {
   }
 
   public override onEnd(): void {
+    this.timeEnded = new Date().getTime();
     this.LogCompletedEvent(this.buckets, this.basalBucket, this.ceilingBucket);
     UIController.ShowEnd();
     this.app.unityBridge.SendClose();
   }
+
   private LogCompletedEvent(buckets: bucket[] = null, basalBucket: number, ceilingBucket: number) {
     let basalBucketID = getBasalBucketID(buckets);
     let ceilingBucketID = getCeilingBucketID(buckets);
@@ -716,6 +730,7 @@ export class Assessment extends BaseQuiz {
         'https://synapse.curiouscontent.org/'
       );
     }
+    
     this.analyticsIntegration.track(AnalyticsEventsType.COMPLETED, {
       type: 'completed',
       score: score,
@@ -726,6 +741,25 @@ export class Assessment extends BaseQuiz {
         nextAssessment: nextAssessment,
         requiredScore: integerRequiredScore
       })
+    })
+
+
+    // Bubble completion data to android
+    // Note: this event also takes care of the "opened" data
+    // TODO: move data to its appropriate event to avoid duplicated tracking/confusion.
+    const timestamp = new Date().toString();
+    this.androidInterface.logEvent({
+      timestamp,
+      data: {
+        total_time_played: 1,
+        last_score: score,
+        last_taken: timestamp,
+        time_spent: this.timeEnded - this.timeStarted
+      },
+      options: {
+        times_opened: 'add',
+        time_spent: 'add',
+      }
     })
   }
 }
