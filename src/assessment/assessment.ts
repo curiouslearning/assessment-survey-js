@@ -28,7 +28,7 @@ enum BucketGenMode {
 
 export class Assessment extends BaseQuiz {
   public unityBridge;
-  protected androidInterface;
+  protected androidInterface: AndroidInterface;
   protected timeStarted: number;
   protected timeEnded: number;
   public analyticsIntegration: AnalyticsIntegration;
@@ -63,7 +63,7 @@ export class Assessment extends BaseQuiz {
 
     this.androidInterface = new AndroidInterface({
       app_id: 'assessment',
-      cr_user_id
+      cr_user_id,
     });
   }
 
@@ -747,19 +747,14 @@ export class Assessment extends BaseQuiz {
     // Bubble completion data to android
     // Note: this event also takes care of the "opened" data
     // TODO: move data to its appropriate event to avoid duplicated tracking/confusion.
-    const timestamp = new Date().toString();
-    this.androidInterface.logEvent({
-      timestamp,
-      data: {
-        total_time_played: 1,
-        last_score: score,
-        last_taken: timestamp,
-        time_spent: this.timeEnded - this.timeStarted
-      },
-      options: {
-        times_opened: 'add',
-        time_spent: 'add',
-      }
-    })
+    this.androidInterface.logSummaryData({
+      total_time_played: 1,
+      last_score: score,
+      last_taken: this.androidInterface.createTimestamp(),
+      time_spent: this.timeEnded - this.timeStarted
+    }, {
+      times_opened: 'add',
+      time_spent: 'add',
+    });
   }
 }

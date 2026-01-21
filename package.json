@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@curiouslearning/analytics": "^1.3.0",
-    "@curiouslearning/core": "^1.6.0",
+    "@curiouslearning/core": "^1.7.0",
     "firebase": "^9.12.1",
     "jest-environment-jsdom": "^29.7.0",
     "workbox-cli": "^7.0.0",
