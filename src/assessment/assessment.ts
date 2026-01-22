@@ -14,7 +14,7 @@ import { AudioController } from '../components/audioController';
 import { AnalyticsEventsType, AnalyticsIntegration } from '../analytics/analytics-integration';
 import { calculateScore, getBasalBucketID, getCeilingBucketID, getCommonAnalyticsEventsProperties } from '../utils/AnalyticsUtils';
 import { getNextAssessment, getRequiredScore } from '../utils/urlUtils';
-import { AndroidInterface } from '@curiouslearning/core';
+
 enum searchStage {
   BinarySearch,
   LinearSearchUp,
@@ -28,9 +28,6 @@ enum BucketGenMode {
 
 export class Assessment extends BaseQuiz {
   public unityBridge;
-  protected androidInterface: AndroidInterface;
-  protected timeStarted: number;
-  protected timeEnded: number;
   public analyticsIntegration: AnalyticsIntegration;
   public currentNode: TreeNode;
   public currentQuestion: qData;
@@ -58,13 +55,6 @@ export class Assessment extends BaseQuiz {
     console.log('app initialized');
     this.setupUIHandlers();
     this.analyticsIntegration = AnalyticsIntegration.getInstance();
-
-    const { cr_user_id } = getCommonAnalyticsEventsProperties();
-
-    this.androidInterface = new AndroidInterface({
-      app_id: 'assessment',
-      cr_user_id,
-    });
   }
 
   private setupUIHandlers(): void {
@@ -201,7 +191,7 @@ export class Assessment extends BaseQuiz {
       this.hideDevModeButton();
     }
 
-    this.timeStarted = new Date().getTime();
+    this.start();
   };
 
   public buildBuckets = async (bucketGenMode: BucketGenMode) => {
@@ -690,10 +680,8 @@ export class Assessment extends BaseQuiz {
   }
 
   public override onEnd(): void {
-    this.timeEnded = new Date().getTime();
     this.LogCompletedEvent(this.buckets, this.basalBucket, this.ceilingBucket);
-    UIController.ShowEnd();
-    this.app.unityBridge.SendClose();
+    super.onEnd();
   }
 
   private LogCompletedEvent(buckets: bucket[] = null, basalBucket: number, ceilingBucket: number) {
@@ -743,18 +731,6 @@ export class Assessment extends BaseQuiz {
       })
     })
 
-
-    // Bubble completion data to android
-    // Note: this event also takes care of the "opened" data
-    // TODO: move data to its appropriate event to avoid duplicated tracking/confusion.
-    this.androidInterface.logSummaryData({
-      total_time_played: 1,
-      last_score: score,
-      last_taken: this.androidInterface.createTimestamp(),
-      time_spent: this.timeEnded - this.timeStarted
-    }, {
-      times_opened: 'add',
-      time_spent: 'add',
-    });
+    this.score = score;
   }
 }
