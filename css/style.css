@@ -167,6 +167,44 @@ body {
   opacity: 0.3;
 }
 
+/* Assessment Close Button - Always visible on assessment screen */
+.assessmentCloseButton {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  width: 40px;
+  height: 40px;
+  font-size: 32px;
+  font-weight: bold;
+  background: rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  transition: opacity 0.2s ease, background 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.assessmentCloseButton:active {
+  opacity: 0.7;
+  transform: scale(0.95);
+}
+
+/* Disabled state when score is not confirmed */
+.assessmentCloseButton:disabled,
+.assessmentCloseButton.disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+  background: rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+}
+
 .finalScoreContent {
   display: flex;
   flex-direction: column;

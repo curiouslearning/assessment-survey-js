@@ -11,7 +11,7 @@ import { BaseQuiz } from './baseQuiz';
 import { fetchAppData, getDataURL } from './utils/jsonUtils';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics, logEvent } from 'firebase/analytics';
-import { Workbox } from 'workbox-window';
+
 import CacheModel from './components/cacheModel';
 import { UIController } from './ui/uiController';
 import { AnalyticsEventsType, AnalyticsIntegration } from './analytics/analytics-integration';
@@ -63,14 +63,14 @@ export class App {
         // This must happen after DOM is ready but before loading app data
         const scoreScreen = FinalScoreScreen.getInstance();
         const hasUnconfirmedScore = scoreScreen.checkAndRestore();
-        
+
         // If there's an unconfirmed score, don't proceed with normal app initialization
         // The score screen will handle navigation after confirmation
         if (hasUnconfirmedScore) {
           console.log('Unconfirmed score found. Showing score screen.');
           return; // Exit early - score screen is now visible and navigation is locked
         }
-        
+
         await fetchAppData(this.dataURL).then((data) => {
           console.log('Assessment/Survey ' + appVersion + ' initializing!');
           console.log('App data loaded!');
@@ -125,8 +125,8 @@ export class App {
 
           this.game.Run(this);
         });
-
-        await this.registerServiceWorker(this.game, this.dataURL);
+        loadingScreen!.style.display = 'none';
+        // await this.registerServiceWorker(this.game, this.dataURL);
       })();
     });
   }
@@ -143,97 +143,7 @@ export class App {
     this.analyticsIntegration.track(AnalyticsEventsType.INITIALIZE, { type: "initialized" })
 
   }
-  async registerServiceWorker(game: BaseQuiz, dataURL: string = '') {
-    console.log('Registering service worker...');
 
-    if ('serviceWorker' in navigator) {
-      let wb = new Workbox('./sw.js', {});
-
-      wb.register()
-        .then((registration) => {
-          console.log('Service worker registered!');
-          this.handleServiceWorkerRegistation(registration);
-        })
-        .catch((err) => {
-          console.log('Service worker registration failed: ' + err);
-        });
-
-      navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
-
-      await navigator.serviceWorker.ready;
-
-      console.log('Cache Model: ');
-      console.log(this.cacheModel);
-
-      // We need to check if there's a new version of the content file and in that case
-      // remove the localStorage content name and version value
-
-      console.log('Checking for content version updates...' + dataURL);
-
-      fetch(this.cacheModel.contentFilePath + '?cache-bust=' + new Date().getTime(), {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store',
-        },
-        cache: 'no-store',
-      })
-        .then(async (response) => {
-          if (!response.ok) {
-            console.error('Failed to fetch the content file from the server!');
-            return;
-          }
-          const newContentFileData = await response.json();
-          const aheadContentVersion = newContentFileData['contentVersion'];
-          console.log('No Cache Content version: ' + aheadContentVersion);
-
-          // We need to check here for the content version updates
-          // If there's a new content version, we need to remove the cached content and reload
-          // We are comparing here the contentVersion with the aheadContentVersion
-          if (aheadContentVersion && contentVersion != aheadContentVersion) {
-            console.log('Content version mismatch! Reloading...');
-            localStorage.removeItem(this.cacheModel.appName);
-            // Clear the cache for tht particular content
-            caches.delete(this.cacheModel.appName);
-            handleUpdateFoundMessage();
-          }
-        })
-        .catch((error) => {
-          console.error('Error fetching the content file: ' + error);
-        });
-
-      if (localStorage.getItem(this.cacheModel.appName) == null) {
-        console.log('Caching!' + this.cacheModel.appName);
-        loadingScreen!.style.display = 'flex';
-        broadcastChannel.postMessage({
-          command: 'Cache',
-          data: {
-            appData: this.cacheModel,
-          },
-        });
-      } else {
-        progressBar!.style.width = 100 + '%';
-        setTimeout(() => {
-          loadingScreen!.style.display = 'none';
-          UIController.SetContentLoaded(true);
-        }, 1500);
-      }
-
-      broadcastChannel.onmessage = (event) => {
-        console.log(event.data.command + ' received from service worker!');
-        if (event.data.command == 'Activated' && localStorage.getItem(this.cacheModel.appName) == null) {
-          broadcastChannel.postMessage({
-            command: 'Cache',
-            data: {
-              appData: this.cacheModel,
-            },
-          });
-        }
-      };
-    } else {
-      console.warn('Service workers are not supported in this browser.');
-    }
-  }
 
   handleServiceWorkerRegistation(registration: ServiceWorkerRegistration | undefined): void {
     try {

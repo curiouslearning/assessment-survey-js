@@ -9,6 +9,8 @@
  * - Restores on app reopen if not confirmed
  */
 
+import { UIController } from '../ui/uiController';
+
 interface ScoreData {
   score: number;
   maxScore: number;
@@ -247,6 +249,9 @@ export class FinalScoreScreen {
     // Unlock navigation
     this.unlockNavigation();
 
+    // Enable the assessment close button (score is now confirmed)
+    UIController.enableAssessmentCloseButton();
+
     // Hide the score screen
     this.hide();
 
@@ -310,6 +315,9 @@ export class FinalScoreScreen {
     // Show the screen
     this.scoreContainer.style.display = 'flex';
 
+    // Disable the assessment close button (score not confirmed yet)
+    UIController.disableAssessmentCloseButton();
+
     // Lock navigation
     this.lockNavigation();
 
@@ -347,6 +355,10 @@ export class FinalScoreScreen {
       this.scoreValueElement.textContent = scoreData.score.toString();
       this.assessmentNameElement.textContent = scoreData.assessmentName;
       this.scoreContainer.style.display = 'flex';
+      
+      // Disable the assessment close button (score not confirmed yet)
+      UIController.disableAssessmentCloseButton();
+      
       this.lockNavigation();
 
       // Hide other containers
@@ -370,11 +382,13 @@ export class FinalScoreScreen {
   private lockNavigation(): void {
     this.navigationLocked = true;
 
-    // Disable close button visually and functionally
+    // Disable close button on score screen visually and functionally
     if (this.closeButton) {
       this.closeButton.style.display = 'none';
       this.closeButton.style.pointerEvents = 'none';
     }
+
+    // Assessment close button is already disabled by show() method
 
     // Prevent browser back button
     window.history.pushState(null, '', window.location.href);

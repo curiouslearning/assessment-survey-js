@@ -221,7 +221,7 @@ export class Assessment extends BaseQuiz {
       // Fetch full app data to get assessment type
       const appData = await fetchAppData(this.app.GetDataURL());
       this.loadAssessmentTypeFromData(appData);
-      
+
       const res = fetchAssessmentBuckets(this.app.GetDataURL()).then((result) => {
         this.buckets = result;
         this.numBuckets = result.length;
@@ -393,6 +393,7 @@ export class Assessment extends BaseQuiz {
         UIController.ChangeStarImageAfterAnimation();
       }
       if (this.HasQuestionsLeft()) {
+        this.onEnd();
         if (this.bucketGenMode === BucketGenMode.LinearArrayBased && !this.isBucketControlsEnabled) {
           if (this.currentLinearTargetIndex < this.buckets[this.currentLinearBucketIndex].items.length) {
             this.currentLinearTargetIndex++;
@@ -404,12 +405,13 @@ export class Assessment extends BaseQuiz {
             this.currentLinearTargetIndex >= this.buckets[this.currentLinearBucketIndex].items.length &&
             this.currentLinearBucketIndex < this.buckets.length
           ) {
-            this.currentLinearBucketIndex++;
-            this.currentLinearTargetIndex = 0;
-            if (this.currentLinearBucketIndex < this.buckets.length) {
-              this.tryMoveBucket(false);
-            } else {
-              console.log('No questions left');
+            {
+              // this.currentLinearBucketIndex++;
+              // this.currentLinearTargetIndex = 0;
+              // if (this.currentLinearBucketIndex < this.buckets.length) {
+              //   this.tryMoveBucket(false);
+              // } else {
+              //   console.log('No questions left');
               this.onEnd();
               return;
             }
@@ -706,7 +708,7 @@ export class Assessment extends BaseQuiz {
 
   public override onEnd(): void {
     this.LogCompletedEvent(this.buckets, this.basalBucket, this.ceilingBucket);
-    
+
     // Calculate score for display
     let basalBucketID = getBasalBucketID(this.buckets);
     let ceilingBucketID = getCeilingBucketID(this.buckets);
@@ -715,11 +717,11 @@ export class Assessment extends BaseQuiz {
     }
     let score = calculateScore(this.buckets, basalBucketID);
     const maxScore = this.buckets.length * 100;
-    
+
     // Show the persistent final score screen instead of the old end screen
     // This screen will handle persistence, navigation locking, and confirmation
     UIController.ShowFinalScore(score, maxScore, this.assessmentType || 'letter-sounds');
-    
+
     this.app.unityBridge.SendClose();
   }
   private LogCompletedEvent(buckets: bucket[] = null, basalBucket: number, ceilingBucket: number) {

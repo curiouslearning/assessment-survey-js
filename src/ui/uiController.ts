@@ -50,6 +50,9 @@ export class UIController {
   private chestImgId = 'chestImage';
   private chestImg: HTMLElement;
 
+  private assessmentCloseButtonId = 'assessmentCloseButton';
+  private assessmentCloseButton: HTMLButtonElement;
+
   public nextQuestion = null;
 
   public contentLoaded: boolean = false;
@@ -103,6 +106,8 @@ export class UIController {
     this.playButton = document.getElementById(this.playButtonId);
 
     this.chestImg = document.getElementById(this.chestImgId);
+
+    this.assessmentCloseButton = document.getElementById(this.assessmentCloseButtonId) as HTMLButtonElement;
 
     this.initializeStars();
 
@@ -208,6 +213,21 @@ export class UIController {
         this.showGame();
       }
     });
+
+    // Setup assessment close button handler
+    if (this.assessmentCloseButton) {
+      this.assessmentCloseButton.addEventListener('click', () => {
+        this.handleAssessmentCloseButtonClick();
+      });
+
+      // Initially enable the close button (assessment hasn't ended yet, so no score screen)
+      // It will be disabled when the score screen is shown
+      this.assessmentCloseButton.disabled = false;
+      this.assessmentCloseButton.classList.remove('disabled');
+      this.assessmentCloseButton.style.pointerEvents = 'auto';
+      this.assessmentCloseButton.style.opacity = '1';
+      this.assessmentCloseButton.style.cursor = 'pointer';
+    }
   }
 
   public showOptions(): void {
@@ -554,6 +574,59 @@ export class UIController {
     handler: (container: HTMLElement, clickCallback: () => void) => void
   ): void {
     UIController.getInstance().externalBucketControlsGenerationHandler = handler;
+  }
+
+  /**
+   * Handles the assessment close button click
+   * Only allows closing if score is confirmed
+   */
+  private handleAssessmentCloseButtonClick(): void {
+    // Check if score is confirmed before allowing close
+    const scoreScreen = FinalScoreScreen.getInstance();
+    const isScoreConfirmed = scoreScreen.isScoreConfirmed();
+
+    if (!isScoreConfirmed) {
+      // Score not confirmed - prevent closing
+      console.log('Cannot close: Score not yet confirmed');
+      return;
+    }
+
+    // Score is confirmed - allow closing via Android interface
+    //@ts-ignore
+    if (window.Android && window.Android.closeWebView) {
+      //@ts-ignore
+      window.Android.closeWebView();
+    } else {
+      console.log('Android.closeWebView() not available');
+    }
+  }
+
+  /**
+   * Enables the assessment close button (called after score confirmation)
+   */
+  public static enableAssessmentCloseButton(): void {
+    const instance = UIController.getInstance();
+    if (instance.assessmentCloseButton) {
+      instance.assessmentCloseButton.disabled = false;
+      instance.assessmentCloseButton.classList.remove('disabled');
+      instance.assessmentCloseButton.style.pointerEvents = 'auto';
+      instance.assessmentCloseButton.style.opacity = '1';
+      instance.assessmentCloseButton.style.cursor = 'pointer';
+    }
+  }
+
+  /**
+   * Disables the assessment close button (called when score screen is shown)
+   */
+  public static disableAssessmentCloseButton(): void {
+    const instance = UIController.getInstance();
+    if (instance.assessmentCloseButton) {
+      instance.assessmentCloseButton.disabled = true;
+      instance.assessmentCloseButton.classList.add('disabled');
+      instance.assessmentCloseButton.style.pointerEvents = 'none';
+      instance.assessmentCloseButton.style.opacity = '0.3';
+      instance.assessmentCloseButton.style.cursor = 'not-allowed';
+    }
   }
 
   public static getInstance(): UIController {
