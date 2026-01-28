@@ -34,7 +34,7 @@ export async function fetchAssessmentBuckets(url: string) {
 }
 
 export function getDataURL(url: string) {
-  return '/data/' + url + '.json';
+  return './data/' + url + '.json';
 }
 
 export function getCaseIndependentLangList() {
