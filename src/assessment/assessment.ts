@@ -213,6 +213,8 @@ export class Assessment extends BaseQuiz {
     if (this.isInDevMode) {
       this.hideDevModeButton();
     }
+
+    this.start();
   };
 
   public buildBuckets = async (bucketGenMode: BucketGenMode) => {
@@ -709,21 +711,10 @@ export class Assessment extends BaseQuiz {
   public override onEnd(): void {
     this.LogCompletedEvent(this.buckets, this.basalBucket, this.ceilingBucket);
 
-    // Calculate score for display
-    let basalBucketID = getBasalBucketID(this.buckets);
-    let ceilingBucketID = getCeilingBucketID(this.buckets);
-    if (basalBucketID == 0) {
-      basalBucketID = ceilingBucketID;
-    }
-    let score = calculateScore(this.buckets, basalBucketID);
-    const maxScore = this.buckets.length * 100;
+    super.onEnd();
 
-    // Show the persistent final score screen instead of the old end screen
-    // This screen will handle persistence, navigation locking, and confirmation
-    UIController.ShowFinalScore(score, maxScore, this.assessmentType || 'letter-sounds');
-
-    this.app.unityBridge.SendClose();
   }
+
   private LogCompletedEvent(buckets: bucket[] = null, basalBucket: number, ceilingBucket: number) {
     let basalBucketID = getBasalBucketID(buckets);
     let ceilingBucketID = getCeilingBucketID(buckets);
@@ -758,6 +749,7 @@ export class Assessment extends BaseQuiz {
         'https://synapse.curiouscontent.org/'
       );
     }
+
     this.analyticsIntegration.track(AnalyticsEventsType.COMPLETED, {
       type: 'completed',
       score: score,
@@ -769,5 +761,7 @@ export class Assessment extends BaseQuiz {
         requiredScore: integerRequiredScore
       })
     })
+
+    this.score = score;
   }
 }
