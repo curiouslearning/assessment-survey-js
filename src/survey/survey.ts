@@ -56,6 +56,7 @@ export class Survey extends BaseQuiz {
 
   public startSurvey = () => {
     UIController.ReadyForNext(this.buildNewQuestion());
+    this.start();
   };
 
   public onQuestionEnd = () => {

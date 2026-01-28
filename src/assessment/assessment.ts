@@ -190,6 +190,8 @@ export class Assessment extends BaseQuiz {
     if (this.isInDevMode) {
       this.hideDevModeButton();
     }
+
+    this.start();
   };
 
   public buildBuckets = async (bucketGenMode: BucketGenMode) => {
@@ -679,9 +681,9 @@ export class Assessment extends BaseQuiz {
 
   public override onEnd(): void {
     this.LogCompletedEvent(this.buckets, this.basalBucket, this.ceilingBucket);
-    UIController.ShowEnd();
-    this.app.unityBridge.SendClose();
+    super.onEnd();
   }
+
   private LogCompletedEvent(buckets: bucket[] = null, basalBucket: number, ceilingBucket: number) {
     let basalBucketID = getBasalBucketID(buckets);
     let ceilingBucketID = getCeilingBucketID(buckets);
@@ -716,6 +718,7 @@ export class Assessment extends BaseQuiz {
         'https://synapse.curiouscontent.org/'
       );
     }
+    
     this.analyticsIntegration.track(AnalyticsEventsType.COMPLETED, {
       type: 'completed',
       score: score,
@@ -727,5 +730,7 @@ export class Assessment extends BaseQuiz {
         requiredScore: integerRequiredScore
       })
     })
+
+    this.score = score;
   }
 }
