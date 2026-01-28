@@ -209,9 +209,8 @@ export class UIController {
     this.buttons.push(this.answerButton6);
 
     this.landingContainer.addEventListener('click', () => {
-      if (localStorage.getItem(getDataFile()) && UIController.getInstance().contentLoaded) {
-        this.showGame();
-      }
+      this.showGame();
+
     });
 
     // Setup assessment close button handler
