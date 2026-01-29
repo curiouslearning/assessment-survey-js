@@ -710,7 +710,9 @@ export class Assessment extends BaseQuiz {
 
   public override onEnd(): void {
     this.LogCompletedEvent(this.buckets, this.basalBucket, this.ceilingBucket);
-
+    let score = calculateScore(this.buckets, getBasalBucketID(this.buckets));
+    const maxScore = this.buckets.length * 100;
+    UIController.ShowFinalScore(score, maxScore, this.assessmentType || 'letter-sounds');
     super.onEnd();
 
   }

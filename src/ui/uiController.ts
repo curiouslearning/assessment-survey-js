@@ -384,7 +384,7 @@ export class UIController {
       });
     } else {
       UIController.getInstance().playButton.innerHTML =
-        "<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='/img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>";
+        "<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='./img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>";
       var nextQuestionButton = document.getElementById('nextqButton');
       nextQuestionButton.addEventListener('click', function () {
         UIController.ShowQuestion();
@@ -402,9 +402,9 @@ export class UIController {
     if (!UIController.getInstance().devModeBucketControlsEnabled) {
       const playButtonImg = UIController.getInstance().playButton.querySelector('img');
       if (playing) {
-        playButtonImg.src = 'animation/SoundButton.gif';
+        playButtonImg.src = './animation/SoundButton.gif';
       } else {
-        playButtonImg.src = '/img/SoundButton_Idle.png';
+        playButtonImg.src = './img/SoundButton_Idle.png';
       }
     }
   }
@@ -426,7 +426,7 @@ export class UIController {
       });
     } else {
       UIController.getInstance().playButton.innerHTML =
-        "<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='/img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>";
+        "<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='./img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>";
 
       var nextQuestionButton = document.getElementById('nextqButton');
       nextQuestionButton.addEventListener('click', function () {
@@ -469,7 +469,7 @@ export class UIController {
     var starToShow = document.getElementById(
       'star' + UIController.getInstance().stars[UIController.getInstance().qAnsNum]
     ) as HTMLImageElement;
-    starToShow.src = '../animation/Star.gif';
+    starToShow.src = './animation/Star.gif';
     starToShow.classList.add('topstarv');
     starToShow.classList.remove('topstarh');
 
