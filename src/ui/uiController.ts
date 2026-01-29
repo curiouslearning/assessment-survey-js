@@ -530,7 +530,7 @@ export class UIController {
     var starToShow = document.getElementById(
       'star' + UIController.getInstance().stars[UIController.getInstance().qAnsNum - 1]
     ) as HTMLImageElement;
-    starToShow.src = '../img/star_after_animation.gif';
+    starToShow.src = './img/star_after_animation.gif';
   }
 
   private answerButtonPress(buttonNum: number): void {
