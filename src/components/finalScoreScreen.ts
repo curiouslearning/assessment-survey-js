@@ -36,6 +36,13 @@ export class FinalScoreScreen {
   private navigationLocked: boolean = false;
   private eventListenersSetup: boolean = false;
 
+  /** Double-tap state: user must tap twice to activate long-press hold */
+  private static readonly DOUBLE_TAP_WINDOW_MS = 500;
+  private longPressActivated: boolean = false;
+  private tapCount: number = 0;
+  private lastTapTime: number = 0;
+  private tapResetTimer: number | null = null;
+
   // Android back button handler
   private androidBackButtonHandler: (e: PopStateEvent) => void;
 
@@ -43,6 +50,9 @@ export class FinalScoreScreen {
   private touchStartX: number = 0;
   private touchStartY: number = 0;
   private touchStartTime: number = 0;
+
+  /** When the current press started (for distinguishing tap vs long press) */
+  private pressStartTime: number = 0;
 
   private constructor() {
     this.initElements();
@@ -135,12 +145,16 @@ export class FinalScoreScreen {
       return false;
     });
 
-    // Disable close button click
+    // Close button: only works after long press is done (handler checks score confirmed)
     if (this.closeButton) {
       this.closeButton.addEventListener('click', (e) => {
+        if (this.isScoreConfirmed()) {
+          this.hide();
+          UIController.enableAssessmentCloseButton();
+          this.navigateToHome();
+        }
         e.preventDefault();
         e.stopPropagation();
-        return false;
       });
     }
 
@@ -173,6 +187,13 @@ export class FinalScoreScreen {
   }
 
   private handleLongPressStart(e: Event): void {
+    this.pressStartTime = Date.now();
+
+    if (!this.longPressActivated) {
+      // Long press not yet activated; tap will be counted in handleLongPressEnd
+      return;
+    }
+
     if (this.isLongPressing || this.longPressTimer !== null) {
       return;
     }
@@ -205,6 +226,8 @@ export class FinalScoreScreen {
     e.preventDefault();
     e.stopPropagation();
 
+    const pressDuration = Date.now() - this.pressStartTime;
+
     if (this.longPressTimer !== null) {
       clearTimeout(this.longPressTimer);
       this.longPressTimer = null;
@@ -214,10 +237,45 @@ export class FinalScoreScreen {
     this.confirmButton.classList.remove('long-pressing');
     this.progressBar.style.width = '0%';
     this.progressBar.style.transition = 'width 0.1s linear';
+
+    // Short press and long press not yet activated: count as tap for double-tap
+    if (!this.longPressActivated && pressDuration < 400) {
+      this.recordTap();
+    }
   }
 
   private handleLongPressCancel(e: Event): void {
     this.handleLongPressEnd(e);
+  }
+
+  /**
+   * Records a tap on the confirm button. Two taps within DOUBLE_TAP_WINDOW_MS activate long-press mode.
+   */
+  private recordTap(): void {
+    const now = Date.now();
+
+    if (this.tapResetTimer !== null) {
+      window.clearTimeout(this.tapResetTimer);
+      this.tapResetTimer = null;
+    }
+
+    if (now - this.lastTapTime > FinalScoreScreen.DOUBLE_TAP_WINDOW_MS) {
+      this.tapCount = 0;
+    }
+
+    this.tapCount += 1;
+    this.lastTapTime = now;
+
+    if (this.tapCount >= 2) {
+      this.longPressActivated = true;
+      this.tapCount = 0;
+      this.triggerHapticFeedback();
+    } else {
+      this.tapResetTimer = window.setTimeout(() => {
+        this.tapCount = 0;
+        this.tapResetTimer = null;
+      }, FinalScoreScreen.DOUBLE_TAP_WINDOW_MS);
+    }
   }
 
   private triggerHapticFeedback(): void {
@@ -246,17 +304,14 @@ export class FinalScoreScreen {
     // Trigger haptic feedback for success
     this.triggerHapticFeedback();
 
-    // Unlock navigation
+    // Unlock navigation so the close button can be used
     this.unlockNavigation();
 
-    // Enable the assessment close button (score is now confirmed)
-    UIController.enableAssessmentCloseButton();
-
-    // Hide the score screen
-    this.hide();
-
-    // Navigate to home/landing screen
-    this.navigateToHome();
+    // Show close button only after long press is done (user must tap it to close)
+    if (this.closeButton) {
+      this.closeButton.style.display = '';
+      this.closeButton.style.pointerEvents = 'auto';
+    }
   }
 
   /**
@@ -312,6 +367,21 @@ export class FinalScoreScreen {
     this.scoreValueElement.textContent = score.toString();
     this.assessmentNameElement.textContent = assessmentName;
 
+    // Reset double-tap state so user must tap twice again to activate long press
+    this.longPressActivated = false;
+    this.tapCount = 0;
+    this.lastTapTime = 0;
+    if (this.tapResetTimer !== null) {
+      window.clearTimeout(this.tapResetTimer);
+      this.tapResetTimer = null;
+    }
+
+    // Close button hidden until long press is done
+    if (this.closeButton) {
+      this.closeButton.style.display = 'none';
+      this.closeButton.style.pointerEvents = 'none';
+    }
+
     // Show the screen
     this.scoreContainer.style.display = 'flex';
 
@@ -355,10 +425,22 @@ export class FinalScoreScreen {
       this.scoreValueElement.textContent = scoreData.score.toString();
       this.assessmentNameElement.textContent = scoreData.assessmentName;
       this.scoreContainer.style.display = 'flex';
-      
+
+      this.longPressActivated = false;
+      this.tapCount = 0;
+      this.lastTapTime = 0;
+      if (this.tapResetTimer !== null) {
+        window.clearTimeout(this.tapResetTimer);
+        this.tapResetTimer = null;
+      }
+      if (this.closeButton) {
+        this.closeButton.style.display = 'none';
+        this.closeButton.style.pointerEvents = 'none';
+      }
+
       // Disable the assessment close button (score not confirmed yet)
       UIController.disableAssessmentCloseButton();
-      
+
       this.lockNavigation();
 
       // Hide other containers

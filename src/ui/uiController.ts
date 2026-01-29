@@ -213,19 +213,12 @@ export class UIController {
 
     });
 
-    // Setup assessment close button handler
+    // Setup assessment close button handler (button stays disabled until score is confirmed via final score screen)
     if (this.assessmentCloseButton) {
       this.assessmentCloseButton.addEventListener('click', () => {
         this.handleAssessmentCloseButtonClick();
       });
-
-      // Initially enable the close button (assessment hasn't ended yet, so no score screen)
-      // It will be disabled when the score screen is shown
-      this.assessmentCloseButton.disabled = false;
-      this.assessmentCloseButton.classList.remove('disabled');
-      this.assessmentCloseButton.style.pointerEvents = 'auto';
-      this.assessmentCloseButton.style.opacity = '1';
-      this.assessmentCloseButton.style.cursor = 'pointer';
+      UIController.disableAssessmentCloseButton();
     }
   }
 

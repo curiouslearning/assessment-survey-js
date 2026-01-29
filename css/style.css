@@ -135,11 +135,7 @@ body {
   right: 0;
   bottom: 0;
   z-index: 10000;
-  background: linear-gradient(
-    180deg,
-    rgba(80, 90, 220, 1) 0%,
-    rgba(247, 247, 161, 1) 100%
-  );
+  background: linear-gradient(180deg, rgba(80, 90, 220, 1) 0%, rgba(247, 247, 161, 1) 100%);
   background-size: 100% 100%;
   user-select: none;
   -webkit-user-select: none;
@@ -170,7 +166,7 @@ body {
 /* Assessment Close Button - Always visible on assessment screen */
 .assessmentCloseButton {
   position: fixed;
-  top: 20px;
+  top: 10px;
   left: 20px;
   width: 40px;
   height: 40px;
@@ -185,7 +181,9 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  transition: opacity 0.2s ease, background 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    background 0.2s ease;
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
@@ -253,7 +251,9 @@ body {
   cursor: pointer;
   overflow: hidden;
   box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -292,15 +292,15 @@ body {
   .finalScoreValue {
     font-size: 72px;
   }
-  
+
   .finalScoreLabel {
     font-size: 28px;
   }
-  
+
   .finalAssessmentName {
     font-size: 24px;
   }
-  
+
   .finalScoreConfirmButton {
     width: 240px;
     height: 60px;
@@ -314,11 +314,7 @@ body {
   max-width: 540px;
   min-height: 100vh;
   height: 100%;
-  background: linear-gradient(
-    180deg,
-    rgba(80, 90, 220, 1) 0%,
-    rgba(247, 247, 161, 1) 100%
-  );
+  background: linear-gradient(180deg, rgba(80, 90, 220, 1) 0%, rgba(247, 247, 161, 1) 100%);
   background-size: 100% 100%;
   bottom: 0;
   position: relative;
