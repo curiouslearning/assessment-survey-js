@@ -152,6 +152,7 @@ export class FinalScoreScreen {
           this.hide();
           UIController.enableAssessmentCloseButton();
           this.navigateToHome();
+          UIController.closeWebView();
         }
         e.preventDefault();
         e.stopPropagation();

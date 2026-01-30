@@ -216,6 +216,7 @@ export class UIController {
     // Setup assessment close button handler (button stays disabled until score is confirmed via final score screen)
     if (this.assessmentCloseButton) {
       this.assessmentCloseButton.addEventListener('click', () => {
+        console.log("<<<<<<<<<<<<<<<<<")
         this.handleAssessmentCloseButtonClick();
       });
       UIController.disableAssessmentCloseButton();
@@ -573,19 +574,20 @@ export class UIController {
    * Only allows closing if score is confirmed
    */
   private handleAssessmentCloseButtonClick(): void {
-    // Check if score is confirmed before allowing close
     const scoreScreen = FinalScoreScreen.getInstance();
-    const isScoreConfirmed = scoreScreen.isScoreConfirmed();
-
-    if (!isScoreConfirmed) {
-      // Score not confirmed - prevent closing
+    if (!scoreScreen.isScoreConfirmed()) {
       console.log('Cannot close: Score not yet confirmed');
       return;
     }
+    UIController.closeWebView();
+  }
 
-    // Score is confirmed - allow closing via Android interface
+  /**
+   * Closes the WebView via the Android bridge. Call when score is confirmed and user chooses to close.
+   */
+  public static closeWebView(): void {
     //@ts-ignore
-    if (window.Android && window.Android.closeWebView) {
+    if (window.Android && typeof window.Android.closeWebView === 'function') {
       //@ts-ignore
       window.Android.closeWebView();
     } else {
