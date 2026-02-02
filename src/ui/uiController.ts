@@ -10,6 +10,9 @@ export class UIController {
   private landingContainerId = 'landWrap';
   public landingContainer: HTMLElement;
 
+  private landingPageCloseButtonId = 'landingPageCloseButton';
+  private landingPageCloseButton: HTMLElement;
+
   private gameContainerId = 'gameWrap';
   public gameContainer: HTMLElement;
 
@@ -87,6 +90,7 @@ export class UIController {
   private init(): void {
     // Initialize required containers
     this.landingContainer = document.getElementById(this.landingContainerId);
+    this.landingPageCloseButton = document.getElementById(this.landingPageCloseButtonId);
     this.gameContainer = document.getElementById(this.gameContainerId);
     this.endContainer = document.getElementById(this.endContainerId);
     this.starContainer = document.getElementById(this.starContainerId);
@@ -221,6 +225,13 @@ export class UIController {
       });
       UIController.disableAssessmentCloseButton();
     }
+
+    if (this.landingPageCloseButton) {
+      this.landingPageCloseButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        UIController.closeWebView();
+      });
+    }
   }
 
   public showOptions(): void {
@@ -299,12 +310,18 @@ export class UIController {
     this.landingContainer.style.display = 'flex';
     this.gameContainer.style.display = 'none';
     this.endContainer.style.display = 'none';
+    if (this.landingPageCloseButton) {
+      this.landingPageCloseButton.style.display = 'flex';
+    }
   }
 
   public static ShowEnd(): void {
     UIController.getInstance().landingContainer.style.display = 'none';
     UIController.getInstance().gameContainer.style.display = 'none';
     UIController.getInstance().endContainer.style.display = 'flex';
+    if (UIController.getInstance().landingPageCloseButton) {
+      UIController.getInstance().landingPageCloseButton.style.display = 'none';
+    }
   }
 
   /**
@@ -322,6 +339,9 @@ export class UIController {
     this.landingContainer.style.display = 'none';
     this.gameContainer.style.display = 'grid';
     this.endContainer.style.display = 'none';
+    if (this.landingPageCloseButton) {
+      this.landingPageCloseButton.style.display = 'none';
+    }
     this.allStart = Date.now();
     this.startPressCallback();
   }

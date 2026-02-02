@@ -680,3 +680,31 @@ input[type='range']::-ms-fill-upper {
 #devModeAnimationSpeedMultiplierValue {
   font-size: 16px;
 }
+
+/* Landing Page Close Button - Always visible and interactive */
+.landingCloseButton {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  width: 40px;
+  height: 40px;
+  font-size: 32px;
+  font-weight: bold;
+  background: rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(0, 0, 0, 0.3);
+  border-radius: 50%;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  opacity: 1;
+  transition: transform 0.1s ease, background-color 0.2s;
+  z-index: 1000;
+}
+
+.landingCloseButton:active {
+  transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.5);
+}
