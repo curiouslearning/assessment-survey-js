@@ -395,7 +395,7 @@ export class Assessment extends BaseQuiz {
         UIController.ChangeStarImageAfterAnimation();
       }
       if (this.HasQuestionsLeft()) {
-        this.onEnd();
+
         if (this.bucketGenMode === BucketGenMode.LinearArrayBased && !this.isBucketControlsEnabled) {
           if (this.currentLinearTargetIndex < this.buckets[this.currentLinearBucketIndex].items.length) {
             this.currentLinearTargetIndex++;
