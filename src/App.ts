@@ -16,6 +16,7 @@ import CacheModel from './components/cacheModel';
 import { UIController } from './ui/uiController';
 import { AnalyticsEventsType, AnalyticsIntegration } from './analytics/analytics-integration';
 import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from './utils/AnalyticsUtils';
+import { AndroidInterface } from '@curiouslearning/core';
 
 const appVersion: string = 'v1.1.3';
 
@@ -111,6 +112,21 @@ export class App {
           // this.cacheModel.setAppName(this.cacheModel.appName + ':' + data["contentVersion"]);
 
           this.game.Run(this);
+
+          // NOTE: when adding new event handling, simply list it down here.
+          this.game.subscribe('ENDED', (gameInstance: BaseQuiz) => {
+            const { cr_user_id } = getCommonAnalyticsEventsProperties();
+            const androidInterface = new AndroidInterface({
+              cr_user_id,
+              app_id: 'assessment',
+            });
+            const { score, startTime, endTime } = gameInstance;
+            androidInterface.logSummaryData({
+              app_type: appType,
+              score,
+              time_spent: endTime - startTime
+            })
+          });
         });
 
         await this.registerServiceWorker(this.game, this.dataURL);
