@@ -1,8 +1,13 @@
 const path = require('path');
 const { container: { ModuleFederationPlugin } } = require('webpack');
+const CopyPlugin = require("copy-webpack-plugin");
+const { InjectManifest } = require('workbox-webpack-plugin');
+
+const isDev = process.env.NODE_ENV !== 'production';
 
 module.exports = {
-  entry: './src/App.ts',
+  entry: './src/mf-entry.ts',
+  mode: isDev ? 'development' : 'production',
   devtool: 'inline-source-map',
   module: {
     rules: [
@@ -16,25 +21,40 @@ module.exports = {
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
   },
-   devServer: {
+  devServer: {
     static: path.join(__dirname, 'dist'),
-    port: 8000,
+    port: 8080,
   },
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist'),
     publicPath: 'auto',
   },
-   plugins: [
-    // To learn more about the usage of this plugin, please visit https://webpack.js.org/plugins/module-federation-plugin/
+  plugins: [
     new ModuleFederationPlugin({
       name: 'assessment_survey_js',
       filename: 'remoteEntry.js',
-      library: { type: 'var', name: 'assessment_survey_js' },
       exposes: {
-        './App': './src/App',
+        './App': './src/mf-entry'
       },
-      shared: { react: { singleton: true }, 'react-dom': { singleton: true } },
+      shared: {},
     }),
+    new CopyPlugin({
+      patterns: [
+        { from: "./css", to: "./css" },
+        { from: "./img", to: "./img" },
+        { from: "./audio", to: "./audio" },
+        { from: "./data", to: "./data" },
+        { from: "./animation", to: "./animation" },
+      ],
+    }),
+    // Only inject service worker in production
+    ...(isDev ? [] : [
+      new InjectManifest({
+        swSrc: "./sw-src.js",
+        swDest: "sw.js",
+        exclude: [/audio\//, /data\//],
+      }),
+    ]),
   ],
 };

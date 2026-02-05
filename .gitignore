@@ -24,6 +24,12 @@ lib-cov
 coverage
 *.lcov
 
+# Build outputs
+build/
+dist/
+*.js.map
+stats.json
+
 # nyc test coverage
 .nyc_output
 

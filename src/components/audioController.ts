@@ -13,6 +13,7 @@ export class AudioController {
   public allAudios: any = {};
   public allImages: any = {};
   public dataURL: string = '';
+  public baseUrl: string = '';
 
   private correctSoundPath = 'dist/audio/Correct.wav';
 
@@ -21,13 +22,14 @@ export class AudioController {
 
   private init(): void {
     this.feedbackAudio = new Audio();
-    this.feedbackAudio.src = this.correctSoundPath;
+    this.feedbackAudio.src = this.baseUrl + this.correctSoundPath;
     this.correctAudio = new Audio();
   }
 
   public static PrepareAudioAndImagesForSurvey(questionsData: qData[], dataURL: string): void {
     AudioController.getInstance().dataURL = dataURL;
-    const feedbackSoundPath = 'audio/' + AudioController.getInstance().dataURL + '/answer_feedback.mp3';
+    const feedbackSoundPath =
+      AudioController.getInstance().baseUrl + 'audio/' + AudioController.getInstance().dataURL + '/answer_feedback.mp3';
 
     AudioController.getInstance().wavToCache.push(feedbackSoundPath);
     AudioController.getInstance().correctAudio.src = feedbackSoundPath;
@@ -56,7 +58,7 @@ export class AudioController {
   public static AddImageToAllImages(newImageURL: string): void {
     console.log('Add image: ' + newImageURL);
     let newImage = new Image();
-    newImage.src = newImageURL;
+    newImage.src = AudioController.getInstance().baseUrl + newImageURL;
     AudioController.getInstance().allImages[newImageURL] = newImage;
   }
 
@@ -74,9 +76,11 @@ export class AudioController {
 
     let newAudio = new Audio();
     if (getCaseIndependentLangList().includes(AudioController.getInstance().dataURL.split('-')[0])) {
-      newAudio.src = 'audio/' + AudioController.getInstance().dataURL + '/' + newAudioURL;
+      newAudio.src =
+        AudioController.getInstance().baseUrl + 'audio/' + AudioController.getInstance().dataURL + '/' + newAudioURL;
     } else {
-      newAudio.src = 'audio/' + AudioController.getInstance().dataURL + '/' + newAudioURL;
+      newAudio.src =
+        AudioController.getInstance().baseUrl + 'audio/' + AudioController.getInstance().dataURL + '/' + newAudioURL;
     }
 
     AudioController.getInstance().allAudios[newAudioURL] = newAudio;
@@ -87,7 +91,7 @@ export class AudioController {
   public static PreloadBucket(newBucket: bucket, dataURL) {
     AudioController.getInstance().dataURL = dataURL;
     AudioController.getInstance().correctAudio.src =
-      'audio/' + AudioController.getInstance().dataURL + '/answer_feedback.mp3';
+      AudioController.getInstance().baseUrl + 'audio/' + AudioController.getInstance().dataURL + '/answer_feedback.mp3';
     for (var itemIndex in newBucket.items) {
       var item = newBucket.items[itemIndex];
       AudioController.FilterAndAddAudioToAllAudios(item.itemName.toLowerCase());

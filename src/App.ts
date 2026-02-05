@@ -8,7 +8,8 @@ import { Assessment } from './assessment/assessment';
 import { UnityBridge } from './utils/unityBridge';
 import { AnalyticsEvents } from './analytics/analyticsEvents';
 import { BaseQuiz } from './baseQuiz';
-import { fetchAppData, getDataURL } from './utils/jsonUtils';
+import { AudioController } from './components/audioController';
+import { fetchAppData, getDataURL, setBaseUrl } from './utils/jsonUtils';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics, logEvent } from 'firebase/analytics';
 import { Workbox } from 'workbox-window';
@@ -25,8 +26,8 @@ const appVersion: string = 'v1.1.3';
  */
 let contentVersion: string = '';
 
-let loadingScreen = document.getElementById('loadingScreen');
-const progressBar = document.getElementById('progressBar');
+let loadingScreen: HTMLElement | null = null;
+let progressBar: HTMLElement | null = null;
 const broadcastChannel: BroadcastChannel = new BroadcastChannel('as-message-channel');
 
 export class App {
@@ -45,6 +46,7 @@ export class App {
     this.unityBridge = new UnityBridge();
 
     console.log('Initializing app...');
+    console.log('Microfrontend Assessment/Survey App Version: 1.4');
 
     this.dataURL = getDataFile();
     this.cacheModel = new CacheModel(this.dataURL, this.dataURL, new Set<string>());
@@ -52,70 +54,41 @@ export class App {
 
   }
 
-  public async spinUp() {
+  public async spinUp(baseUrl: string = '') {
+    if (baseUrl) {
+      AudioController.getInstance().baseUrl = baseUrl;
+      UIController.getInstance().baseUrl = baseUrl;
+      setBaseUrl(baseUrl);
+    }
+
     await AnalyticsIntegration.initializeAnalytics();
     this.analyticsIntegration = AnalyticsIntegration.getInstance();
-    window.addEventListener('load', () => {
-      console.log('Window Loaded!');
-      (async () => {
-        await fetchAppData(this.dataURL).then((data) => {
-          console.log('Assessment/Survey ' + appVersion + ' initializing!');
-          console.log('App data loaded!');
-          console.log(data);
+    loadingScreen = document.getElementById('loadingScreen');
+    progressBar = document.getElementById('progressBar');
 
-          this.cacheModel.setContentFilePath(getDataURL(this.dataURL));
 
-          // TODO: Why do we need to set the feedback text here?
-          UIController.SetFeedbackText(data['feedbackText']);
+    const data = await fetchAppData(this.dataURL);
 
-          let appType = data['appType'];
-          let assessmentType = data['assessmentType'];
+    this.cacheModel.setContentFilePath(getDataURL(this.dataURL));
+    UIController.SetFeedbackText(data['feedbackText']);
 
-          if (appType == 'survey') {
-            this.game = new Survey(this.dataURL, this.unityBridge);
-          } else if (appType == 'assessment') {
-            // Get and add all the audio assets to the cache model
+    let appType = data['appType'];
 
-            let buckets = data['buckets'];
+    if (appType === 'survey') {
+      this.game = new Survey(this.dataURL, this.unityBridge);
+    } else {
+      this.game = new Assessment(this.dataURL, this.unityBridge);
+    }
 
-            for (let i = 0; i < buckets.length; i++) {
-              for (let j = 0; j < buckets[i].items.length; j++) {
-                let audioItemURL;
-                // Use to lower case for the Lugandan data
-                if (
-                  data['quizName'].includes('Luganda') ||
-                  data['quizName'].toLowerCase().includes('west african english')
-                ) {
-                  audioItemURL =
-                    '/audio/' + this.dataURL + '/' + buckets[i].items[j].itemName.toLowerCase().trim() + '.mp3';
-                } else {
-                  audioItemURL = '/audio/' + this.dataURL + '/' + buckets[i].items[j].itemName.trim() + '.mp3';
-                }
+    this.game.unityBridge = this.unityBridge;
+    contentVersion = data['contentVersion'];
 
-                this.cacheModel.addItemToAudioVisualResources(audioItemURL);
-              }
-            }
+    this.setCommonProperties();
+    this.logInitialAnalyticsEvents();
 
-            this.cacheModel.addItemToAudioVisualResources('/audio/' + this.dataURL + '/answer_feedback.mp3');
-
-            this.game = new Assessment(this.dataURL, this.unityBridge);
-          }
-
-          this.game.unityBridge = this.unityBridge;
-
-          contentVersion = data['contentVersion'];
-
-          this.setCommonProperties();
-          // AnalyticsEvents.sendInit(appVersion, data['contentVersion']);
-          this.logInitialAnalyticsEvents();
-          // this.cacheModel.setAppName(this.cacheModel.appName + ':' + data["contentVersion"]);
-
-          this.game.Run(this);
-        });
-
-        await this.registerServiceWorker(this.game, this.dataURL);
-      })();
-    });
+    this.game.Run(this);
+    console.log('Assessment/Survey ' + appVersion + ' initializing!');
+    await this.registerServiceWorker(this.game, this.dataURL);
   }
   async setCommonProperties() {
     setCommonAnalyticsEventsProperties(getUUID(), getAppLanguageFromDataURL(this.dataURL), getAppTypeFromDataURL(this.dataURL), getUserSource(), contentVersion, appVersion);
@@ -131,6 +104,10 @@ export class App {
 
   }
   async registerServiceWorker(game: BaseQuiz, dataURL: string = '') {
+    if ((window as any).__ASSESSMENT_MF__) {
+      console.log('Skipping SW registration (MF mode)');
+      return;
+    }
     console.log('Registering service worker...');
 
     if ('serviceWorker' in navigator) {
@@ -283,6 +260,3 @@ function handleUpdateFoundMessage(): void {
     text = 'Update will happen on the next launch.';
   }
 }
-
-const app = new App();
-app.spinUp();

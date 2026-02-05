@@ -15,6 +15,8 @@ export class UIController {
   private endContainerId = 'endWrap';
   public endContainer: HTMLElement;
 
+  public baseUrl: string = "";
+
   private starContainerId = 'starWrapper';
   public starContainer: HTMLElement;
 
@@ -353,7 +355,7 @@ export class UIController {
       });
     } else {
       UIController.getInstance().playButton.innerHTML =
-        "<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='/img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>";
+        `<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='${UIController.getInstance().baseUrl}img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>`;
       var nextQuestionButton = document.getElementById('nextqButton');
       nextQuestionButton.addEventListener('click', function () {
         UIController.ShowQuestion();
@@ -371,9 +373,9 @@ export class UIController {
     if (!UIController.getInstance().devModeBucketControlsEnabled) {
       const playButtonImg = UIController.getInstance().playButton.querySelector('img');
       if (playing) {
-        playButtonImg.src = 'animation/SoundButton.gif';
+        playButtonImg.src = UIController.getInstance().baseUrl + 'animation/SoundButton.gif';
       } else {
-        playButtonImg.src = '/img/SoundButton_Idle.png';
+        playButtonImg.src = UIController.getInstance().baseUrl + 'img/SoundButton_Idle.png';
       }
     }
   }
@@ -395,7 +397,7 @@ export class UIController {
       });
     } else {
       UIController.getInstance().playButton.innerHTML =
-        "<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='/img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>";
+        `<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='${UIController.getInstance().baseUrl}img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>`;
 
       var nextQuestionButton = document.getElementById('nextqButton');
       nextQuestionButton.addEventListener('click', function () {
@@ -438,7 +440,7 @@ export class UIController {
     var starToShow = document.getElementById(
       'star' + UIController.getInstance().stars[UIController.getInstance().qAnsNum]
     ) as HTMLImageElement;
-    starToShow.src = '../animation/Star.gif';
+    starToShow.src = UIController.getInstance().baseUrl + 'animation/Star.gif';
     starToShow.classList.add('topstarv');
     starToShow.classList.remove('topstarh');
 
@@ -499,7 +501,7 @@ export class UIController {
     var starToShow = document.getElementById(
       'star' + UIController.getInstance().stars[UIController.getInstance().qAnsNum - 1]
     ) as HTMLImageElement;
-    starToShow.src = '../img/star_after_animation.gif';
+    starToShow.src = UIController.getInstance().baseUrl + 'img/star_after_animation.gif';
   }
 
   private answerButtonPress(buttonNum: number): void {
@@ -522,7 +524,7 @@ export class UIController {
     const currentImageNumber = parseInt(currentImgSrc.slice(-6, -4), 10);
     console.log('Chest Progression number-->', currentImageNumber);
     const nextImageNumber = (currentImageNumber % 4) + 1;
-    const nextImageSrc = `img/chestprogression/TreasureChestOpen0${nextImageNumber}.svg`;
+    const nextImageSrc = UIController.getInstance().baseUrl + `img/chestprogression/TreasureChestOpen0${nextImageNumber}.svg`;
     chestImage.src = nextImageSrc;
   }
 
@@ -551,5 +553,127 @@ export class UIController {
     }
 
     return UIController.instance;
+  }
+
+  public static InjectDOM(container: HTMLElement, baseUrl: string): void {
+    // Inject CSS
+    const cssId = 'assessment-css';
+    if (!document.getElementById(cssId)) {
+      const head = document.getElementsByTagName('head')[0];
+      const link = document.createElement('link');
+      link.id = cssId;
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = baseUrl + 'css/style.css';
+      link.media = 'all';
+      head.appendChild(link);
+    }
+
+    // Inject HTML structure
+    container.innerHTML = `
+    <div class="bodyWrapper">
+      <div class="landingPageWrapper" id="landWrap">
+        <img class="landingMonster" src="${baseUrl}img/monster.png" />
+        <br />
+        <button id="startButton">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M9 18L15 12L9 6V18Z"
+              fill="currentColor"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            ></path>
+          </svg>
+        </button>
+        <div id="loadingScreen">
+          <img id="loading-gif" src="${baseUrl}img/loadingImg.gif" alt="Loading Animation" />
+          <div id="progressBarContainer">
+            <div id="progressBar"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="questionViewWrapper" id="gameWrap" style="display: none">
+        <div class="starWrapper" id="starWrapper"></div>
+        <div class="chestWrapper" id="chestWrapper">
+          <div class="chestdiv">
+            <img id="chestImage" src="${baseUrl}img/chestprogression/TreasureChestOpen01.svg" />
+          </div>
+        </div>
+        <div class="questionContainer" id="qWrap"></div>
+
+        <div class="answerContainer" id="aWrap">
+          <div class="answerButton" id="answerButton1">1</div>
+          <div class="answerButton" id="answerButton2">2</div>
+          <div class="answerButton" id="answerButton3">3</div>
+          <div class="answerButton" id="answerButton4">4</div>
+          <div class="answerButton" id="answerButton5" style="display: none">5</div>
+          <div class="answerButton" id="answerButton6" style="display: none">6</div>
+        </div>
+        <div>
+          <div class="nextQuestionInput">
+            <div id="pbutton"></div>
+          </div>
+
+          <div class="feedbackContainer hidden" id="feedbackWrap">kuyancomeka!</div>
+        </div>
+      </div>
+
+      <div class="endingPageWrapper" id="endWrap" style="display: none">click to exit!</div>
+
+      <!-- Bucket info container that later contains real-time details on the progress -->
+      <div id="devModeBucketInfoContainer"></div>
+
+      <div id="devModeModalToggleButtonContainer">
+        <button id="devModeModalToggleButton">
+          Dev<br />
+          Mode
+        </button>
+      </div>
+
+       <div id="devModeSettingsModal">
+        <p style="font-size: 26px">Dev Mode Settings</p>
+        <form id="devModeSettingsContainer">
+          <!-- Bucket generation mode range -->
+          <span class="devModeLabel">Assessment bucket generation mode</span>
+          <select id="devModeBucketGenSelect">
+            <option value="0">Randomized Middle Point BST</option>
+            <option value="1">Sequential Array Based</option>
+          </select>
+          <!-- Show correct target label checkbox -->
+          <span class="devModeLabel">Show a Label on correct target</span>
+          <div style="display: flex; align-items: center; height: 40px; gap: 8px">
+            <input id="devModeCorrectLabelShownCheckbox" type="checkbox" />
+            <label for="devModeCorrectLabelShownCheckbox">Show correct label on answer button</label>
+          </div>
+          <!-- Show bucket information checkbox -->
+          <span class="devModeLabel">Show bucket details on screen</span>
+          <div style="display: flex; align-items: center; height: 40px; gap: 8px">
+            <input id="devModeBucketInfoShownCheckbox" type="checkbox" />
+            <label for="devModeBucketInfoShownCheckbox">Show bucket index, tried and passed</label>
+          </div>
+          <!-- Enable bucket controls -->
+          <span class="devModeLabel">Enable bucket controls</span>
+          <div style="display: flex; align-items: center; height: 40px; gap: 8px">
+            <input id="devModeBucketControlsShownCheckbox" type="checkbox" />
+            <label for="devModeBucketControlsShownCheckbox">Enable item buttons, next and prev buckets</label>
+          </div>
+          <!-- Animation speed adjustment slider control -->
+          <span class="devModeLabel">Animations speed</span>
+          <div style="width: 100%; position: relative">
+            <input id="devModeAnimationSpeedMultiplierRange" type="range" min="0" max="1" value="1" step="0.1" />
+            <div style="display: flex; width: 100%; justify-content: space-between">
+              <span style="font-size: 12px"><- Faster</span>
+              <text id="devModeAnimationSpeedMultiplierValue">1</text>
+              <span style="font-size: 12px">Slower -></span>
+            </div>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  `;
   }
 }

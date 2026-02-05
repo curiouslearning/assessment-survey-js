@@ -2,6 +2,15 @@
 
 // import { setFeedbackText } from './uiController';
 
+let baseUrl: string = '';
+
+export function setBaseUrl(url: string) {
+  baseUrl = url;
+  if (!baseUrl.endsWith('/')) {
+    baseUrl += '/';
+  }
+}
+
 export async function fetchAppData(url: string) {
   return loadData(url).then((data) => {
     return data;
@@ -34,7 +43,7 @@ export async function fetchAssessmentBuckets(url: string) {
 }
 
 export function getDataURL(url: string) {
-  return '/data/' + url + '.json';
+  return baseUrl + 'data/' + url + '.json';
 }
 
 export function getCaseIndependentLangList() {
