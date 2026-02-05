@@ -17,6 +17,7 @@ import CacheModel from './components/cacheModel';
 import { UIController } from './ui/uiController';
 import { AnalyticsEventsType, AnalyticsIntegration } from './analytics/analytics-integration';
 import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from './utils/AnalyticsUtils';
+import { AndroidInterface } from '@curiouslearning/core';
 
 const appVersion: string = 'v1.1.3';
 
