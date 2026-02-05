@@ -83,9 +83,13 @@ export function calculateScore(buckets: bucket[], basalBucketID: number): number
         return buckets.length * 100;
     }
 
+    if (basalBucketID < 1) {
+        return 0;
+    }
+
     score = Math.round((basalBucketID - 1) * 100 + (numCorrect / 5) * 100) | 0;
 
-    return score;
+    return Math.max(0, score);
 }
 
 export function getCeilingBucketID(buckets: bucket[]): number {
