@@ -41,6 +41,9 @@ export function getCommonAnalyticsEventsProperties() {
     };
 }
 export function getBasalBucketID(buckets: bucket[]): number {
+    if (!buckets || buckets.length === 0) {
+        return 0;
+    }
     let bucketID = 0;
 
     // Select the lowest bucketID bucket that the user has failed
@@ -89,6 +92,9 @@ export function calculateScore(buckets: bucket[], basalBucketID: number): number
 }
 
 export function getCeilingBucketID(buckets: bucket[]): number {
+    if (!buckets || buckets.length === 0) {
+        return 0;
+    }
     let bucketID = 0;
 
     // Select the hiughest bucketID bucket that the user has passed
