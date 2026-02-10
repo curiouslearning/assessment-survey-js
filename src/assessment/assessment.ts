@@ -709,24 +709,10 @@ export class Assessment extends BaseQuiz {
   }
 
   public override onEnd(): void {
-
-    let scoreID = getBasalBucketID(this.buckets);
-    if (scoreID == 0) {
-      let ceilingBucketID = getCeilingBucketID(this.buckets);
-      if (ceilingBucketID > 0) {
-        scoreID = ceilingBucketID;
-      } else {
-        scoreID = this.currentBucket.bucketID;
-      }
-    }
-    let score = calculateScore(this.buckets, scoreID);
-    console.log('Score: ' + score + "this.score" + this.score);
     this.LogCompletedEvent(this.buckets, this.basalBucket, this.ceilingBucket);
-
+    let score = calculateScore(this.buckets, getBasalBucketID(this.buckets));
     const maxScore = this.buckets.length * 100;
     UIController.ShowFinalScore(score, maxScore, this.assessmentType || 'letter-sounds');
-
-
     super.onEnd();
 
   }
