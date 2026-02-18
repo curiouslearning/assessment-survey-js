@@ -2,7 +2,7 @@
 
 import { qData } from './questionData';
 import { bucket, bucketItem } from '../assessment/bucketData';
-import { getCaseIndependentLangList } from '../utils/jsonUtils';
+import { getCaseIndependentLangList, getAudioDirectory } from '../utils/jsonUtils';
 
 export class AudioController {
   private static instance: AudioController | null = null;
@@ -27,7 +27,8 @@ export class AudioController {
 
   public static PrepareAudioAndImagesForSurvey(questionsData: qData[], dataURL: string): void {
     AudioController.getInstance().dataURL = dataURL;
-    const feedbackSoundPath = 'audio/' + AudioController.getInstance().dataURL + '/answer_feedback.mp3';
+    const audioDir = getAudioDirectory(dataURL);
+    const feedbackSoundPath = '/assessment-audio/' + audioDir + '/answer_feedback.mp3';
 
     AudioController.getInstance().wavToCache.push(feedbackSoundPath);
     AudioController.getInstance().correctAudio.src = feedbackSoundPath;
@@ -73,10 +74,11 @@ export class AudioController {
     console.log('Filtered: ' + newAudioURL);
 
     let newAudio = new Audio();
-    if (getCaseIndependentLangList().includes(AudioController.getInstance().dataURL.split('-')[0])) {
-      newAudio.src = 'audio/' + AudioController.getInstance().dataURL + '/' + newAudioURL;
+    const audioDir = getAudioDirectory(AudioController.getInstance().dataURL);
+    if (getCaseIndependentLangList().includes(audioDir.split('-')[0])) {
+      newAudio.src = '/assessment-audio/' + audioDir + '/' + newAudioURL;
     } else {
-      newAudio.src = 'audio/' + AudioController.getInstance().dataURL + '/' + newAudioURL;
+      newAudio.src = '/assessment-audio/' + audioDir + '/' + newAudioURL;
     }
 
     AudioController.getInstance().allAudios[newAudioURL] = newAudio;

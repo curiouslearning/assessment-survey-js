@@ -58,8 +58,10 @@ export abstract class BaseQuiz extends PubSub {
       window.location.href.includes('localhost') ||
       window.location.href.includes('127.0.0.1') ||
       window.location.href.includes('assessmentdev');
-    this.devModeToggleButtonContainer = document.getElementById(this.devModeToggleButtonContainerId);
-    this.devModeSettingsModal = document.getElementById(this.devModeModalId);
+    // Lookup elements via UIController so we respect the current root (shadow DOM or document)
+    const ui = UIController.getInstance();
+    this.devModeToggleButtonContainer = ui.FindElement(this.devModeToggleButtonContainerId);
+    this.devModeSettingsModal = ui.FindElement(this.devModeModalId);
 
     // this.devModeSettingsModal.addEventListener("click", (event) => {
     // 	// @ts-ignore
@@ -70,66 +72,70 @@ export abstract class BaseQuiz extends PubSub {
     // 	}
     // });
 
-    this.devModeBucketGenSelect = document.getElementById(this.devModeBucketGenSelectId) as HTMLSelectElement;
-    this.devModeBucketGenSelect.onchange = (event) => {
-      this.handleBucketGenModeChange(event);
-    };
+    this.devModeBucketGenSelect = ui.FindElement(this.devModeBucketGenSelectId) as HTMLSelectElement;
+    if (this.devModeBucketGenSelect) {
+      this.devModeBucketGenSelect.onchange = (event) => {
+        this.handleBucketGenModeChange(event);
+      };
+    }
 
-    this.devModeToggleButton = document.getElementById(this.devModeToggleButtonId) as HTMLButtonElement;
-    this.devModeToggleButton.onclick = this.toggleDevModeModal;
+    this.devModeToggleButton = ui.FindElement(this.devModeToggleButtonId) as HTMLButtonElement;
+    if (this.devModeToggleButton) this.devModeToggleButton.onclick = this.toggleDevModeModal;
 
-    this.devModeCorrectLabelShownCheckbox = document.getElementById(
-      this.devModeCorrectLabelShownCheckboxId
-    ) as HTMLInputElement;
-    this.devModeCorrectLabelShownCheckbox.onchange = () => {
-      this.isCorrectLabelShown = this.devModeCorrectLabelShownCheckbox.checked;
-      this.handleCorrectLabelShownChange();
-    };
+    this.devModeCorrectLabelShownCheckbox = ui.FindElement(this.devModeCorrectLabelShownCheckboxId) as HTMLInputElement;
+    if (this.devModeCorrectLabelShownCheckbox) {
+      this.devModeCorrectLabelShownCheckbox.onchange = () => {
+        this.isCorrectLabelShown = this.devModeCorrectLabelShownCheckbox.checked;
+        this.handleCorrectLabelShownChange();
+      };
+    }
 
-    this.devModeBucketInfoShownCheckbox = document.getElementById(
-      this.devModeBucketInfoShownCheckboxId
-    ) as HTMLInputElement;
-    this.devModeBucketInfoShownCheckbox.onchange = () => {
-      this.isBucketInfoShown = this.devModeBucketInfoShownCheckbox.checked;
-      this.devModeBucketInfoContainer.style.display = this.isBucketInfoShown ? 'block' : 'none';
-      this.handleBucketInfoShownChange();
-    };
+    this.devModeBucketInfoShownCheckbox = ui.FindElement(this.devModeBucketInfoShownCheckboxId) as HTMLInputElement;
+    if (this.devModeBucketInfoShownCheckbox) {
+      this.devModeBucketInfoShownCheckbox.onchange = () => {
+        this.isBucketInfoShown = this.devModeBucketInfoShownCheckbox.checked;
+        if (this.devModeBucketInfoContainer) this.devModeBucketInfoContainer.style.display = this.isBucketInfoShown ? 'block' : 'none';
+        this.handleBucketInfoShownChange();
+      };
+    }
 
-    this.devModeBucketControlsShownCheckbox = document.getElementById(
-      this.devModeBucketControlsShownCheckboxId
-    ) as HTMLInputElement;
-    this.devModeBucketControlsShownCheckbox.onchange = () => {
-      this.isBucketControlsEnabled = this.devModeBucketControlsShownCheckbox.checked;
-      this.handleBucketControlsShownChange();
-    };
+    this.devModeBucketControlsShownCheckbox = ui.FindElement(this.devModeBucketControlsShownCheckboxId) as HTMLInputElement;
+    if (this.devModeBucketControlsShownCheckbox) {
+      this.devModeBucketControlsShownCheckbox.onchange = () => {
+        this.isBucketControlsEnabled = this.devModeBucketControlsShownCheckbox.checked;
+        this.handleBucketControlsShownChange();
+      };
+    }
 
-    this.devModeBucketInfoContainer = document.getElementById(this.devModeBucketInfoContainerId);
+    this.devModeBucketInfoContainer = ui.FindElement(this.devModeBucketInfoContainerId);
 
-    this.devModeAnimationSpeedMultiplierRange = document.getElementById(
-      this.devModeAnimationSpeedMultiplierRangeId
-    ) as HTMLInputElement;
+    this.devModeAnimationSpeedMultiplierRange = ui.FindElement(this.devModeAnimationSpeedMultiplierRangeId) as HTMLInputElement;
 
-    this.devModeAnimationSpeedMultiplierValue = document.getElementById(this.devModeAnimationSpeedMultiplierValueId);
+    this.devModeAnimationSpeedMultiplierValue = ui.FindElement(this.devModeAnimationSpeedMultiplierValueId);
 
-    this.devModeAnimationSpeedMultiplierRange.onchange = () => {
-      this.animationSpeedMultiplier = parseFloat(this.devModeAnimationSpeedMultiplierRange.value);
-      if (this.animationSpeedMultiplier < 0.2) {
-        this.animationSpeedMultiplier = 0.2;
-        this.devModeAnimationSpeedMultiplierRange.value = '0.2';
-      }
+    if (this.devModeAnimationSpeedMultiplierRange) {
+      this.devModeAnimationSpeedMultiplierRange.onchange = () => {
+        this.animationSpeedMultiplier = parseFloat(this.devModeAnimationSpeedMultiplierRange.value);
+        if (this.animationSpeedMultiplier < 0.2) {
+          this.animationSpeedMultiplier = 0.2;
+          this.devModeAnimationSpeedMultiplierRange.value = '0.2';
+        }
 
-      this.devModeAnimationSpeedMultiplierValue.innerText = this.animationSpeedMultiplier.toString();
-      this.handleAnimationSpeedMultiplierChange();
-    };
+        if (this.devModeAnimationSpeedMultiplierValue) this.devModeAnimationSpeedMultiplierValue.innerText = this.animationSpeedMultiplier.toString();
+        this.handleAnimationSpeedMultiplierChange();
+      };
+    }
 
     if (!this.isInDevMode) {
-      this.devModeToggleButtonContainer.style.display = 'none';
+      if (this.devModeToggleButtonContainer) this.devModeToggleButtonContainer.style.display = 'none';
     } else {
-      this.devModeToggleButtonContainer.style.display = 'block';
+      if (this.devModeToggleButtonContainer) this.devModeToggleButtonContainer.style.display = 'block';
     }
 
     // Initialize the animation speed multiplier value and position
-    this.animationSpeedMultiplier = parseFloat(this.devModeAnimationSpeedMultiplierRange.value);
+    if (this.devModeAnimationSpeedMultiplierRange) {
+      this.animationSpeedMultiplier = parseFloat(this.devModeAnimationSpeedMultiplierRange.value);
+    }
   }
 
   public hideDevModeButton() {

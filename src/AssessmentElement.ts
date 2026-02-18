@@ -1,4 +1,5 @@
 import { App } from './App';
+import { UIController } from './ui/uiController';
 
 /**
  * AssessmentElement - Web Component wrapper for the Assessment Survey application
@@ -66,24 +67,81 @@ export class AssessmentElement extends HTMLElement {
                 return;
             }
 
-            // Set the data URL in the URL parameters for the App to use
+            // Extract just the key name (without the 'data/' prefix and '.json' extension)
+            // This handles cases like:
+            //   'data/english/assessment_data.json' -> 'english/assessment_data'
+            //   'english/assessment_data.json' -> 'english/assessment_data'
+            //   'zulu-lettersounds.json' -> 'zulu-lettersounds'
+            //   'zulu-lettersounds' -> 'zulu-lettersounds'
+            let dataKey = fullDataUrl.replace(/^(\.?\/)?data(\/)?/, '').replace(/\.json$/, '');
+
+            // Set the data key in the URL parameters for the App to use
             const currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.set('data', fullDataUrl);
+            currentUrl.searchParams.set('data', dataKey);
             window.history.replaceState({}, '', currentUrl);
 
-            // Create a temporary container in the light DOM for the App
-            // (since App.ts expects to work with the main document)
-            const tempContainer = document.createElement('div');
-            tempContainer.id = 'assessment-app-root';
-            tempContainer.style.cssText = `
-        width: 100%;
-        height: 100%;
-      `;
+            // Inject the HTML structure from index.html into the shadow DOM
+            // This is required because the App and UIController expect these elements to exist
+            this.container.innerHTML = `
+                <link rel="stylesheet" href="${basePath}assessment-css/style.css">
+                <style>
+                    :host { display: block; width: 100%; height: 100%; }
+                    .bodyWrapper { width: 100% !important; max-width: none !important; }
+                </style>
+                <div class="bodyWrapper">
+                    <div class="landingPageWrapper" id="landWrap">
+                        <img class="landingMonster" src="${basePath}assessment-img/monster.png" />
+                        <br />
+                        <button id="startButton">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M9 18L15 12L9 6V18Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                        </button>
+                        <div id="loadingScreen">
+                            <img id="loading-gif" src="${basePath}assessment-img/loadingImg.gif" alt="Loading Animation" />
+                            <div id="progressBarContainer">
+                                <div id="progressBar"></div>
+                            </div>
+                        </div>
+                    </div>
 
-            this.container.appendChild(tempContainer);
+                    <div class="questionViewWrapper" id="gameWrap" style="display: none">
+                        <div class="starWrapper" id="starWrapper"></div>
+                        <div class="chestWrapper">
+                            <div class="chestdiv">
+                                <img id="chestImage" src="${basePath}assessment-img/chestprogression/TreasureChestOpen01.svg" />
+                            </div>
+                        </div>
+                        <div class="questionContainer" id="qWrap"></div>
 
-            // Initialize the App
-            this.app = new App();
+                        <div class="answerContainer" id="aWrap">
+                            <div class="answerButton" id="answerButton1">1</div>
+                            <div class="answerButton" id="answerButton2">2</div>
+                            <div class="answerButton" id="answerButton3">3</div>
+                            <div class="answerButton" id="answerButton4">4</div>
+                            <div class="answerButton" id="answerButton5" style="display: none">5</div>
+                            <div class="answerButton" id="answerButton6" style="display: none">6</div>
+                        </div>
+                        <div>
+                            <div class="nextQuestionInput">
+                                <div id="pbutton"></div>
+                            </div>
+
+                            <div class="feedbackContainer hidden" id="feedbackWrap">kuyancomeka!</div>
+                        </div>
+                    </div>
+
+                    <div class="endingPageWrapper" id="endWrap" style="display: none">click to exit!</div>
+                </div>
+            `;
+
+            // Initialize UIController with the shadow root BEFORE creating the App.
+            // This ensures all DOM element lookups in BaseQuiz and Assessment constructors
+            // will find elements within the shadow DOM.
+            UIController.getInstance(this._shadowRoot);
+
+            // Initialize the App with the shadow root to allow scoped DOM access
+            this.app = new App(this._shadowRoot);
             await this.app.spinUp();
 
             // Listen for assessment completion

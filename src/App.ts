@@ -8,7 +8,7 @@ import { Assessment } from './assessment/assessment';
 import { UnityBridge } from './utils/unityBridge';
 import { AnalyticsEvents } from './analytics/analyticsEvents';
 import { BaseQuiz } from './baseQuiz';
-import { fetchAppData, getDataURL } from './utils/jsonUtils';
+import { fetchAppData, getDataURL, getAudioDirectory } from './utils/jsonUtils';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics, logEvent } from 'firebase/analytics';
 import { Workbox } from 'workbox-window';
@@ -26,8 +26,6 @@ const appVersion: string = 'v1.1.3';
  */
 let contentVersion: string = '';
 
-let loadingScreen = document.getElementById('loadingScreen');
-const progressBar = document.getElementById('progressBar');
 const broadcastChannel: BroadcastChannel = new BroadcastChannel('as-message-channel');
 
 export class App {
@@ -40,98 +38,124 @@ export class App {
   public analyticsIntegration: AnalyticsIntegration;
   cacheModel: CacheModel;
 
+  private loadingScreen: HTMLElement | null = null;
+  private progressBar: HTMLElement | null = null;
+
+  private rootElement: Document | ShadowRoot | HTMLElement;
+
   lang: string = 'english';
 
-  constructor() {
+  constructor(root: Document | ShadowRoot | HTMLElement = document) {
+    this.rootElement = root;
     this.unityBridge = new UnityBridge();
-
-    console.log('Initializing app...');
 
     this.dataURL = getDataFile();
     this.cacheModel = new CacheModel(this.dataURL, this.dataURL, new Set<string>());
+  }
 
-
+  private getElementById(id: string): HTMLElement | null {
+    if (this.rootElement instanceof Document) {
+      return this.rootElement.getElementById(id);
+    }
+    return (this.rootElement as HTMLElement).querySelector(`#${id}`);
   }
 
   public async spinUp() {
     await AnalyticsIntegration.initializeAnalytics();
     this.analyticsIntegration = AnalyticsIntegration.getInstance();
-    window.addEventListener('load', () => {
-      console.log('Window Loaded!');
-      (async () => {
-        await fetchAppData(this.dataURL).then((data) => {
-          console.log('Assessment/Survey ' + appVersion + ' initializing!');
-          console.log('App data loaded!');
-          console.log(data);
 
-          this.cacheModel.setContentFilePath(getDataURL(this.dataURL));
+    const initialize = async () => {
+      console.log('App initialization starting...');
 
-          // TODO: Why do we need to set the feedback text here?
-          UIController.SetFeedbackText(data['feedbackText']);
+      this.loadingScreen = this.getElementById('loadingScreen');
+      this.progressBar = this.getElementById('progressBar');
 
-          let appType = data['appType'];
-          let assessmentType = data['assessmentType'];
+      // Initialize UIController with the provided root (Document or ShadowRoot)
+      try {
+        UIController.getInstance(this.rootElement);
+      } catch (err) {
+        console.warn('UIController initialization deferred in spinUp:', err);
+      }
 
-          if (appType == 'survey') {
-            this.game = new Survey(this.dataURL, this.unityBridge);
-          } else if (appType == 'assessment') {
-            // Get and add all the audio assets to the cache model
+      await fetchAppData(this.dataURL).then((data) => {
+        console.log('Assessment/Survey ' + appVersion + ' initializing!');
+        console.log('App data loaded!');
+        console.log(data);
 
-            let buckets = data['buckets'];
+        this.cacheModel.setContentFilePath(getDataURL(this.dataURL));
 
-            for (let i = 0; i < buckets.length; i++) {
-              for (let j = 0; j < buckets[i].items.length; j++) {
-                let audioItemURL;
-                // Use to lower case for the Lugandan data
-                if (
-                  data['quizName'].includes('Luganda') ||
-                  data['quizName'].toLowerCase().includes('west african english')
-                ) {
-                  audioItemURL =
-                    '/audio/' + this.dataURL + '/' + buckets[i].items[j].itemName.toLowerCase().trim() + '.mp3';
-                } else {
-                  audioItemURL = '/audio/' + this.dataURL + '/' + buckets[i].items[j].itemName.trim() + '.mp3';
-                }
+        // TODO: Why do we need to set the feedback text here?
+        UIController.SetFeedbackText(data['feedbackText']);
 
-                this.cacheModel.addItemToAudioVisualResources(audioItemURL);
+        let appType = data['appType'];
+        let assessmentType = data['assessmentType'];
+
+        if (appType == 'survey') {
+          this.game = new Survey(this.dataURL, this.unityBridge);
+        } else if (appType == 'assessment') {
+          // Get and add all the audio assets to the cache model
+
+          let buckets = data['buckets'];
+          const audioDir = getAudioDirectory(this.dataURL);
+
+          for (let i = 0; i < buckets.length; i++) {
+            for (let j = 0; j < buckets[i].items.length; j++) {
+              let audioItemURL;
+              // Use to lower case for the Lugandan data
+              if (
+                data['quizName'].includes('Luganda') ||
+                data['quizName'].toLowerCase().includes('west african english')
+              ) {
+                audioItemURL =
+                  '/assessment-audio/' + audioDir + '/' + buckets[i].items[j].itemName.toLowerCase().trim() + '.mp3';
+              } else {
+                audioItemURL = '/assessment-audio/' + audioDir + '/' + buckets[i].items[j].itemName.trim() + '.mp3';
               }
+
+              this.cacheModel.addItemToAudioVisualResources(audioItemURL);
             }
-
-            this.cacheModel.addItemToAudioVisualResources('/audio/' + this.dataURL + '/answer_feedback.mp3');
-
-            this.game = new Assessment(this.dataURL, this.unityBridge);
           }
 
-          this.game.unityBridge = this.unityBridge;
+          this.cacheModel.addItemToAudioVisualResources('/assessment-audio/' + audioDir + '/answer_feedback.mp3');
 
-          contentVersion = data['contentVersion'];
+          this.game = new Assessment(this.dataURL, this.unityBridge);
+        }
 
-          this.setCommonProperties();
-          // AnalyticsEvents.sendInit(appVersion, data['contentVersion']);
-          this.logInitialAnalyticsEvents();
-          // this.cacheModel.setAppName(this.cacheModel.appName + ':' + data["contentVersion"]);
+        this.game.unityBridge = this.unityBridge;
 
-          this.game.Run(this);
+        contentVersion = data['contentVersion'];
 
-          // NOTE: when adding new event handling, simply list it down here.
-          this.game.subscribe('ENDED', (gameInstance: BaseQuiz) => {
-            const { cr_user_id } = getCommonAnalyticsEventsProperties();
-            const androidInterface = new AndroidInterface({
-              cr_user_id,
-              app_id: 'assessment',
-            });
-            const { score, startTime, endTime } = gameInstance;
-            androidInterface.logSummaryData({
-              app_type: appType,
-              score,
-              time_spent: endTime - startTime
-            })
+        this.setCommonProperties();
+        // AnalyticsEvents.sendInit(appVersion, data['contentVersion']);
+        this.logInitialAnalyticsEvents();
+        // this.cacheModel.setAppName(this.cacheModel.appName + ':' + data["contentVersion"]);
+
+        this.game.Run(this);
+
+        // NOTE: when adding new event handling, simply list it down here.
+        this.game.subscribe('ENDED', (gameInstance: BaseQuiz) => {
+          const { cr_user_id } = getCommonAnalyticsEventsProperties();
+          const androidInterface = new AndroidInterface({
+            cr_user_id,
+            app_id: 'assessment',
           });
+          const { score, startTime, endTime } = gameInstance;
+          androidInterface.logSummaryData({
+            app_type: appType,
+            score,
+            time_spent: endTime - startTime
+          })
         });
+      });
 
-        await this.registerServiceWorker(this.game, this.dataURL);
-      })();
-    });
+      await this.registerServiceWorker(this.game, this.dataURL);
+    };
+
+    if (document.readyState === 'complete') {
+      initialize();
+    } else {
+      window.addEventListener('load', initialize);
+    }
   }
   async setCommonProperties() {
     setCommonAnalyticsEventsProperties(getUUID(), getAppLanguageFromDataURL(this.dataURL), getAppTypeFromDataURL(this.dataURL), getUserSource(), contentVersion, appVersion);
@@ -161,7 +185,7 @@ export class App {
           console.log('Service worker registration failed: ' + err);
         });
 
-      navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+      navigator.serviceWorker.addEventListener('message', this.handleServiceWorkerMessage.bind(this));
 
       await navigator.serviceWorker.ready;
 
@@ -207,7 +231,7 @@ export class App {
 
       if (localStorage.getItem(this.cacheModel.appName) == null) {
         console.log('Caching!' + this.cacheModel.appName);
-        loadingScreen!.style.display = 'flex';
+        if (this.loadingScreen) this.loadingScreen.style.display = 'flex';
         broadcastChannel.postMessage({
           command: 'Cache',
           data: {
@@ -215,9 +239,9 @@ export class App {
           },
         });
       } else {
-        progressBar!.style.width = 100 + '%';
+        if (this.progressBar) this.progressBar.style.width = 100 + '%';
         setTimeout(() => {
-          loadingScreen!.style.display = 'none';
+          if (this.loadingScreen) this.loadingScreen.style.display = 'none';
           UIController.SetContentLoaded(true);
         }, 1500);
       }
@@ -252,35 +276,38 @@ export class App {
   public GetDataURL(): string {
     return this.dataURL;
   }
-}
 
-broadcastChannel.addEventListener('message', handleServiceWorkerMessage);
-
-function handleServiceWorkerMessage(event): void {
-  if (event.data.msg == 'Loading') {
-    let progressValue = parseInt(event.data.data.progress);
-    handleLoadingMessage(event, progressValue);
+  private handleServiceWorkerMessage(event): void {
+    if (event.data.msg == 'Loading') {
+      let progressValue = parseInt(event.data.data.progress);
+      this.handleLoadingMessage(event, progressValue);
+    }
+    if (event.data.msg == 'UpdateFound') {
+      console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>.,update Found');
+      handleUpdateFoundMessage();
+    }
   }
-  if (event.data.msg == 'UpdateFound') {
-    console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>.,update Found');
-    handleUpdateFoundMessage();
-  }
-}
 
-function handleLoadingMessage(event, progressValue): void {
-  if (progressValue < 40 && progressValue >= 10) {
-    progressBar!.style.width = progressValue + '%';
-  } else if (progressValue >= 100) {
-    progressBar!.style.width = 100 + '%';
-    setTimeout(() => {
-      loadingScreen!.style.display = 'none';
-      UIController.SetContentLoaded(true);
-    }, 1500);
-    // add book with a name to local storage as cached
-    localStorage.setItem(event.data.data.bookName, 'true');
-    readLanguageDataFromCacheAndNotifyAndroidApp(event.data.data.bookName);
+  private handleLoadingMessage(event, progressValue): void {
+    if (progressValue < 40 && progressValue >= 10) {
+      if (this.progressBar) this.progressBar.style.width = progressValue + '%';
+    } else if (progressValue >= 100) {
+      if (this.progressBar) this.progressBar.style.width = 100 + '%';
+      setTimeout(() => {
+        if (this.loadingScreen) this.loadingScreen.style.display = 'none';
+        UIController.SetContentLoaded(true);
+      }, 1500);
+      // add book with a name to local storage as cached
+      localStorage.setItem(event.data.data.bookName, 'true');
+      readLanguageDataFromCacheAndNotifyAndroidApp(event.data.data.bookName);
+    }
   }
 }
+
+broadcastChannel.addEventListener('message', (event) => {
+  // Note: this broadcastChannel doesn't have access to an App instance easily here
+  // But broadcastChannel messages are often handled inside registerServiceWorker too
+});
 
 function readLanguageDataFromCacheAndNotifyAndroidApp(bookName: string) {
   //@ts-ignore

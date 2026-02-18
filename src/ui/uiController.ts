@@ -80,28 +80,37 @@ export class UIController {
 
   public externalBucketControlsGenerationHandler: (container: HTMLElement, clickCallback: () => void) => void;
 
+  private rootElement: Document | ShadowRoot | HTMLElement = document;
+
+  private getElementById(id: string): HTMLElement | null {
+    if (this.rootElement instanceof Document) {
+      return this.rootElement.getElementById(id);
+    }
+    return (this.rootElement as HTMLElement).querySelector(`#${id}`);
+  }
+
   private init(): void {
     // Initialize required containers
-    this.landingContainer = document.getElementById(this.landingContainerId);
-    this.gameContainer = document.getElementById(this.gameContainerId);
-    this.endContainer = document.getElementById(this.endContainerId);
-    this.starContainer = document.getElementById(this.starContainerId);
-    this.chestContainer = document.getElementById(this.chestContainerId);
-    this.questionsContainer = document.getElementById(this.questionsContainerId);
-    this.feedbackContainer = document.getElementById(this.feedbackContainerId);
-    this.answersContainer = document.getElementById(this.answersContainerId);
+    this.landingContainer = this.getElementById(this.landingContainerId);
+    this.gameContainer = this.getElementById(this.gameContainerId);
+    this.endContainer = this.getElementById(this.endContainerId);
+    this.starContainer = this.getElementById(this.starContainerId);
+    this.chestContainer = this.getElementById(this.chestContainerId);
+    this.questionsContainer = this.getElementById(this.questionsContainerId);
+    this.feedbackContainer = this.getElementById(this.feedbackContainerId);
+    this.answersContainer = this.getElementById(this.answersContainerId);
 
     // Initialize required buttons
-    this.answerButton1 = document.getElementById(this.answerButton1Id);
-    this.answerButton2 = document.getElementById(this.answerButton2Id);
-    this.answerButton3 = document.getElementById(this.answerButton3Id);
-    this.answerButton4 = document.getElementById(this.answerButton4Id);
-    this.answerButton5 = document.getElementById(this.answerButton5Id);
-    this.answerButton6 = document.getElementById(this.answerButton6Id);
+    this.answerButton1 = this.getElementById(this.answerButton1Id);
+    this.answerButton2 = this.getElementById(this.answerButton2Id);
+    this.answerButton3 = this.getElementById(this.answerButton3Id);
+    this.answerButton4 = this.getElementById(this.answerButton4Id);
+    this.answerButton5 = this.getElementById(this.answerButton5Id);
+    this.answerButton6 = this.getElementById(this.answerButton6Id);
 
-    this.playButton = document.getElementById(this.playButtonId);
+    this.playButton = this.getElementById(this.playButtonId);
 
-    this.chestImg = document.getElementById(this.chestImgId);
+    this.chestImg = this.getElementById(this.chestImgId);
 
     this.initializeStars();
 
@@ -354,7 +363,7 @@ export class UIController {
     } else {
       UIController.getInstance().playButton.innerHTML =
         "<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='/img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>";
-      var nextQuestionButton = document.getElementById('nextqButton');
+      var nextQuestionButton = UIController.getInstance().getElementById('nextqButton');
       nextQuestionButton.addEventListener('click', function () {
         UIController.ShowQuestion();
         //playquestionaudio
@@ -397,7 +406,7 @@ export class UIController {
       UIController.getInstance().playButton.innerHTML =
         "<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='/img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>";
 
-      var nextQuestionButton = document.getElementById('nextqButton');
+      var nextQuestionButton = UIController.getInstance().getElementById('nextqButton');
       nextQuestionButton.addEventListener('click', function () {
         console.log('next question button pressed');
         console.log(newQuestion.promptAudio);
@@ -435,7 +444,7 @@ export class UIController {
   }
 
   public static AddStar(): void {
-    var starToShow = document.getElementById(
+    var starToShow = UIController.getInstance().getElementById(
       'star' + UIController.getInstance().stars[UIController.getInstance().qAnsNum]
     ) as HTMLImageElement;
     starToShow.src = '../animation/Star.gif';
@@ -496,7 +505,7 @@ export class UIController {
   }
 
   public static ChangeStarImageAfterAnimation(): void {
-    var starToShow = document.getElementById(
+    var starToShow = UIController.getInstance().getElementById(
       'star' + UIController.getInstance().stars[UIController.getInstance().qAnsNum - 1]
     ) as HTMLImageElement;
     starToShow.src = '../img/star_after_animation.gif';
@@ -515,7 +524,7 @@ export class UIController {
   }
 
   public static ProgressChest() {
-    const chestImage = document.getElementById('chestImage') as HTMLImageElement;
+    const chestImage = UIController.getInstance().getElementById('chestImage') as HTMLImageElement;
     let currentImgSrc = chestImage.src;
     console.log('Chest Progression-->', chestImage);
     console.log('Chest Progression-->', chestImage.src);
@@ -544,12 +553,34 @@ export class UIController {
     UIController.getInstance().externalBucketControlsGenerationHandler = handler;
   }
 
-  public static getInstance(): UIController {
+  public static getInstance(root?: Document | ShadowRoot | HTMLElement): UIController {
     if (UIController.instance === null) {
       UIController.instance = new UIController();
+      if (root) UIController.instance.rootElement = root;
       UIController.instance.init();
+      return UIController.instance;
+    }
+
+    // If an existing instance exists but a different root is provided (e.g., shadow root
+    // when the assessment is mounted), reinitialize the controller to bind to the new root.
+    if (root && UIController.instance.rootElement !== root) {
+      UIController.instance.rootElement = root;
+      try {
+        UIController.instance.init();
+      } catch (err) {
+        // If init fails, log a warning and allow the caller to proceed; init will be
+        // attempted again later when spinUp or the component ensures DOM readiness.
+        // This avoids throwing in production while still reporting the problem.
+        // eslint-disable-next-line no-console
+        console.warn('UIController re-init failed:', err);
+      }
     }
 
     return UIController.instance;
+  }
+
+  // Public helper to find an element within the controller's root
+  public FindElement(id: string): HTMLElement | null {
+    return this.getElementById(id);
   }
 }
