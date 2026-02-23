@@ -50,7 +50,7 @@ export class Survey extends BaseQuiz {
     this.buildQuestionList().then((result) => {
       this.questionsData = result;
       AudioController.PrepareAudioAndImagesForSurvey(this.questionsData, this.app.GetDataURL());
-      this.unityBridge.SendLoaded();
+      this.app.notifyLoaded();
     });
   }
 

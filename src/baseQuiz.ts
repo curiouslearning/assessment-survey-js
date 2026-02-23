@@ -161,7 +161,7 @@ export abstract class BaseQuiz extends PubSub {
   public onEnd(): void {
     // sendFinished();
     UIController.ShowEnd(); // TODO: non-game logic code. Move to App.ts
-    this.app.unityBridge.SendClose(); // TODO: non-game logic code. Move to App.ts
+    this.app.notifyClose();
     this.endTime = Date.now();
     this.publish('ENDED', this);
   }

@@ -67,7 +67,7 @@ export class Assessment extends BaseQuiz {
     this.app = applink;
     this.buildBuckets(this.bucketGenMode).then((result) => {
       console.log(this.currentBucket);
-      this.unityBridge.SendLoaded();
+      this.app.notifyLoaded();
     });
   }
 
@@ -709,15 +709,7 @@ export class Assessment extends BaseQuiz {
       integerRequiredScore = Number(requiredScore);
     }
     this.analyticsIntegration.sendDataToThirdParty(score, this.commonProperties.cr_user_id, integerRequiredScore, nextAssessment, this.commonProperties.app);
-    if (window.parent) {
-      window.parent.postMessage(
-        {
-          type: 'assessment_completed',
-          score: score,
-        },
-        'https://synapse.curiouscontent.org/'
-      );
-    }
+    this.app.notifyAssessmentCompleted(score);
     
     this.analyticsIntegration.track(AnalyticsEventsType.COMPLETED, {
       type: 'completed',

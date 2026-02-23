@@ -4,7 +4,7 @@
 import { qData, answerData } from '../components/questionData';
 import { logEvent } from 'firebase/analytics';
 import { bucket } from '../assessment/bucketData';
-import { getNextAssessment, getRequiredScore } from '../utils/urlUtils';
+import { getNextAssessment, getRequiredScore, getEndpoint, getOrganization } from '../utils/urlUtils';
 
 // Create a singleton class for the analytics events
 export class AnalyticsEvents {
@@ -335,10 +335,8 @@ export class AnalyticsEvents {
     // Send data to the third party
     console.log('Attempting to send score to a third party! Score: ', score);
 
-    // Read the URL from utm parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const targetPartyURL = urlParams.get('endpoint');
-    const organization = urlParams.get('organization');
+    const targetPartyURL = getEndpoint();
+    const organization = getOrganization();
     const xhr = new XMLHttpRequest();
 
     if (!targetPartyURL) {

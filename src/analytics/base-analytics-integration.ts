@@ -109,7 +109,7 @@ export class BaseAnalyticsIntegration {
      *
      * @returns {any | undefined} The Firebase app instance, or undefined if not initialized.
      */
-    get firebaseApp() {
+    get firebaseApp(): any {
         return this.firebaseStrategy?.firebaseApp;
     }
 

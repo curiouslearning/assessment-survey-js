@@ -2,6 +2,39 @@
  * Contains utils for working with URL strings.
  */
 
+export type RuntimeConfigOverrides = {
+  data?: string;
+  cr_user_id?: string;
+  userSource?: string;
+  requiredScore?: string;
+  nextAssessment?: string;
+  endpoint?: string;
+  organization?: string;
+};
+
+let runtimeConfigOverrides: RuntimeConfigOverrides = {};
+
+export function configureRuntimeConfig(overrides: RuntimeConfigOverrides = {}): void {
+  runtimeConfigOverrides = {
+    ...runtimeConfigOverrides,
+    ...overrides,
+  };
+}
+
+export function resetRuntimeConfig(): void {
+  runtimeConfigOverrides = {};
+}
+
+function getConfigValue(key: keyof RuntimeConfigOverrides): string | null {
+  const overrideValue = runtimeConfigOverrides[key];
+  if (overrideValue !== undefined && overrideValue !== null && overrideValue !== '') {
+    return overrideValue;
+  }
+
+  const pathParams = getPathName();
+  return pathParams.get(key);
+}
+
 export function getAppType(): string {
   const pathParams = getPathName();
   const appType = pathParams.get('appType');
@@ -9,8 +42,7 @@ export function getAppType(): string {
 }
 
 export function getUUID(): string {
-  const pathParams = getPathName();
-  var nuuid = pathParams.get('cr_user_id');
+  var nuuid = getConfigValue('cr_user_id');
   if (nuuid == undefined) {
     console.log('no uuid provided');
     nuuid = 'WebUserNoID';
@@ -19,8 +51,7 @@ export function getUUID(): string {
 }
 
 export function getUserSource(): string {
-  const pathParams = getPathName();
-  var nuuid = pathParams.get('userSource');
+  var nuuid = getConfigValue('userSource');
   if (nuuid == undefined) {
     console.log('no user source provided');
     nuuid = 'WebUserNoSource';
@@ -29,8 +60,7 @@ export function getUserSource(): string {
 }
 
 export function getDataFile(): string {
-  const pathParams = getPathName();
-  var data = pathParams.get('data');
+  var data = getConfigValue('data');
   if (data == undefined) {
     console.log('default data file');
     data = 'zulu-lettersounds';
@@ -62,12 +92,18 @@ export function getAppTypeFromDataURL(appType: string): string {
   return 'NotAvailable';
 }
 export function getRequiredScore() {
-  let pathParams = getPathName();
-  return pathParams.get("requiredScore");
+  return getConfigValue('requiredScore');
 }
 export function getNextAssessment() {
-  let pathParams = getPathName();
-  return pathParams.get("nextAssessment");
+  return getConfigValue('nextAssessment');
+}
+
+export function getEndpoint() {
+  return getConfigValue('endpoint');
+}
+
+export function getOrganization() {
+  return getConfigValue('organization');
 }
 
 function getPathName() {

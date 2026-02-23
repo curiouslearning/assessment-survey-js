@@ -1,5 +1,7 @@
 /** Json Utils */
 
+import { resolveAssetPath } from './assetUtils';
+
 // import { setFeedbackText } from './uiController';
 
 export async function fetchAppData(url: string) {
@@ -34,7 +36,7 @@ export async function fetchAssessmentBuckets(url: string) {
 }
 
 export function getDataURL(url: string) {
-  return '/data/' + url + '.json';
+  return resolveAssetPath('data/' + url + '.json');
 }
 
 export function getCaseIndependentLangList() {

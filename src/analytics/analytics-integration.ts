@@ -1,4 +1,5 @@
 import { getCommonAnalyticsEventsProperties } from "../utils/AnalyticsUtils";
+import { getEndpoint, getOrganization } from "../utils/urlUtils";
 import { Answered, BucketCompleted, CommonEventProperties, Completed, Initialized, Opened, UserLocation } from "./analytics-event-interface";
 import { BaseAnalyticsIntegration } from "./base-analytics-integration";
 
@@ -63,10 +64,8 @@ export class AnalyticsIntegration extends BaseAnalyticsIntegration {
         // Send data to the third party
         console.log('Attempting to send score to a third party! Score: ', score);
 
-        // Read the URL from utm parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const targetPartyURL = urlParams.get('endpoint');
-        const organization = urlParams.get('organization');
+        const targetPartyURL = getEndpoint();
+        const organization = getOrganization();
         const xhr = new XMLHttpRequest();
 
         if (!targetPartyURL) {
