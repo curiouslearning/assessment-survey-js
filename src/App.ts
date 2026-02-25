@@ -127,7 +127,7 @@ export class App {
               time_spent: endTime - startTime
             })
           });
-        });
+        }); 
 
         await this.registerServiceWorker(this.game, this.dataURL);
       })();
