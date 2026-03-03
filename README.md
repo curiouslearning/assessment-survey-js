@@ -37,6 +37,60 @@ This repository now supports two build targets:
 
 The package build emits ESM JS + type declarations into `lib/`.
 
+## Working locally with this package
+
+Use this workflow when developing `@curiouslearning/assessment-survey` and testing changes in a separate host app without publishing to npm.
+
+### Option A: Use `npm link` (fast iteration)
+
+In this package repo (`assessment-survey-js`):
+
+```bash
+npm run build:package
+npm link
+```
+
+In your host app repo:
+
+```bash
+npm link @curiouslearning/assessment-survey
+```
+
+After making changes here, rebuild to refresh `lib/`:
+
+```bash
+npm run build:package
+```
+
+When done, unlink in the host app:
+
+```bash
+npm unlink @curiouslearning/assessment-survey
+```
+
+And optionally remove the global link from this package repo:
+
+```bash
+npm unlink
+```
+
+### Option B: Use local tarball (closest to publish)
+
+In this package repo:
+
+```bash
+npm run build:package
+npm pack
+```
+
+Then install the generated `.tgz` in your host app:
+
+```bash
+npm install ../assessment-survey-js/curiouslearning-assessment-survey-0.0.1.tgz
+```
+
+Use this option to validate exactly what files are included in the distributed package.
+
 ## Web component usage (host integration)
 
 The package exports a custom element registration entry.
@@ -100,4 +154,66 @@ Recommended host behavior:
 - On language change, invalidate old key and warm new key.
 - Track readiness marker by key and content version:
 	- `assessment:<selectedKey>:<contentVersion>:ready`
+
+## Manual host wrapper mode (instantiate `App` directly)
+
+You can skip the built-in `<assessment-survey-player>` and instantiate `App` directly from your own host web component.
+
+### Host TypeScript usage
+
+```ts
+import { createApp, type AppStartupConfig } from '@curiouslearning/assessment-survey';
+
+const config: AppStartupConfig = {
+	dataURL: 'zulu-lettersounds',
+	uiRoot: hostElement, // your host component root element
+	assetBaseUrl: '/assets/assessment-survey',
+	waitForWindowLoad: false,
+	skipLoadingScreen: true,
+	enableServiceWorker: false,
+	enableUnityBridge: false,
+	enableAndroidSummary: false,
+	enableParentPostMessage: false
+};
+
+const app = createApp(config);
+app.spinUp(config);
+```
+
+### Required DOM IDs in host template
+
+If you use manual mode, your host template must include the expected IDs used by UI logic:
+
+- `landWrap`, `gameWrap`, `endWrap`
+- `starWrapper`, `qWrap`, `feedbackWrap`, `aWrap`
+- `answerButton1` ... `answerButton6`
+- `pbutton`, `chestImage`
+- `loadingScreen`, `progressBar`
+- Dev mode controls:
+	- `devModeModalToggleButtonContainer`
+	- `devModeModalToggleButton`
+	- `devModeSettingsModal`
+	- `devModeBucketGenSelect`
+	- `devModeCorrectLabelShownCheckbox`
+	- `devModeBucketInfoShownCheckbox`
+	- `devModeBucketInfoContainer`
+	- `devModeBucketControlsShownCheckbox`
+	- `devModeAnimationSpeedMultiplierRange`
+	- `devModeAnimationSpeedMultiplierValue`
+
+### What is overrideable from host today
+
+Overrideable via `AppStartupConfig`:
+
+- Data/config: `dataURL`, `userId`, `userSource`, `requiredScore`, `nextAssessment`, `endpoint`, `organization`
+- Asset/runtime: `assetBaseUrl`, `waitForWindowLoad`, `skipLoadingScreen`
+- Integrations: `enableServiceWorker`, `enableUnityBridge`, `enableAndroidSummary`, `enableParentPostMessage`
+- Host callbacks via `hostIntegrationAdapters`:
+	- `onLoaded`, `onClose`, `onSummaryData`, `onAssessmentCompleted`
+
+Not fully overrideable yet:
+
+- Multiple concurrent player instances (current UI controller is singleton-oriented)
+- Deep UI structure changes without keeping required IDs
+- Full replacement of internal game flow without forking game classes
 
