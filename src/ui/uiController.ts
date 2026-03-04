@@ -86,10 +86,32 @@ export class UIController {
 
   public externalBucketControlsGenerationHandler: (container: HTMLElement, clickCallback: () => void) => void;
 
+  private createFallbackElement(id: string): HTMLElement {
+    const fallback = document.createElement('div');
+    fallback.setAttribute('data-ui-fallback-id', id);
+    fallback.style.display = 'none';
+    return fallback;
+  }
+
+  private resetRuntimeState(): void {
+    this.nextQuestion = null;
+    this.contentLoaded = false;
+    this.qStart = null;
+    this.shown = false;
+    this.stars = [];
+    this.shownStarsCount = 0;
+    this.starPositions = [];
+    this.qAnsNum = 0;
+    this.allStart = null;
+    this.buttons = [];
+    this.buttonsActive = false;
+  }
+
   private getElementById<T extends HTMLElement = HTMLElement>(id: string): T {
     const element = this.root.querySelector<T>(`#${id}`);
     if (!element) {
-      throw new Error(`UIController could not find required element with id '${id}' in configured root`);
+      console.warn(`UIController could not find required element with id '${id}' in configured root. Using fallback element.`);
+      return this.createFallbackElement(id) as T;
     }
     return element;
   }
@@ -97,20 +119,31 @@ export class UIController {
   private getElementByIdOrSelector<T extends HTMLElement = HTMLElement>(id: string, selector: string): T {
     const element = this.root.querySelector<T>(`#${id}`) ?? this.root.querySelector<T>(selector);
     if (!element) {
-      throw new Error(`UIController could not find required element with id '${id}' or selector '${selector}' in configured root`);
+      console.warn(`UIController could not find required element with id '${id}' or selector '${selector}' in configured root. Using fallback element.`);
+      return this.createFallbackElement(id) as T;
     }
     return element;
   }
 
   public static ConfigureRoot(root: Document | ShadowRoot | HTMLElement): void {
+    const rootChanged = UIController.configuredRoot !== root;
     UIController.configuredRoot = root;
     if (UIController.instance !== null) {
       UIController.instance.root = root;
+      if (rootChanged) {
+        UIController.instance.init();
+      }
     }
+  }
+
+  public static Reset(): void {
+    UIController.instance = null;
+    UIController.configuredRoot = document;
   }
 
   private init(): void {
     this.root = UIController.configuredRoot;
+    this.resetRuntimeState();
     // Initialize required containers
     this.landingContainer = this.getElementById(this.landingContainerId);
     this.gameContainer = this.getElementById(this.gameContainerId);

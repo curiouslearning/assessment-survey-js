@@ -109,6 +109,7 @@ import '@curiouslearning/assessment-survey/register';
 	user-id="123"
 	user-source="host-app"
 	asset-base-url="/assets/assessment-survey"
+	host-theme="ftm-dim"
 	skip-loading-screen="true"
 	enable-service-worker="false"
 	enable-unity-bridge="false"
@@ -118,6 +119,8 @@ import '@curiouslearning/assessment-survey/register';
 ```
 
 `skip-loading-screen` is recommended in host integration mode when the host app preloads and caches the selected language pack before mounting the component.
+
+`host-theme="ftm-dim"` is an optional embed-only visual variant that replaces the default gradient with a dim transparent background so host content can remain visible behind the assessment UI.
 
 ### Listen to events
 

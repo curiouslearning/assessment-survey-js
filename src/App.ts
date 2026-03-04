@@ -105,6 +105,10 @@ export class App {
     const skipLoadingScreen = config.skipLoadingScreen ?? false;
     this.enableServiceWorker = config.enableServiceWorker ?? this.enableServiceWorker;
 
+    if (skipLoadingScreen) {
+      UIController.SetLoadingVisible(false);
+    }
+
     await AnalyticsIntegration.initializeAnalytics();
     this.analyticsIntegration = AnalyticsIntegration.getInstance();
     const initialize = async () => {

@@ -2,6 +2,21 @@ import { App, AppStartupConfig, createApp } from './App';
 import { UIController } from './ui/uiController';
 
 const DEFAULT_TAG_NAME = 'assessment-survey-player';
+type HostTheme = 'default' | 'ftm-dim';
+
+function normalizeHostTheme(theme: string | null): HostTheme {
+  const normalizedTheme = theme?.trim().toLowerCase() ?? '';
+
+  if (normalizedTheme === 'ftm-dim') {
+    return 'ftm-dim';
+  }
+
+  return 'default';
+}
+
+function getBodyWrapperClass(hostTheme: HostTheme): string {
+  return hostTheme === 'ftm-dim' ? 'bodyWrapper as-host-theme-ftm-dim' : 'bodyWrapper';
+}
 
 function normalizeBaseUrl(baseUrl: string): string {
   if (!baseUrl) {
@@ -25,10 +40,10 @@ function toBooleanAttribute(value: string | null, defaultValue: boolean): boolea
   return value !== 'false' && value !== '0';
 }
 
-function buildTemplate(assetBaseUrl: string): string {
+function buildTemplate(assetBaseUrl: string, hostTheme: HostTheme): string {
   return `
     <link rel="stylesheet" href="${withBase(assetBaseUrl, 'css/style.css')}" />
-    <div class="bodyWrapper">
+    <div class="${getBodyWrapperClass(hostTheme)}">
       <div class="landingPageWrapper" id="landWrap">
         <img class="landingMonster" src="${withBase(assetBaseUrl, 'img/monster.png')}" />
         <br />
@@ -137,7 +152,8 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
     }
 
     const assetBaseUrl = normalizeBaseUrl(this.getAttribute('asset-base-url') ?? '');
-    this.innerHTML = buildTemplate(assetBaseUrl);
+    const hostTheme = normalizeHostTheme(this.getAttribute('host-theme'));
+    this.innerHTML = buildTemplate(assetBaseUrl, hostTheme);
 
     UIController.ConfigureRoot(this);
 
@@ -168,6 +184,12 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
     this.appInstance = createApp(startupConfig);
     this.appInstance.spinUp(startupConfig);
     this.isInitialized = true;
+  }
+
+  disconnectedCallback(): void {
+    this.appInstance = null;
+    this.isInitialized = false;
+    UIController.Reset();
   }
 }
 

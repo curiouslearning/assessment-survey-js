@@ -1,5 +1,5 @@
-body,
-html {
+html.assessment-survey-standalone,
+body.assessment-survey-standalone {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -17,7 +17,7 @@ html {
   src: url(BalooBhai2-VariableFont_wght.ttf);
 }
 
-body {
+body.assessment-survey-standalone {
   background-color: #3d85d1;
   text-align: center;
   height: 100%;
@@ -122,11 +122,15 @@ body {
 }
 
 .bodyWrapper {
+  box-sizing: border-box;
   margin: 0 auto;
+  font-family: BalooBhai2, Kalam, sans-serif;
+  text-align: center;
   width: 100%;
   max-width: 540px;
   min-height: 100vh;
   height: 100%;
+  overflow: hidden;
   background: linear-gradient(
     180deg,
     rgba(80, 90, 220, 1) 0%,
@@ -135,6 +139,10 @@ body {
   background-size: 100% 100%;
   bottom: 0;
   position: relative;
+}
+
+.bodyWrapper.as-host-theme-ftm-dim {
+  background: rgba(0, 0, 0, 0.45);
 }
 
 .questionContainer img {
