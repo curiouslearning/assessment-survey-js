@@ -110,15 +110,15 @@ import '@curiouslearning/assessment-survey/register';
 	user-source="host-app"
 	asset-base-url="/assets/assessment-survey"
 	host-theme="ftm-dim"
-	skip-loading-screen="true"
-	enable-service-worker="false"
-	enable-unity-bridge="false"
-	enable-android-summary="false"
-	enable-parent-post-message="false"
+	embed-mode="true"
 ></assessment-survey-player>
 ```
 
-`skip-loading-screen` is recommended in host integration mode when the host app preloads and caches the selected language pack before mounting the component.
+`embed-mode="true"` applies host-friendly defaults (`skip-loading-screen=true`, `skip-start-screen=true`, `enable-service-worker=false`, `enable-unity-bridge=false`, `enable-android-summary=false`, `enable-parent-post-message=false`).
+
+You can still set any of those attributes explicitly when a host needs a different value. Explicit attribute values always override the `embed-mode` preset.
+
+`skip-loading-screen` remains recommended in host integration mode when the host app preloads and caches the selected language pack before mounting the component.
 
 `host-theme="ftm-dim"` is an optional embed-only visual variant that replaces the default gradient with a dim transparent background so host content can remain visible behind the assessment UI.
 
@@ -173,6 +173,7 @@ const config: AppStartupConfig = {
 	assetBaseUrl: '/assets/assessment-survey',
 	waitForWindowLoad: false,
 	skipLoadingScreen: true,
+	skipStartScreen: true,
 	enableServiceWorker: false,
 	enableUnityBridge: false,
 	enableAndroidSummary: false,
@@ -209,7 +210,7 @@ If you use manual mode, your host template must include the expected IDs used by
 Overrideable via `AppStartupConfig`:
 
 - Data/config: `dataURL`, `userId`, `userSource`, `requiredScore`, `nextAssessment`, `endpoint`, `organization`
-- Asset/runtime: `assetBaseUrl`, `waitForWindowLoad`, `skipLoadingScreen`
+- Asset/runtime: `assetBaseUrl`, `waitForWindowLoad`, `skipLoadingScreen`, `skipStartScreen`
 - Integrations: `enableServiceWorker`, `enableUnityBridge`, `enableAndroidSummary`, `enableParentPostMessage`
 - Host callbacks via `hostIntegrationAdapters`:
 	- `onLoaded`, `onClose`, `onSummaryData`, `onAssessmentCompleted`

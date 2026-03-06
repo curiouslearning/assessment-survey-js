@@ -4,6 +4,33 @@ import { UIController } from './ui/uiController';
 const DEFAULT_TAG_NAME = 'assessment-survey-player';
 type HostTheme = 'default' | 'ftm-dim';
 
+type StartupModeDefaults = {
+  skipLoadingScreen: boolean;
+  skipStartScreen: boolean;
+  enableServiceWorker: boolean;
+  enableUnityBridge: boolean;
+  enableAndroidSummary: boolean;
+  enableParentPostMessage: boolean;
+};
+
+const EMBED_MODE_DEFAULTS: StartupModeDefaults = {
+  skipLoadingScreen: true,
+  skipStartScreen: true,
+  enableServiceWorker: false,
+  enableUnityBridge: false,
+  enableAndroidSummary: false,
+  enableParentPostMessage: false,
+};
+
+const STANDARD_MODE_DEFAULTS: StartupModeDefaults = {
+  skipLoadingScreen: false,
+  skipStartScreen: false,
+  enableServiceWorker: true,
+  enableUnityBridge: true,
+  enableAndroidSummary: true,
+  enableParentPostMessage: true,
+};
+
 function normalizeHostTheme(theme: string | null): HostTheme {
   const normalizedTheme = theme?.trim().toLowerCase() ?? '';
 
@@ -153,6 +180,8 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
 
     const assetBaseUrl = normalizeBaseUrl(this.getAttribute('asset-base-url') ?? '');
     const hostTheme = normalizeHostTheme(this.getAttribute('host-theme'));
+    const embedMode = toBooleanAttribute(this.getAttribute('embed-mode'), true);
+    const modeDefaults = embedMode ? EMBED_MODE_DEFAULTS : STANDARD_MODE_DEFAULTS;
     this.innerHTML = buildTemplate(assetBaseUrl, hostTheme);
 
     UIController.ConfigureRoot(this);
@@ -166,11 +195,12 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
       endpoint: this.getAttribute('endpoint') ?? undefined,
       organization: this.getAttribute('organization') ?? undefined,
       assetBaseUrl,
-      skipLoadingScreen: toBooleanAttribute(this.getAttribute('skip-loading-screen'), true),
-      enableServiceWorker: toBooleanAttribute(this.getAttribute('enable-service-worker'), false),
-      enableUnityBridge: toBooleanAttribute(this.getAttribute('enable-unity-bridge'), false),
-      enableAndroidSummary: toBooleanAttribute(this.getAttribute('enable-android-summary'), false),
-      enableParentPostMessage: toBooleanAttribute(this.getAttribute('enable-parent-post-message'), false),
+      skipLoadingScreen: toBooleanAttribute(this.getAttribute('skip-loading-screen'), modeDefaults.skipLoadingScreen),
+      skipStartScreen: toBooleanAttribute(this.getAttribute('skip-start-screen'), modeDefaults.skipStartScreen),
+      enableServiceWorker: toBooleanAttribute(this.getAttribute('enable-service-worker'), modeDefaults.enableServiceWorker),
+      enableUnityBridge: toBooleanAttribute(this.getAttribute('enable-unity-bridge'), modeDefaults.enableUnityBridge),
+      enableAndroidSummary: toBooleanAttribute(this.getAttribute('enable-android-summary'), modeDefaults.enableAndroidSummary),
+      enableParentPostMessage: toBooleanAttribute(this.getAttribute('enable-parent-post-message'), modeDefaults.enableParentPostMessage),
       waitForWindowLoad: false,
       uiRoot: this,
       hostIntegrationAdapters: {

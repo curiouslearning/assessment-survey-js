@@ -58,6 +58,8 @@ export class UIController {
   public nextQuestion = null;
 
   public contentLoaded: boolean = false;
+  private gameReady: boolean = true;
+  private skipStartScreen: boolean = false;
 
   public qStart;
   public shown = false;
@@ -96,6 +98,8 @@ export class UIController {
   private resetRuntimeState(): void {
     this.nextQuestion = null;
     this.contentLoaded = false;
+    this.gameReady = true;
+    this.skipStartScreen = false;
     this.qStart = null;
     this.shown = false;
     this.stars = [];
@@ -266,10 +270,20 @@ export class UIController {
     this.buttons.push(this.answerButton6);
 
     this.landingContainer.addEventListener('click', () => {
-      if (localStorage.getItem(getDataFile()) && UIController.getInstance().contentLoaded) {
+      if (this.canShowGameFromLanding()) {
         this.showGame();
       }
     });
+  }
+
+  private canShowGameFromLanding(): boolean {
+    return this.contentLoaded && this.gameReady && localStorage.getItem(getDataFile()) !== null;
+  }
+
+  private maybeAutoStartGame(): void {
+    if (this.skipStartScreen && this.canShowGameFromLanding()) {
+      this.showGame();
+    }
   }
 
   public showOptions(): void {
@@ -357,11 +371,17 @@ export class UIController {
   }
 
   private showGame(): void {
+    if (this.gameContainer.style.display === 'grid') {
+      return;
+    }
+
     this.landingContainer.style.display = 'none';
     this.gameContainer.style.display = 'grid';
     this.endContainer.style.display = 'none';
     this.allStart = Date.now();
-    this.startPressCallback();
+    if (typeof this.startPressCallback === 'function') {
+      this.startPressCallback();
+    }
   }
 
   public static SetFeedbackVisibile(visible: boolean, isCorrect: boolean) {
@@ -590,7 +610,27 @@ export class UIController {
   }
 
   public static SetContentLoaded(value: boolean): void {
-    UIController.getInstance().contentLoaded = value;
+    const instance = UIController.getInstance();
+    instance.contentLoaded = value;
+
+    if (value) {
+      instance.maybeAutoStartGame();
+    }
+  }
+
+  public static SetSkipStartScreen(value: boolean): void {
+    const instance = UIController.getInstance();
+    instance.skipStartScreen = value;
+    instance.maybeAutoStartGame();
+  }
+
+  public static SetGameReady(value: boolean): void {
+    const instance = UIController.getInstance();
+    instance.gameReady = value;
+
+    if (value) {
+      instance.maybeAutoStartGame();
+    }
   }
 
   public static SetLoadingVisible(visible: boolean): void {

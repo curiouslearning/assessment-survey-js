@@ -31,6 +31,7 @@ export interface AppStartupConfig {
   enableServiceWorker?: boolean;
   waitForWindowLoad?: boolean;
   skipLoadingScreen?: boolean;
+  skipStartScreen?: boolean;
   uiRoot?: Document | ShadowRoot | HTMLElement;
   assetBaseUrl?: string;
   enableUnityBridge?: boolean;
@@ -103,7 +104,11 @@ export class App {
 
     const waitForWindowLoad = config.waitForWindowLoad ?? true;
     const skipLoadingScreen = config.skipLoadingScreen ?? false;
+    const skipStartScreen = config.skipStartScreen ?? false;
     this.enableServiceWorker = config.enableServiceWorker ?? this.enableServiceWorker;
+
+    UIController.SetGameReady(false);
+    UIController.SetSkipStartScreen(skipStartScreen);
 
     if (skipLoadingScreen) {
       UIController.SetLoadingVisible(false);
@@ -359,6 +364,8 @@ export class App {
   }
 
   public notifyLoaded(): void {
+    UIController.SetGameReady(true);
+
     if (this.enableUnityBridge) {
       this.unityBridge.SendLoaded();
     }
