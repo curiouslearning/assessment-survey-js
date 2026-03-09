@@ -118,7 +118,7 @@ export class App {
             // we only log when its assessment, for survey we don't have the score and max score properties.
             if (appType !== 'assessment') return;
 
-            const { cr_user_id } = getCommonAnalyticsEventsProperties();
+            const { cr_user_id, language } = getCommonAnalyticsEventsProperties();
             const androidInterface = new AndroidInterface({
               cr_user_id,
               app_id: appType,
@@ -126,6 +126,7 @@ export class App {
             const { score, startTime, endTime, max_score } = gameInstance;
             androidInterface.logUserSessionsData({
               type: assessmentType || appType,
+              lang: language,
               score,
               max_score,
               time_spent: endTime - startTime
