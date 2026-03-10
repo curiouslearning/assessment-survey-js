@@ -72,9 +72,9 @@ export class App {
           let appType = data['appType'];
           let assessmentType = data['assessmentType'];
 
-          if (appType == 'survey') {
+          if (appType == Survey.TYPE) {
             this.game = new Survey(this.dataURL, this.unityBridge);
-          } else if (appType == 'assessment') {
+          } else if (appType == Assessment.TYPE) {
             // Get and add all the audio assets to the cache model
 
             let buckets = data['buckets'];
@@ -115,17 +115,22 @@ export class App {
 
           // NOTE: when adding new event handling, simply list it down here.
           this.game.subscribe('ENDED', (gameInstance: BaseQuiz) => {
-            const { cr_user_id } = getCommonAnalyticsEventsProperties();
+            // we only log when its assessment, for survey we don't have the score and max score properties.
+            if (appType !== 'assessment') return;
+
+            const { cr_user_id, language } = getCommonAnalyticsEventsProperties();
             const androidInterface = new AndroidInterface({
               cr_user_id,
-              app_id: 'assessment',
+              app_id: appType,
             });
-            const { score, startTime, endTime } = gameInstance;
-            androidInterface.logSummaryData({
-              app_type: appType,
+            const { score, startTime, endTime, max_score } = gameInstance;
+            androidInterface.logUserSessionsData({
+              type: assessmentType || appType,
+              lang: language,
               score,
+              max_score,
               time_spent: endTime - startTime
-            })
+            });
           });
         }); 
 

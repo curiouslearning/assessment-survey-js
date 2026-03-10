@@ -12,7 +12,7 @@ import { TreeNode, sortedArrayToIDsBST } from '../components/tNode';
 import { randFrom, shuffleArray } from '../utils/mathUtils';
 import { AudioController } from '../components/audioController';
 import { AnalyticsEventsType, AnalyticsIntegration } from '../analytics/analytics-integration';
-import { calculateScore, getBasalBucketID, getCeilingBucketID, getCommonAnalyticsEventsProperties } from '../utils/AnalyticsUtils';
+import { calculateScore, getBasalBucketID, getCeilingBucketID, getCommonAnalyticsEventsProperties, getMaxScore } from '../utils/AnalyticsUtils';
 import { getNextAssessment, getRequiredScore } from '../utils/urlUtils';
 
 enum searchStage {
@@ -27,6 +27,8 @@ enum BucketGenMode {
 }
 
 export class Assessment extends BaseQuiz {
+  static readonly TYPE = 'assessment';
+
   public unityBridge;
   public analyticsIntegration: AnalyticsIntegration;
   public currentNode: TreeNode;
@@ -67,6 +69,7 @@ export class Assessment extends BaseQuiz {
     this.app = applink;
     this.buildBuckets(this.bucketGenMode).then((result) => {
       console.log(this.currentBucket);
+      this.max_score = getMaxScore(this.buckets, this.basalBucket);
       this.unityBridge.SendLoaded();
     });
   }
