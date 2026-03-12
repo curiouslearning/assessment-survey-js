@@ -88,7 +88,8 @@ async function cacheTheBookJSONAndImages(data) {
     await Promise.all(
       cachableAssets.map(async (asset) => {
         try {
-          await cache.add(asset.toLowerCase());
+          const request = new Request(asset, { cache: 'reload' });
+          await cache.add(request);
         } catch (error) {
           if (debugCaching) {
             console.log('Error while caching an asset:', asset, error);

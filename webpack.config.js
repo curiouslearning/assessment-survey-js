@@ -53,7 +53,8 @@ module.exports = {
       new InjectManifest({
         swSrc: "./sw-src.js",
         swDest: "sw.js",
-        exclude: [/audio\//, /data\//],
+        maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
+        exclude: [/coverage\//, /\.map$/, /stats\.json$/],
       }),
     ]),
   ],

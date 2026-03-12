@@ -15,7 +15,7 @@ export class AudioController {
   public dataURL: string = '';
   public baseUrl: string = '';
 
-  private correctSoundPath = 'dist/audio/Correct.wav';
+  private correctSoundPath = 'audio/Correct.wav';
 
   private feedbackAudio: any = null;
   private correctAudio: any = null;

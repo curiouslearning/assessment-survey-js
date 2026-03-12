@@ -107,6 +107,16 @@ export class App {
   async registerServiceWorker(game: BaseQuiz, dataURL: string = '') {
     if ((window as any).__ASSESSMENT_MF__) {
       console.log('Skipping SW registration (MF mode)');
+      if (progressBar) {
+        progressBar.style.width = '100%';
+      }
+      localStorage.setItem(this.cacheModel.appName, 'true');
+      setTimeout(() => {
+        if (loadingScreen) {
+          loadingScreen.style.display = 'none';
+        }
+        UIController.SetContentLoaded(true);
+      }, 300);
       return;
     }
     console.log('Registering service worker...');
