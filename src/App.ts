@@ -122,8 +122,8 @@ export class App {
             const androidInterface = new AndroidInterface({
               cr_user_id,
               app_id: appType,
-              debug: true,
-              log: true
+              debug: false,
+              log: false
             });
             const { score, startTime, endTime, max_score } = gameInstance;
             androidInterface.logUserSessionsData({
