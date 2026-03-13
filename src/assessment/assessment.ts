@@ -713,10 +713,11 @@ export class Assessment extends BaseQuiz {
     this.analyticsIntegration.sendDataToThirdParty(score, this.commonProperties.cr_user_id, integerRequiredScore, nextAssessment, this.commonProperties.app);
     this.app.notifyAssessmentCompleted(score);
     
+    const maxScore = buckets.length * 100;
     this.analyticsIntegration.track(AnalyticsEventsType.COMPLETED, {
       type: 'completed',
       score: score,
-      maxScore: buckets.length * 100,
+      maxScore,
       basalBucket: basalBucketID,
       ceilingBucket: ceilingBucketID,
       ...(isSynapseUser && {
@@ -726,5 +727,6 @@ export class Assessment extends BaseQuiz {
     })
 
     this.score = score;
+    this.max_score = maxScore;
   }
 }
