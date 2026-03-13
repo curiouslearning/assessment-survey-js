@@ -122,6 +122,8 @@ export class App {
             const androidInterface = new AndroidInterface({
               cr_user_id,
               app_id: appType,
+              debug: false,
+              log: false
             });
             const { score, startTime, endTime, max_score } = gameInstance;
             androidInterface.logUserSessionsData({
@@ -129,7 +131,8 @@ export class App {
               lang: language,
               score,
               max_score,
-              time_spent: endTime - startTime
+              time_spent: endTime - startTime,
+              event_type: 'activity_completed'
             });
           });
         }); 
