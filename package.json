@@ -27,10 +27,7 @@
   },
   "scripts": {
     "webpack": "webpack && live-server",
-    "build": "webpack",
-    "build:standalone": "webpack",
-    "build:package": "tsc -p tsconfig.package.json",
-    "build:all": "npm run build:standalone && npm run build:package",
+    "build": "webpack && workbox injectManifest",
     "test": "jest",
     "dev": "webpack && npx workbox injectManifest && live-server --no-browser",
     "prepublishOnly": "npm run build:package",
