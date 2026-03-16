@@ -92,6 +92,7 @@ export class App {
     this.unityBridge = this.enableUnityBridge ? new UnityBridge() : App.createNoopUnityBridge();
 
     console.log('Initializing app...');
+    console.log('Initializing app...2');
 
     this.dataURL = config.dataURL ?? getDataFile();
     this.enableServiceWorker = config.enableServiceWorker ?? true;
@@ -229,24 +230,7 @@ export class App {
       this.setCommonProperties();
       this.logInitialAnalyticsEvents();
 
-            const { cr_user_id, language } = getCommonAnalyticsEventsProperties();
-            const androidInterface = new AndroidInterface({
-              cr_user_id,
-              app_id: appType,
-              debug: false,
-              log: false
-            });
-            const { score, startTime, endTime, max_score } = gameInstance;
-            androidInterface.logUserSessionsData({
-              type: assessmentType || appType,
-              lang: language,
-              score,
-              max_score,
-              time_spent: endTime - startTime,
-              event_type: 'activity_completed'
-            });
-          });
-        }); 
+      this.game.Run(this);
 
       this.game.subscribe('ENDED', (gameInstance: BaseQuiz) => {
         const { score, startTime, endTime } = gameInstance;
