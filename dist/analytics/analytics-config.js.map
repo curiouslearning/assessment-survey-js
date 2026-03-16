@@ -1,1 +1,0 @@
-{"version":3,"file":"analytics-config.js","sourceRoot":"","sources":["../../src/analytics/analytics-config.ts"],"names":[],"mappings":"AAMA,MAAM,CAAC,MAAM,cAAc,GAAG;IAC1B,MAAM,EAAE,yCAAyC;IACjD,UAAU,EAAE,2BAA2B;IACvC,WAAW,EAAE,kCAAkC;IAC/C,SAAS,EAAE,WAAW;IACtB,aAAa,EAAE,uBAAuB;IACtC,iBAAiB,EAAE,cAAc;IACjC,KAAK,EAAE,2CAA2C;IAClD,aAAa,EAAE,cAAc;CAChC,CAAC"}
