@@ -12,7 +12,7 @@ import { TreeNode, sortedArrayToIDsBST } from '../components/tNode';
 import { randFrom, shuffleArray } from '../utils/mathUtils';
 import { AudioController } from '../components/audioController';
 import { AnalyticsEventsType, AnalyticsIntegration } from '../analytics/analytics-integration';
-import { calculateScore, getBasalBucketID, getCeilingBucketID, getCommonAnalyticsEventsProperties } from '../utils/AnalyticsUtils';
+import { calculateScore, getBasalBucketID, getCeilingBucketID, getCommonAnalyticsEventsProperties, getMaxScore } from '../utils/AnalyticsUtils';
 import { getNextAssessment, getRequiredScore } from '../utils/urlUtils';
 
 enum searchStage {
@@ -27,6 +27,8 @@ enum BucketGenMode {
 }
 
 export class Assessment extends BaseQuiz {
+  static readonly TYPE = 'assessment';
+
   public unityBridge;
   public analyticsIntegration: AnalyticsIntegration;
   public currentNode: TreeNode;
@@ -711,10 +713,11 @@ export class Assessment extends BaseQuiz {
     this.analyticsIntegration.sendDataToThirdParty(score, this.commonProperties.cr_user_id, integerRequiredScore, nextAssessment, this.commonProperties.app);
     this.app.notifyAssessmentCompleted(score);
     
+    const maxScore = buckets.length * 100;
     this.analyticsIntegration.track(AnalyticsEventsType.COMPLETED, {
       type: 'completed',
       score: score,
-      maxScore: buckets.length * 100,
+      maxScore,
       basalBucket: basalBucketID,
       ceilingBucket: ceilingBucketID,
       ...(isSynapseUser && {
@@ -724,5 +727,6 @@ export class Assessment extends BaseQuiz {
     })
 
     this.score = score;
+    this.max_score = maxScore;
   }
 }

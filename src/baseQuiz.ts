@@ -5,11 +5,14 @@ import { UnityBridge } from './utils/unityBridge';
 import { PubSub } from '@curiouslearning/core'
 
 export abstract class BaseQuiz extends PubSub {
+  static readonly TYPE: string = 'base';
+
   protected app: App;
   protected quizEndData: any;
   public id: string;
   public type: string;
   public score: number;
+  public max_score: number;
   public startTime: number;
   public endTime: number;
   public dataURL: string;

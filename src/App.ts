@@ -229,7 +229,24 @@ export class App {
       this.setCommonProperties();
       this.logInitialAnalyticsEvents();
 
-      this.game.Run(this);
+            const { cr_user_id, language } = getCommonAnalyticsEventsProperties();
+            const androidInterface = new AndroidInterface({
+              cr_user_id,
+              app_id: appType,
+              debug: false,
+              log: false
+            });
+            const { score, startTime, endTime, max_score } = gameInstance;
+            androidInterface.logUserSessionsData({
+              type: assessmentType || appType,
+              lang: language,
+              score,
+              max_score,
+              time_spent: endTime - startTime,
+              event_type: 'activity_completed'
+            });
+          });
+        }); 
 
       this.game.subscribe('ENDED', (gameInstance: BaseQuiz) => {
         const { score, startTime, endTime } = gameInstance;
