@@ -10,7 +10,8 @@ build
 /build
 /build/.idea
 */build/.well-known/*
-
+dist
+/dist
 
 # Common ignores
 .DS_Store
