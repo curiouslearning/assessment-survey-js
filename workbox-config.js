@@ -3,7 +3,7 @@ module.exports = {
   globPatterns: [
     '**/*.{wav,mp3,gif,WAV,png,webp,otf,jpg,jpeg,js,json,css,html,svg}',
   ],
-  swDest: 'dist/sw.js',
+  swDest: 'sw.js',
   swSrc: 'sw-src.js',
   globIgnores: [
     'audio/**/*',

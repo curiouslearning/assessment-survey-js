@@ -35,12 +35,4 @@ module.exports = {
     filename: 'dist/bundle.js',
     path: path.resolve(__dirname),
   },
-  plugins: [
-    new CopyPlugin({
-      patterns: [
-        { from: 'audio', to: 'audio' },
-        { from: 'img', to: 'img' },
-      ],
-    }),
-  ],
 };
