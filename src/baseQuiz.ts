@@ -1,7 +1,7 @@
 import { App } from './App';
-import { AnalyticsEvents } from './analytics/analyticsEvents';
-import { UIController } from './ui/uiController';
-import { UnityBridge } from './utils/unityBridge';
+import { AnalyticsEvents } from '@analytics/analyticsEvents';
+import { UIController } from '@ui/uiController';
+import { UnityBridge } from '@utils/unityBridge';
 import { PubSub } from '@curiouslearning/core'
 
 export abstract class BaseQuiz extends PubSub {

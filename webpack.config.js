@@ -35,7 +35,14 @@ module.exports = {
   },
   resolve: {
     alias: {
+      '@analytics': path.resolve(__dirname, 'src/analytics/'),
+      '@assessment': path.resolve(__dirname, 'src/assessment/'),
+      '@components': path.resolve(__dirname, 'src/components/'),
       '@configs': path.resolve(__dirname, 'src/config/'),
+      '@survey': path.resolve(__dirname, 'src/survey/'),
+      '@ui': path.resolve(__dirname, 'src/ui/'),
+      '@utils': path.resolve(__dirname, 'src/utils/'),
+
     },
     extensions: ['.tsx', '.ts', '.js'],
   },

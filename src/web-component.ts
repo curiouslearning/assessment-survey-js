@@ -1,5 +1,5 @@
 import { App, AppStartupConfig, createApp } from './App';
-import { UIController } from './ui/uiController';
+import { UIController } from '@ui/uiController';
 
 const DEFAULT_TAG_NAME = 'assessment-survey-player';
 type HostTheme = 'default' | 'ftm-dim';

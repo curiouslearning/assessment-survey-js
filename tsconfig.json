@@ -14,7 +14,13 @@
     "strict": false,
     "removeComments": true,
     "paths":{
-      "@configs/*": ["src/config/*"]
+      "@analytics/*": ["src/analytics/*"],
+      "@assessment/*": ["src/assessment/*"],
+      "@components/*": ["src/components/*"],
+      "@configs/*": ["src/config/*"],
+      "@survey/*": ["src/survey/*"],
+      "@ui/*": ["src/ui/*"],
+      "@utils/*": ["src/utils/*"],
     }
   },
   "include": [

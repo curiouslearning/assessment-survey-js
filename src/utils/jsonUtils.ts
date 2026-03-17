@@ -1,9 +1,4 @@
 /** Json Utils */
-
-import { resolveAssetPath } from './assetUtils';
-
-// import { setFeedbackText } from './uiController';
-
 export async function fetchAppData(url: string) {
   return loadData(url).then((data) => {
     return data;
@@ -46,7 +41,6 @@ export function getCaseIndependentLangList() {
 }
 
 async function loadData(url: string) {
-  console.log('loadData ', url)
   var furl = getDataURL(url);
   console.log({ furl });
   return fetch(furl).then((response) => response.json());

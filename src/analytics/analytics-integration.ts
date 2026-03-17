@@ -1,5 +1,5 @@
-import { getCommonAnalyticsEventsProperties } from "../utils/AnalyticsUtils";
-import { getEndpoint, getOrganization } from "../utils/urlUtils";
+import { getCommonAnalyticsEventsProperties } from "@utils/AnalyticsUtils";
+import { getEndpoint, getOrganization } from "@utils/urlUtils";
 import { Answered, BucketCompleted, CommonEventProperties, Completed, Initialized, Opened, UserLocation } from "./analytics-event-interface";
 import { BaseAnalyticsIntegration } from "./base-analytics-integration";
 

@@ -1,8 +1,8 @@
-import { qData, answerData } from '../components/questionData';
-import { AudioController } from '../components/audioController';
-import { randFrom, shuffleArray } from '../utils/mathUtils';
-import { getDataFile } from '../utils/urlUtils';
-import { resolveAssetPath } from '../utils/assetUtils';
+import { qData, answerData } from '@components/questionData';
+import { AudioController } from '@components/audioController';
+import { randFrom, shuffleArray } from '@utils/mathUtils';
+import { getDataFile } from '@utils/urlUtils';
+import { resolveAssetPath } from '@utils/assetUtils';
 import { ASSET_PATHS } from '@configs/assetsPaths';
 
 export class UIController {
