@@ -36,7 +36,9 @@ export async function fetchAssessmentBuckets(url: string) {
 }
 
 export function getDataURL(url: string) {
-  return resolveAssetPath('data/' + url + '.json');
+  //return resolveAssetPath('data/' + url + '.json');
+
+  return `/data/${url}.json`
 }
 
 export function getCaseIndependentLangList() {
@@ -44,7 +46,8 @@ export function getCaseIndependentLangList() {
 }
 
 async function loadData(url: string) {
+  console.log('loadData ', url)
   var furl = getDataURL(url);
-  // console.log(furl);
+  console.log({ furl });
   return fetch(furl).then((response) => response.json());
 }

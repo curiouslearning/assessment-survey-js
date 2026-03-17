@@ -1,3 +1,5 @@
 import { startStandaloneApp } from './App';
 
-startStandaloneApp();
+startStandaloneApp({
+    assetBaseUrl: '/assets'
+});

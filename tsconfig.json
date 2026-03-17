@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "module": "es6",
     "esModuleInterop": true,
     "target": "es2016",
@@ -11,7 +12,10 @@
     "outDir": "dist",
     "sourceMap": true,
     "strict": false,
-    "removeComments": true
+    "removeComments": true,
+    "paths":{
+      "@configs/*": ["src/config/*"]
+    }
   },
   "include": [
     "src"
@@ -19,8 +23,4 @@
   "exclude": [
     "node_modules"
   ],
-  "lib": [
-    "es7",
-    "dom"
-  ]
 }

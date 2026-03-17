@@ -7,10 +7,7 @@
   "types": "lib/index.d.ts",
   "files": [
     "lib",
-    "css",
-    "img",
-    "animation",
-    "audio",
+    "public",
     "data"
   ],
   "exports": {

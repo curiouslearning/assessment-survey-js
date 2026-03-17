@@ -1,0 +1,30 @@
+export const ASSET_PATHS = {
+    CHEST_PROGRESSION: {
+        1: 'img/chestprogression/TreasureChestOpen01',
+        2: 'img/chestprogression/TreasureChestOpen02',
+        3: 'img/chestprogression/TreasureChestOpen03',
+        4: 'img/chestprogression/TreasureChestOpen04',
+    },
+    SOUND_BUTTON_ANIMATION: 'animation/SoundButton.gif',
+    SOUND_BUTTON_IDLE: 'img/SoundButton_Idle.png',
+    STAR_ANIMATION: 'animation/Star.gif',
+    STAR_AFTER_ANIMATION: 'img/star_after_animation.gif',
+    // AUDIO: {
+    //     itemAudio: (dataURL: string, itemName: string) => `audio/${dataURL}/${itemName}.mp3`,
+    //     feedbackAudio: (dataURL: string) => `audio/${dataURL}/answer_feedback.mp3`,
+    // }
+    AUDIO: {
+        itemAudio: (dataURL: string, itemName: string) => {
+            console.log('itemAudio ', {
+                dataURL, itemName
+            })
+            return `audio/${dataURL}/${itemName}`
+        },
+        feedbackAudio: (dataURL: string) => {
+            console.log('feedbackAudio ', {
+                dataURL
+            })
+            return `audio/${dataURL}/answer_feedback.mp3`
+        },
+    }
+} as const;

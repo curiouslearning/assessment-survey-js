@@ -147,9 +147,9 @@ export class App {
 
   private static createNoopUnityBridge() {
     return {
-      SendMessage: (_message: string) => {},
-      SendLoaded: () => {},
-      SendClose: () => {},
+      SendMessage: (_message: string) => { },
+      SendLoaded: () => { },
+      SendClose: () => { },
     };
   }
 

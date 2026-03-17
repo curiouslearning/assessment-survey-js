@@ -8,9 +8,15 @@ module.exports = {
   entry: './src/standalone.ts',
   devtool: isDev ? 'inline-source-map' : false,
   devServer: {
-    static: {
-      directory: path.join(__dirname),
-    },
+    static: [
+      {
+        directory: path.join(__dirname, 'public'),
+      },
+      {
+        directory: path.join(__dirname, 'data'),
+        publicPath: '/data',
+      },
+  ],
     client: {
       overlay: true,
     },
@@ -28,6 +34,9 @@ module.exports = {
     ],
   },
   resolve: {
+    alias: {
+      '@configs': path.resolve(__dirname, 'src/config/'),
+    },
     extensions: ['.tsx', '.ts', '.js'],
   },
   output: {
