@@ -31,7 +31,7 @@
     "build:package": "tsc -p tsconfig.package.json && tsc-alias -p tsconfig.package.json",
     "build:all": "npm run build:standalone && npm run build:package",
     "test": "jest",
-    "dev": "webpack serve -c webpack.config.js && npm run wb:inject",
+    "dev": "npm run wb:inject && webpack serve -c webpack.config.js",
     "prepublishOnly": "npm run build:package",
     "tsc-build": "tsc && tsc-bundle tsconfig.json --exportAs Bundle --entryPoint App --outFile bundle.js",
     "tsc-run": "tsc && tsc-bundle tsconfig.json --exportAs Bundle --entryPoint App --outFile bundle.js && live-server",
