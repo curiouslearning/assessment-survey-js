@@ -606,9 +606,6 @@ export class UIController {
     const currentImageNumber = parseInt(currentImgSrc.slice(-6, -4), 10);
     console.log('Chest Progression number-->', currentImageNumber);
     const nextImageNumber = (currentImageNumber % 4) + 1;
-    console.log({
-      ASSET_PATHS
-    })
     const nextImageSrc = resolveAssetPath(ASSET_PATHS.CHEST_PROGRESSION[nextImageNumber]);
     chestImage.src = nextImageSrc;
   }

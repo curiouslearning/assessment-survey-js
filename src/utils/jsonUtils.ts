@@ -42,6 +42,6 @@ export function getCaseIndependentLangList() {
 
 async function loadData(url: string) {
   var furl = getDataURL(url);
-  console.log({ furl });
+  //console.log({ furl });
   return fetch(furl).then((response) => response.json());
 }
