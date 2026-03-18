@@ -31,8 +31,6 @@ export async function fetchAssessmentBuckets(url: string) {
 }
 
 export function getDataURL(url: string) {
-  //return resolveAssetPath('data/' + url + '.json');
-
   return `/data/${url}.json`
 }
 
