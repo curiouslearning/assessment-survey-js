@@ -12,10 +12,10 @@ module.exports = {
       {
         directory: path.join(__dirname, 'public'),
       },
-      {
-        directory: path.join(__dirname, 'data'),
-        publicPath: '/data',
-      },
+      // {
+      //   directory: path.join(__dirname, 'data'),
+      //   publicPath: '/data',
+      // },
        {
         directory: path.join(__dirname), // serve sw.js from root
         publicPath: '/',
