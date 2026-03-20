@@ -78,6 +78,9 @@ const DEFAULT_CLASS_NAMES: TemplateClassNames = {
   devModeLabel: 'devModeLabel',
 };
 
+/**
+ * Builds the stylesheet link node for renderer-managed styles.
+ */
 class StylesheetLinkSection extends TemplateSection<HTMLLinkElement> {
   public render(): HTMLLinkElement {
     return createElement('link', {
@@ -89,6 +92,9 @@ class StylesheetLinkSection extends TemplateSection<HTMLLinkElement> {
   }
 }
 
+/**
+ * Builds the ending screen wrapper section.
+ */
 class EndingPageWrapperSection extends TemplateSection<HTMLDivElement> {
   public render(): HTMLDivElement {
     return createElement('div', {
@@ -100,6 +106,9 @@ class EndingPageWrapperSection extends TemplateSection<HTMLDivElement> {
   }
 }
 
+/**
+ * Builds the optional dev-mode bucket info container.
+ */
 class DevModeBucketInfoSection extends TemplateSection<HTMLDivElement> {
   public render(): HTMLDivElement {
     return createElement('div', {
@@ -109,6 +118,9 @@ class DevModeBucketInfoSection extends TemplateSection<HTMLDivElement> {
   }
 }
 
+/**
+ * Builds the dev-mode modal toggle button section.
+ */
 class DevModeToggleButtonSection extends TemplateSection<HTMLDivElement> {
   public render(): HTMLDivElement {
     const toggleContainer = createElement('div', {
@@ -131,6 +143,9 @@ class DevModeToggleButtonSection extends TemplateSection<HTMLDivElement> {
   }
 }
 
+/**
+ * Composes all top-level gameplay sections into the body wrapper.
+ */
 class BodyWrapperSection extends TemplateSection<HTMLDivElement> {
   public render(): HTMLDivElement {
     const bodyWrapper = createElement('div', {
@@ -153,9 +168,15 @@ class BodyWrapperSection extends TemplateSection<HTMLDivElement> {
   }
 }
 
+/**
+ * Orchestrates full template assembly into a document fragment.
+ */
 class AssessmentSurveyTemplateBuilder {
   constructor(private readonly context: TemplateContext) {}
 
+  /**
+   * Builds the complete renderer output as a document fragment.
+   */
   public build(): DocumentFragment {
     const fragment = document.createDocumentFragment();
 
@@ -169,6 +190,9 @@ class AssessmentSurveyTemplateBuilder {
   }
 }
 
+/**
+ * Resolves partial caller config into a full renderable config object.
+ */
 function resolveTemplateConfig(config: AssessmentSurveyTemplateConfig = {}): ResolvedTemplateConfig {
   return {
     assetBaseUrl: normalizeBaseUrl(config.assetBaseUrl ?? ''),
@@ -191,12 +215,18 @@ function resolveTemplateConfig(config: AssessmentSurveyTemplateConfig = {}): Res
   };
 }
 
+/**
+ * Builds a full assessment-survey DOM fragment from configuration.
+ */
 export function buildAssessmentSurveyFragment(config: AssessmentSurveyTemplateConfig = {}): DocumentFragment {
   const resolvedConfig = resolveTemplateConfig(config);
   const context = new TemplateContext(resolvedConfig);
   return new AssessmentSurveyTemplateBuilder(context).build();
 }
 
+/**
+ * Mounts the generated fragment by replacing all children of a root element.
+ */
 export function mountAssessmentSurveyFragment(root: HTMLElement, config: AssessmentSurveyTemplateConfig = {}): void {
   root.replaceChildren(buildAssessmentSurveyFragment(config));
 }
