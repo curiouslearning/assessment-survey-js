@@ -1,19 +1,19 @@
 //this is where the logic for handling the buckets will go
 //
 //once we start adding in the assessment functionality
-import { UIController } from '../ui/uiController';
-import { qData, answerData } from '../components/questionData';
-import { AnalyticsEvents } from '../analytics/analyticsEvents';
+import { UIController } from '@ui/uiController';
+import { qData, answerData } from '@components/questionData';
+import { AnalyticsEvents } from '@analytics/analyticsEvents';
 import { App } from '../App';
 import { bucket, bucketItem } from './bucketData';
 import { BaseQuiz } from '../baseQuiz';
-import { fetchAssessmentBuckets } from '../utils/jsonUtils';
-import { TreeNode, sortedArrayToIDsBST } from '../components/tNode';
-import { randFrom, shuffleArray } from '../utils/mathUtils';
-import { AudioController } from '../components/audioController';
-import { AnalyticsEventsType, AnalyticsIntegration } from '../analytics/analytics-integration';
-import { calculateScore, getBasalBucketID, getCeilingBucketID, getCommonAnalyticsEventsProperties } from '../utils/AnalyticsUtils';
-import { getNextAssessment, getRequiredScore } from '../utils/urlUtils';
+import { fetchAssessmentBuckets } from '@utils/jsonUtils';
+import { TreeNode, sortedArrayToIDsBST } from '@components/tNode';
+import { randFrom, shuffleArray } from '@utils/mathUtils';
+import { AudioController } from '@components/audioController';
+import { AnalyticsEventsType, AnalyticsIntegration } from '@analytics/analytics-integration';
+import { calculateScore, getBasalBucketID, getCeilingBucketID, getCommonAnalyticsEventsProperties } from '@utils/AnalyticsUtils';
+import { getNextAssessment, getRequiredScore } from '@utils/urlUtils';
 
 enum searchStage {
   BinarySearch,
@@ -710,7 +710,7 @@ export class Assessment extends BaseQuiz {
     }
     this.analyticsIntegration.sendDataToThirdParty(score, this.commonProperties.cr_user_id, integerRequiredScore, nextAssessment, this.commonProperties.app);
     this.app.notifyAssessmentCompleted(score);
-    
+
     this.analyticsIntegration.track(AnalyticsEventsType.COMPLETED, {
       type: 'completed',
       score: score,

@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "module": "es6",
     "esModuleInterop": true,
     "target": "es2016",
@@ -11,7 +12,16 @@
     "outDir": "dist",
     "sourceMap": true,
     "strict": false,
-    "removeComments": true
+    "removeComments": true,
+    "paths":{
+      "@analytics/*": ["src/analytics/*"],
+      "@assessment/*": ["src/assessment/*"],
+      "@components/*": ["src/components/*"],
+      "@configs/*": ["src/config/*"],
+      "@survey/*": ["src/survey/*"],
+      "@ui/*": ["src/ui/*"],
+      "@utils/*": ["src/utils/*"],
+    }
   },
   "include": [
     "src"
@@ -19,8 +29,4 @@
   "exclude": [
     "node_modules"
   ],
-  "lib": [
-    "es7",
-    "dom"
-  ]
 }

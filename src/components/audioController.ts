@@ -1,9 +1,10 @@
 //code for loading audios
 
 import { qData } from './questionData';
-import { bucket, bucketItem } from '../assessment/bucketData';
-import { getCaseIndependentLangList } from '../utils/jsonUtils';
-import { resolveAssetPath } from '../utils/assetUtils';
+import { bucket, bucketItem } from '@assessment/bucketData';
+import { getCaseIndependentLangList } from '@utils/jsonUtils';
+import { resolveAssetPath } from '@utils/assetUtils';
+import { ASSET_PATHS } from '@configs/assetsPaths';
 
 export class AudioController {
   private static instance: AudioController | null = null;
@@ -25,8 +26,7 @@ export class AudioController {
 
   public static PrepareAudioAndImagesForSurvey(questionsData: qData[], dataURL: string): void {
     AudioController.getInstance().dataURL = dataURL;
-    const feedbackSoundPath = resolveAssetPath('audio/' + AudioController.getInstance().dataURL + '/answer_feedback.mp3');
-
+    const feedbackSoundPath = resolveAssetPath(ASSET_PATHS.AUDIO.feedbackAudio(AudioController.getInstance().dataURL));
     AudioController.getInstance().wavToCache.push(feedbackSoundPath);
     AudioController.getInstance().correctAudio.src = feedbackSoundPath;
     AudioController.getInstance().feedbackAudio.src = feedbackSoundPath;
@@ -72,12 +72,7 @@ export class AudioController {
     console.log('Filtered: ' + newAudioURL);
 
     let newAudio = new Audio();
-    if (getCaseIndependentLangList().includes(AudioController.getInstance().dataURL.split('-')[0])) {
-      newAudio.src = resolveAssetPath('audio/' + AudioController.getInstance().dataURL + '/' + newAudioURL);
-    } else {
-      newAudio.src = resolveAssetPath('audio/' + AudioController.getInstance().dataURL + '/' + newAudioURL);
-    }
-
+    newAudio.src = resolveAssetPath(ASSET_PATHS.AUDIO.itemAudio(AudioController.getInstance().dataURL, newAudioURL));
     AudioController.getInstance().allAudios[newAudioURL] = newAudio;
 
     console.log(newAudio.src);
@@ -85,7 +80,7 @@ export class AudioController {
 
   public static PreloadBucket(newBucket: bucket, dataURL) {
     AudioController.getInstance().dataURL = dataURL;
-    const feedbackSoundPath = resolveAssetPath('audio/' + AudioController.getInstance().dataURL + '/answer_feedback.mp3');
+    const feedbackSoundPath = resolveAssetPath(ASSET_PATHS.AUDIO.feedbackAudio(AudioController.getInstance().dataURL));
     AudioController.getInstance().correctAudio.src = feedbackSoundPath;
     AudioController.getInstance().feedbackAudio.src = feedbackSoundPath;
     for (var itemIndex in newBucket.items) {

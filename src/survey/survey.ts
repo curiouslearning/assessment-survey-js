@@ -1,14 +1,14 @@
 //this is where the code will go for linearly iterating through the
 //questions in a data.json file that identifies itself as a survey
 
-import { UIController } from '../ui/uiController';
-import { AudioController } from '../components/audioController';
-import { qData, answerData } from '../components/questionData';
-import { AnalyticsEvents } from '../analytics/analyticsEvents';
+import { UIController } from '@ui/uiController';
+import { AudioController } from '@components/audioController';
+import { qData, answerData } from '@components/questionData';
+import { AnalyticsEvents } from '@analytics/analyticsEvents';
 import { App } from '../App';
 import { BaseQuiz } from '../baseQuiz';
-import { fetchSurveyQuestions } from '../utils/jsonUtils';
-import { UnityBridge } from '../utils/unityBridge';
+import { fetchSurveyQuestions } from '@utils/jsonUtils';
+import { UnityBridge } from '@utils/unityBridge';
 
 export class Survey extends BaseQuiz {
   public questionsData: qData[];

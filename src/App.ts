@@ -2,20 +2,20 @@
  * App class that represents an entry point of the application.
  */
 
-import { getUUID, getUserSource, getDataFile, getAppLanguageFromDataURL, getAppTypeFromDataURL, configureRuntimeConfig } from './utils/urlUtils';
-import { Survey } from './survey/survey';
-import { Assessment } from './assessment/assessment';
-import { UnityBridge } from './utils/unityBridge';
+import { getUUID, getUserSource, getDataFile, getAppLanguageFromDataURL, getAppTypeFromDataURL, configureRuntimeConfig } from '@utils/urlUtils';
+import { Survey } from '@survey/survey';
+import { Assessment } from '@assessment/assessment';
+import { UnityBridge } from '@utils/unityBridge';
 import { BaseQuiz } from './baseQuiz';
-import { fetchAppData, getDataURL } from './utils/jsonUtils';
-import { resolveAssetPath, setAssetBaseUrl } from './utils/assetUtils';
+import { fetchAppData, getDataURL } from '@utils/jsonUtils';
+import { resolveAssetPath, setAssetBaseUrl } from '@utils/assetUtils';
 import { Workbox } from 'workbox-window';
-import CacheModel from './components/cacheModel';
-import { UIController } from './ui/uiController';
-import { AnalyticsEventsType, AnalyticsIntegration } from './analytics/analytics-integration';
-import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from './utils/AnalyticsUtils';
+import CacheModel from '@components/cacheModel';
+import { UIController } from '@ui/uiController';
+import { AnalyticsEventsType, AnalyticsIntegration } from '@analytics/analytics-integration';
+import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from '@utils/AnalyticsUtils';
 import { AndroidInterface } from '@curiouslearning/core';
-
+import { ASSET_PATHS } from '@configs/assetsPaths';
 const appVersion: string = 'v1.1.3';
 
 /**
@@ -147,9 +147,9 @@ export class App {
 
   private static createNoopUnityBridge() {
     return {
-      SendMessage: (_message: string) => {},
-      SendLoaded: () => {},
-      SendClose: () => {},
+      SendMessage: (_message: string) => { },
+      SendLoaded: () => { },
+      SendClose: () => { },
     };
   }
 
@@ -208,16 +208,16 @@ export class App {
               data['quizName'].includes('Luganda') ||
               data['quizName'].toLowerCase().includes('west african english')
             ) {
-              audioItemURL = resolveAssetPath('audio/' + this.dataURL + '/' + buckets[i].items[j].itemName.toLowerCase().trim() + '.mp3');
+              audioItemURL = resolveAssetPath(ASSET_PATHS.AUDIO.itemAudio(this.dataURL, buckets[i].items[j].itemName.toLowerCase().trim()));
             } else {
-              audioItemURL = resolveAssetPath('audio/' + this.dataURL + '/' + buckets[i].items[j].itemName.trim() + '.mp3');
+              audioItemURL = resolveAssetPath(ASSET_PATHS.AUDIO.itemAudio(this.dataURL, buckets[i].items[j].itemName.trim()));
             }
 
             this.cacheModel.addItemToAudioVisualResources(audioItemURL);
           }
         }
 
-        this.cacheModel.addItemToAudioVisualResources(resolveAssetPath('audio/' + this.dataURL + '/answer_feedback.mp3'));
+        this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.feedbackAudio(this.dataURL)));
 
         this.game = new Assessment(this.dataURL, this.unityBridge);
       }

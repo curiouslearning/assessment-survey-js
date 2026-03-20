@@ -1,6 +1,6 @@
 import { App, AppStartupConfig, createApp } from './App';
-import { UIController } from './ui/uiController';
 import { buildAssessmentSurveyFragment, normalizeBaseUrl, normalizeHostTheme } from './ui/dom-template';
+import { UIController } from '@ui/uiController';
 
 const DEFAULT_TAG_NAME = 'assessment-survey-player';
 

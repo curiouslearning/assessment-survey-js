@@ -1,8 +1,9 @@
-import { qData, answerData } from '../components/questionData';
-import { AudioController } from '../components/audioController';
-import { randFrom, shuffleArray } from '../utils/mathUtils';
-import { getDataFile } from '../utils/urlUtils';
-import { resolveAssetPath } from '../utils/assetUtils';
+import { qData, answerData } from '@components/questionData';
+import { AudioController } from '@components/audioController';
+import { randFrom, shuffleArray } from '@utils/mathUtils';
+import { getDataFile } from '@utils/urlUtils';
+import { resolveAssetPath } from '@utils/assetUtils';
+import { ASSET_PATHS } from '@configs/assetsPaths';
 
 export class UIController {
   private static instance: UIController | null = null;
@@ -436,7 +437,7 @@ export class UIController {
       });
     } else {
       UIController.getInstance().playButton.innerHTML =
-        `<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='${resolveAssetPath('img/SoundButton_Idle.png')}' type='image/svg+xml'> </img></button>`;
+        `<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE)}' type='image/svg+xml'> </img></button>`;
       var nextQuestionButton = UIController.getInstance().playButton.querySelector('#nextqButton') as HTMLElement;
       nextQuestionButton.addEventListener('click', function () {
         UIController.ShowQuestion();
@@ -454,9 +455,9 @@ export class UIController {
     if (!UIController.getInstance().devModeBucketControlsEnabled) {
       const playButtonImg = UIController.getInstance().playButton.querySelector('img');
       if (playing) {
-        playButtonImg.src = resolveAssetPath('animation/SoundButton.gif');
+        playButtonImg.src = resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_ANIMATION);
       } else {
-        playButtonImg.src = resolveAssetPath('img/SoundButton_Idle.png');
+        playButtonImg.src = resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE);
       }
     }
   }
@@ -478,7 +479,7 @@ export class UIController {
       });
     } else {
       UIController.getInstance().playButton.innerHTML =
-        `<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='${resolveAssetPath('img/SoundButton_Idle.png')}' type='image/svg+xml'> </img></button>`;
+        `<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE)}' type='image/svg+xml'> </img></button>`;
 
       var nextQuestionButton = UIController.getInstance().playButton.querySelector('#nextqButton') as HTMLElement;
       nextQuestionButton.addEventListener('click', function () {
@@ -521,7 +522,7 @@ export class UIController {
     var starToShow = UIController.getInstance().getElementById<HTMLImageElement>(
       'star' + UIController.getInstance().stars[UIController.getInstance().qAnsNum]
     );
-    starToShow.src = resolveAssetPath('animation/Star.gif');
+    starToShow.src = resolveAssetPath(ASSET_PATHS.STAR_ANIMATION);
     starToShow.classList.add('topstarv');
     starToShow.classList.remove('topstarh');
 
@@ -582,7 +583,7 @@ export class UIController {
     var starToShow = UIController.getInstance().getElementById<HTMLImageElement>(
       'star' + UIController.getInstance().stars[UIController.getInstance().qAnsNum - 1]
     );
-    starToShow.src = resolveAssetPath('img/star_after_animation.gif');
+    starToShow.src = resolveAssetPath(ASSET_PATHS.STAR_AFTER_ANIMATION);
   }
 
   private answerButtonPress(buttonNum: number): void {
@@ -605,7 +606,7 @@ export class UIController {
     const currentImageNumber = parseInt(currentImgSrc.slice(-6, -4), 10);
     console.log('Chest Progression number-->', currentImageNumber);
     const nextImageNumber = (currentImageNumber % 4) + 1;
-    const nextImageSrc = resolveAssetPath(`img/chestprogression/TreasureChestOpen0${nextImageNumber}.svg`);
+    const nextImageSrc = resolveAssetPath(ASSET_PATHS.CHEST_PROGRESSION[nextImageNumber]);
     chestImage.src = nextImageSrc;
   }
 
