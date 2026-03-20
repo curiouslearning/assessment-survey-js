@@ -1,10 +1,10 @@
 // this is where we can have the classes and functions for building the events
 // to send to an analytics recorder (firebase? lrs?)
 
-import { qData, answerData } from '../components/questionData';
+import { qData, answerData } from '@components/questionData';
 import { logEvent } from 'firebase/analytics';
-import { bucket } from '../assessment/bucketData';
-import { getNextAssessment, getRequiredScore, getEndpoint, getOrganization } from '../utils/urlUtils';
+import { bucket } from '@assessment/bucketData';
+import { getNextAssessment, getRequiredScore, getEndpoint, getOrganization } from '@utils/urlUtils';
 
 // Create a singleton class for the analytics events
 export class AnalyticsEvents {
