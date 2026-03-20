@@ -109,6 +109,7 @@ import '@curiouslearning/assessment-survey/register';
 	user-id="123"
 	user-source="host-app"
 	asset-base-url="/assets/assessment-survey"
+	data-base-url="/assets/assessment-survey"
 	host-theme="ftm-dim"
 	embed-mode="true"
 ></assessment-survey-player>
@@ -117,6 +118,8 @@ import '@curiouslearning/assessment-survey/register';
 `embed-mode="true"` applies host-friendly defaults (`skip-loading-screen=true`, `skip-start-screen=true`, `enable-service-worker=false`, `enable-unity-bridge=false`, `enable-android-summary=false`, `enable-parent-post-message=false`).
 
 You can still set any of those attributes explicitly when a host needs a different value. Explicit attribute values always override the `embed-mode` preset.
+
+`data-base-url` is optional. If omitted, the component uses `asset-base-url` for `data-key` JSON loading.
 
 `skip-loading-screen` remains recommended in host integration mode when the host app preloads and caches the selected language pack before mounting the component.
 
@@ -171,6 +174,7 @@ const config: AppStartupConfig = {
 	dataURL: 'zulu-lettersounds',
 	uiRoot: hostElement, // your host component root element
 	assetBaseUrl: '/assets/assessment-survey',
+	dataBaseUrl: '/assets/assessment-survey',
 	waitForWindowLoad: false,
 	skipLoadingScreen: true,
 	skipStartScreen: true,
@@ -210,7 +214,7 @@ If you use manual mode, your host template must include the expected IDs used by
 Overrideable via `AppStartupConfig`:
 
 - Data/config: `dataURL`, `userId`, `userSource`, `requiredScore`, `nextAssessment`, `endpoint`, `organization`
-- Asset/runtime: `assetBaseUrl`, `waitForWindowLoad`, `skipLoadingScreen`, `skipStartScreen`
+- Asset/runtime: `assetBaseUrl`, `dataBaseUrl`, `waitForWindowLoad`, `skipLoadingScreen`, `skipStartScreen`
 - Integrations: `enableServiceWorker`, `enableUnityBridge`, `enableAndroidSummary`, `enableParentPostMessage`
 - Host callbacks via `hostIntegrationAdapters`:
 	- `onLoaded`, `onClose`, `onSummaryData`, `onAssessmentCompleted`

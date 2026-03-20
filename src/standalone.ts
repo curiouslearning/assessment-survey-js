@@ -1,7 +1,8 @@
 import { startStandaloneApp } from './App';
-import { mountAssessmentSurveyFragment, normalizeHostTheme } from './ui/dom-template';
+import { mountAssessmentSurveyFragment, normalizeBaseUrl, normalizeHostTheme } from './ui/dom-template';
 
 const STANDALONE_ROOT_ID = 'assessment-survey-root';
+const DEFAULT_ASSET_BASE_URL = '/assets';
 
 function toBooleanAttribute(value: string | null, defaultValue: boolean): boolean {
 	if (value === null) {
@@ -25,9 +26,19 @@ function getOrCreateStandaloneRoot(): HTMLElement {
 	return root;
 }
 
-function mountStandaloneTemplate(root: HTMLElement): void {
+function getStandaloneAssetBaseUrl(root: HTMLElement): string {
+	const configuredAssetBaseUrl = root.getAttribute('data-asset-base-url');
+
+	if (!configuredAssetBaseUrl || configuredAssetBaseUrl.trim() === '') {
+		return DEFAULT_ASSET_BASE_URL;
+	}
+
+	return normalizeBaseUrl(configuredAssetBaseUrl);
+}
+
+function mountStandaloneTemplate(root: HTMLElement, assetBaseUrl: string): void {
 	mountAssessmentSurveyFragment(root, {
-		assetBaseUrl: root.getAttribute('data-asset-base-url') ?? '',
+		assetBaseUrl,
 		hostTheme: normalizeHostTheme(root.getAttribute('data-host-theme')),
 		includeStylesheetLink: false,
 		rootRelativeAssetPaths: false,
@@ -46,5 +57,6 @@ function mountStandaloneTemplate(root: HTMLElement): void {
 }
 
 const standaloneRoot = getOrCreateStandaloneRoot();
-mountStandaloneTemplate(standaloneRoot);
-startStandaloneApp();
+const assetBaseUrl = getStandaloneAssetBaseUrl(standaloneRoot);
+mountStandaloneTemplate(standaloneRoot, assetBaseUrl);
+startStandaloneApp({ assetBaseUrl });

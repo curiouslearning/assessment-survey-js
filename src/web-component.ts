@@ -3,6 +3,7 @@ import { buildAssessmentSurveyFragment, normalizeBaseUrl, normalizeHostTheme } f
 import { UIController } from '@ui/uiController';
 
 const DEFAULT_TAG_NAME = 'assessment-survey-player';
+const DEFAULT_ASSET_BASE_URL = '/assets';
 
 type StartupModeDefaults = {
   skipLoadingScreen: boolean;
@@ -39,6 +40,17 @@ function toBooleanAttribute(value: string | null, defaultValue: boolean): boolea
   return value !== 'false' && value !== '0';
 }
 
+function getFirstAttributeValue(element: HTMLElement, names: string[]): string | null {
+  for (const name of names) {
+    const value = element.getAttribute(name);
+    if (value !== null) {
+      return value;
+    }
+  }
+
+  return null;
+}
+
 export class AssessmentSurveyPlayerElement extends HTMLElement {
   private appInstance: App | null = null;
   private isInitialized = false;
@@ -48,7 +60,18 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
       return;
     }
 
-    const assetBaseUrl = normalizeBaseUrl(this.getAttribute('asset-base-url') ?? '');
+    const configuredAssetBaseUrl = this.getAttribute('asset-base-url');
+    const assetBaseUrl = normalizeBaseUrl(
+      configuredAssetBaseUrl && configuredAssetBaseUrl.trim() !== ''
+        ? configuredAssetBaseUrl
+        : DEFAULT_ASSET_BASE_URL
+    );
+    const configuredDataBaseUrl = getFirstAttributeValue(this, ['data-base-url', 'json-base-url']);
+    const dataBaseUrl = normalizeBaseUrl(
+      configuredDataBaseUrl && configuredDataBaseUrl.trim() !== ''
+        ? configuredDataBaseUrl
+        : assetBaseUrl
+    );
     const hostTheme = normalizeHostTheme(this.getAttribute('host-theme'));
     const embedMode = toBooleanAttribute(this.getAttribute('embed-mode'), true);
     const modeDefaults = embedMode ? EMBED_MODE_DEFAULTS : STANDARD_MODE_DEFAULTS;
@@ -72,6 +95,7 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
       endpoint: this.getAttribute('endpoint') ?? undefined,
       organization: this.getAttribute('organization') ?? undefined,
       assetBaseUrl,
+      dataBaseUrl,
       skipLoadingScreen: toBooleanAttribute(this.getAttribute('skip-loading-screen'), modeDefaults.skipLoadingScreen),
       skipStartScreen: toBooleanAttribute(this.getAttribute('skip-start-screen'), modeDefaults.skipStartScreen),
       enableServiceWorker: toBooleanAttribute(this.getAttribute('enable-service-worker'), modeDefaults.enableServiceWorker),
