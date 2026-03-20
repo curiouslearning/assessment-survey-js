@@ -1,8 +1,9 @@
 import { App, AppStartupConfig, createApp } from './App';
+import { buildAssessmentSurveyFragment, normalizeBaseUrl, normalizeHostTheme } from './ui/dom-template';
 import { UIController } from '@ui/uiController';
 
 const DEFAULT_TAG_NAME = 'assessment-survey-player';
-type HostTheme = 'default' | 'ftm-dim';
+const DEFAULT_ASSET_BASE_URL = '/assets';
 
 type StartupModeDefaults = {
   skipLoadingScreen: boolean;
@@ -31,34 +32,6 @@ const STANDARD_MODE_DEFAULTS: StartupModeDefaults = {
   enableParentPostMessage: true,
 };
 
-function normalizeHostTheme(theme: string | null): HostTheme {
-  const normalizedTheme = theme?.trim().toLowerCase() ?? '';
-
-  if (normalizedTheme === 'ftm-dim') {
-    return 'ftm-dim';
-  }
-
-  return 'default';
-}
-
-function getBodyWrapperClass(hostTheme: HostTheme): string {
-  return hostTheme === 'ftm-dim' ? 'bodyWrapper as-host-theme-ftm-dim' : 'bodyWrapper';
-}
-
-function normalizeBaseUrl(baseUrl: string): string {
-  if (!baseUrl) {
-    return '';
-  }
-
-  return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-}
-
-function withBase(baseUrl: string, path: string): string {
-  const normalizedBase = normalizeBaseUrl(baseUrl);
-  const normalizedPath = path.replace(/^\/+/, '');
-  return normalizedBase ? `${normalizedBase}/${normalizedPath}` : `/${normalizedPath}`;
-}
-
 function toBooleanAttribute(value: string | null, defaultValue: boolean): boolean {
   if (value === null) {
     return defaultValue;
@@ -67,106 +40,15 @@ function toBooleanAttribute(value: string | null, defaultValue: boolean): boolea
   return value !== 'false' && value !== '0';
 }
 
-function buildTemplate(assetBaseUrl: string, hostTheme: HostTheme): string {
-  return `
-    <link rel="stylesheet" href="${withBase(assetBaseUrl, 'css/style.css')}" />
-    <div class="${getBodyWrapperClass(hostTheme)}">
-      <div class="landingPageWrapper" id="landWrap">
-        <img class="landingMonster" src="${withBase(assetBaseUrl, 'img/monster.png')}" />
-        <br />
-        <button id="startButton">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M9 18L15 12L9 6V18Z"
-              fill="currentColor"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            ></path>
-          </svg>
-        </button>
-        <div id="loadingScreen">
-          <img id="loading-gif" src="${withBase(assetBaseUrl, 'img/loadingImg.gif')}" alt="Loading Animation" />
-          <div id="progressBarContainer">
-            <div id="progressBar"></div>
-          </div>
-        </div>
-      </div>
+function getFirstAttributeValue(element: HTMLElement, names: string[]): string | null {
+  for (const name of names) {
+    const value = element.getAttribute(name);
+    if (value !== null) {
+      return value;
+    }
+  }
 
-      <div class="questionViewWrapper" id="gameWrap" style="display: none">
-        <div class="starWrapper" id="starWrapper"></div>
-        <div class="chestWrapper">
-          <div class="chestdiv">
-            <img id="chestImage" src="${withBase(assetBaseUrl, 'img/chestprogression/TreasureChestOpen01.svg')}" />
-          </div>
-        </div>
-        <div class="questionContainer" id="qWrap"></div>
-
-        <div class="answerContainer" id="aWrap">
-          <div class="answerButton" id="answerButton1">1</div>
-          <div class="answerButton" id="answerButton2">2</div>
-          <div class="answerButton" id="answerButton3">3</div>
-          <div class="answerButton" id="answerButton4">4</div>
-          <div class="answerButton" id="answerButton5" style="display: none">5</div>
-          <div class="answerButton" id="answerButton6" style="display: none">6</div>
-        </div>
-        <div>
-          <div class="nextQuestionInput">
-            <div id="pbutton"></div>
-          </div>
-
-          <div class="feedbackContainer hidden" id="feedbackWrap">kuyancomeka!</div>
-        </div>
-      </div>
-
-      <div class="endingPageWrapper" id="endWrap" style="display: none">click to exit!</div>
-
-      <div id="devModeBucketInfoContainer"></div>
-
-      <div id="devModeModalToggleButtonContainer">
-        <button id="devModeModalToggleButton">
-          Dev<br />
-          Mode
-        </button>
-      </div>
-
-      <div id="devModeSettingsModal">
-        <p style="font-size: 26px">Dev Mode Settings</p>
-        <form id="devModeSettingsContainer">
-          <span class="devModeLabel">Assessment bucket generation mode</span>
-          <select id="devModeBucketGenSelect">
-            <option value="0">Randomized Middle Point BST</option>
-            <option value="1">Sequential Array Based</option>
-          </select>
-          <span class="devModeLabel">Show a Label on correct target</span>
-          <div style="display: flex; align-items: center; height: 40px; gap: 8px">
-            <input id="devModeCorrectLabelShownCheckbox" type="checkbox" />
-            <label for="devModeCorrectLabelShownCheckbox">Show correct label on answer button</label>
-          </div>
-          <span class="devModeLabel">Show bucket details on screen</span>
-          <div style="display: flex; align-items: center; height: 40px; gap: 8px">
-            <input id="devModeBucketInfoShownCheckbox" type="checkbox" />
-            <label for="devModeBucketInfoShownCheckbox">Show bucket index, tried and passed</label>
-          </div>
-          <span class="devModeLabel">Enable bucket controls</span>
-          <div style="display: flex; align-items: center; height: 40px; gap: 8px">
-            <input id="devModeBucketControlsShownCheckbox" type="checkbox" />
-            <label for="devModeBucketControlsShownCheckbox">Enable item buttons, next and prev buckets</label>
-          </div>
-          <span class="devModeLabel">Animations speed</span>
-          <div style="width: 100%; position: relative">
-            <input id="devModeAnimationSpeedMultiplierRange" type="range" min="0" max="1" value="1" step="0.1" />
-            <div style="display: flex; width: 100%; justify-content: space-between">
-              <span style="font-size: 12px"><- Faster</span>
-              <text id="devModeAnimationSpeedMultiplierValue">1</text>
-              <span style="font-size: 12px">Slower -></span>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-  `;
+  return null;
 }
 
 export class AssessmentSurveyPlayerElement extends HTMLElement {
@@ -178,11 +60,29 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
       return;
     }
 
-    const assetBaseUrl = normalizeBaseUrl(this.getAttribute('asset-base-url') ?? '');
+    const configuredAssetBaseUrl = this.getAttribute('asset-base-url');
+    const assetBaseUrl = normalizeBaseUrl(
+      configuredAssetBaseUrl && configuredAssetBaseUrl.trim() !== ''
+        ? configuredAssetBaseUrl
+        : DEFAULT_ASSET_BASE_URL
+    );
+    const configuredDataBaseUrl = getFirstAttributeValue(this, ['data-base-url', 'json-base-url']);
+    const dataBaseUrl = normalizeBaseUrl(
+      configuredDataBaseUrl && configuredDataBaseUrl.trim() !== ''
+        ? configuredDataBaseUrl
+        : assetBaseUrl
+    );
     const hostTheme = normalizeHostTheme(this.getAttribute('host-theme'));
     const embedMode = toBooleanAttribute(this.getAttribute('embed-mode'), true);
     const modeDefaults = embedMode ? EMBED_MODE_DEFAULTS : STANDARD_MODE_DEFAULTS;
-    this.innerHTML = buildTemplate(assetBaseUrl, hostTheme);
+    this.replaceChildren(
+      buildAssessmentSurveyFragment({
+        assetBaseUrl,
+        hostTheme,
+        includeStylesheetLink: true,
+        rootRelativeAssetPaths: true,
+      })
+    );
 
     UIController.ConfigureRoot(this);
 
@@ -195,6 +95,7 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
       endpoint: this.getAttribute('endpoint') ?? undefined,
       organization: this.getAttribute('organization') ?? undefined,
       assetBaseUrl,
+      dataBaseUrl,
       skipLoadingScreen: toBooleanAttribute(this.getAttribute('skip-loading-screen'), modeDefaults.skipLoadingScreen),
       skipStartScreen: toBooleanAttribute(this.getAttribute('skip-start-screen'), modeDefaults.skipStartScreen),
       enableServiceWorker: toBooleanAttribute(this.getAttribute('enable-service-worker'), modeDefaults.enableServiceWorker),
