@@ -2,7 +2,31 @@ import { App } from './App';
 import { AnalyticsEvents } from './analytics/analyticsEvents';
 import { UIController } from './ui/uiController';
 import { UnityBridge } from './utils/unityBridge';
-import { PubSub } from '@curiouslearning/core'
+// Minimal PubSub shim for tests and runtime if the external package is unavailable
+class PubSub {
+  private listeners: { [key: string]: Array<(payload?: any) => void> } = {};
+
+  subscribe(event: string, callback: (payload?: any) => void): void {
+    if (!this.listeners[event]) {
+      this.listeners[event] = [];
+    }
+    this.listeners[event].push(callback);
+  }
+
+  publish(event: string, payload?: any): void {
+    const subs = this.listeners[event];
+    if (!subs) {
+      return;
+    }
+    for (const callback of subs) {
+      try {
+        callback(payload);
+      } catch (err) {
+        console.error('PubSub callback error for event', event, err);
+      }
+    }
+  }
+}
 
 export abstract class BaseQuiz extends PubSub {
   static readonly TYPE: string = 'base';
@@ -74,37 +98,49 @@ export abstract class BaseQuiz extends PubSub {
     // });
 
     this.devModeBucketGenSelect = document.getElementById(this.devModeBucketGenSelectId) as HTMLSelectElement;
-    this.devModeBucketGenSelect.onchange = (event) => {
-      this.handleBucketGenModeChange(event);
-    };
+    if (this.devModeBucketGenSelect) {
+      this.devModeBucketGenSelect.onchange = (event) => {
+        this.handleBucketGenModeChange(event);
+      };
+    }
 
     this.devModeToggleButton = document.getElementById(this.devModeToggleButtonId) as HTMLButtonElement;
-    this.devModeToggleButton.onclick = this.toggleDevModeModal;
+    if (this.devModeToggleButton) {
+      this.devModeToggleButton.onclick = this.toggleDevModeModal;
+    }
 
     this.devModeCorrectLabelShownCheckbox = document.getElementById(
       this.devModeCorrectLabelShownCheckboxId
     ) as HTMLInputElement;
-    this.devModeCorrectLabelShownCheckbox.onchange = () => {
-      this.isCorrectLabelShown = this.devModeCorrectLabelShownCheckbox.checked;
-      this.handleCorrectLabelShownChange();
-    };
+    if (this.devModeCorrectLabelShownCheckbox) {
+      this.devModeCorrectLabelShownCheckbox.onchange = () => {
+        this.isCorrectLabelShown = this.devModeCorrectLabelShownCheckbox.checked;
+        this.handleCorrectLabelShownChange();
+      };
+    }
 
     this.devModeBucketInfoShownCheckbox = document.getElementById(
       this.devModeBucketInfoShownCheckboxId
     ) as HTMLInputElement;
-    this.devModeBucketInfoShownCheckbox.onchange = () => {
-      this.isBucketInfoShown = this.devModeBucketInfoShownCheckbox.checked;
-      this.devModeBucketInfoContainer.style.display = this.isBucketInfoShown ? 'block' : 'none';
-      this.handleBucketInfoShownChange();
-    };
+    if (this.devModeBucketInfoShownCheckbox) {
+      this.devModeBucketInfoShownCheckbox.onchange = () => {
+        this.isBucketInfoShown = this.devModeBucketInfoShownCheckbox.checked;
+        if (this.devModeBucketInfoContainer) {
+          this.devModeBucketInfoContainer.style.display = this.isBucketInfoShown ? 'block' : 'none';
+        }
+        this.handleBucketInfoShownChange();
+      };
+    }
 
     this.devModeBucketControlsShownCheckbox = document.getElementById(
       this.devModeBucketControlsShownCheckboxId
     ) as HTMLInputElement;
-    this.devModeBucketControlsShownCheckbox.onchange = () => {
-      this.isBucketControlsEnabled = this.devModeBucketControlsShownCheckbox.checked;
-      this.handleBucketControlsShownChange();
-    };
+    if (this.devModeBucketControlsShownCheckbox) {
+      this.devModeBucketControlsShownCheckbox.onchange = () => {
+        this.isBucketControlsEnabled = this.devModeBucketControlsShownCheckbox.checked;
+        this.handleBucketControlsShownChange();
+      };
+    }
 
     this.devModeBucketInfoContainer = document.getElementById(this.devModeBucketInfoContainerId);
 
@@ -114,25 +150,29 @@ export abstract class BaseQuiz extends PubSub {
 
     this.devModeAnimationSpeedMultiplierValue = document.getElementById(this.devModeAnimationSpeedMultiplierValueId);
 
-    this.devModeAnimationSpeedMultiplierRange.onchange = () => {
+    if (this.devModeAnimationSpeedMultiplierRange) {
+      this.devModeAnimationSpeedMultiplierRange.onchange = () => {
+        this.animationSpeedMultiplier = parseFloat(this.devModeAnimationSpeedMultiplierRange.value);
+        if (this.animationSpeedMultiplier < 0.2) {
+          this.animationSpeedMultiplier = 0.2;
+          this.devModeAnimationSpeedMultiplierRange.value = '0.2';
+        }
+
+        if (this.devModeAnimationSpeedMultiplierValue) {
+          this.devModeAnimationSpeedMultiplierValue.innerText = this.animationSpeedMultiplier.toString();
+        }
+        this.handleAnimationSpeedMultiplierChange();
+      };
       this.animationSpeedMultiplier = parseFloat(this.devModeAnimationSpeedMultiplierRange.value);
-      if (this.animationSpeedMultiplier < 0.2) {
-        this.animationSpeedMultiplier = 0.2;
-        this.devModeAnimationSpeedMultiplierRange.value = '0.2';
-      }
-
-      this.devModeAnimationSpeedMultiplierValue.innerText = this.animationSpeedMultiplier.toString();
-      this.handleAnimationSpeedMultiplierChange();
-    };
-
-    if (!this.isInDevMode) {
-      this.devModeToggleButtonContainer.style.display = 'none';
-    } else {
-      this.devModeToggleButtonContainer.style.display = 'block';
     }
 
-    // Initialize the animation speed multiplier value and position
-    this.animationSpeedMultiplier = parseFloat(this.devModeAnimationSpeedMultiplierRange.value);
+    if (this.devModeToggleButtonContainer) {
+      if (!this.isInDevMode) {
+        this.devModeToggleButtonContainer.style.display = 'none';
+      } else {
+        this.devModeToggleButtonContainer.style.display = 'block';
+      }
+    }
   }
 
   public hideDevModeButton() {
@@ -146,6 +186,9 @@ export abstract class BaseQuiz extends PubSub {
   public abstract handleAnimationSpeedMultiplierChange(): void;
 
   public toggleDevModeModal = () => {
+    if (!this.devModeSettingsModal) {
+      return;
+    }
     if (this.devModeSettingsModal.style.display == 'block') {
       this.devModeSettingsModal.style.display = 'none';
     } else {

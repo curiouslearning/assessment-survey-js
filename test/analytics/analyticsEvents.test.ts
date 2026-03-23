@@ -7,6 +7,10 @@ jest.mock('firebase/analytics', () => ({
   logEvent: jest.fn(),
 }));
 
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 const mockBuckets: bucket[] = [
   {
     bucketID: 1,
@@ -337,6 +341,7 @@ describe('sendFinished', () => {
   
 
   beforeEach(() => {
+    (window as any).parent = window;
     mockPostMessage = jest.spyOn(window.parent, 'postMessage').mockImplementation(() => {});
     mockSendDataToThirdParty = jest.spyOn(AnalyticsEvents, 'sendDataToThirdParty').mockImplementation(() => {});
     mockGetBasalBucketID = jest.spyOn(AnalyticsEvents, 'getBasalBucketID').mockReturnValue(2);
@@ -356,7 +361,7 @@ describe('sendFinished', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
 
   it('should log event and send data correctly', () => {
@@ -442,9 +447,9 @@ describe('sendBucket', () => {
     AnalyticsEvents.clon = '67.890';
     AnalyticsEvents.appVersion = '1.0.0';
     AnalyticsEvents.contentVersion = '2.0.0';
-    AnalyticsEvents.getAppTypeFromDataURL = jest.fn(() => 'test-app');
-    AnalyticsEvents.getAppLanguageFromDataURL = jest.fn(() => 'en');
-    AnalyticsEvents.joinLatLong = jest.fn(() => '12.345,67.890');
+    jest.spyOn(AnalyticsEvents, 'getAppTypeFromDataURL').mockReturnValue('test-app');
+    jest.spyOn(AnalyticsEvents, 'getAppLanguageFromDataURL').mockReturnValue('en');
+    jest.spyOn(AnalyticsEvents, 'joinLatLong').mockReturnValue('12.345,67.890');
   });
 
   it('should call logEvent with correct parameters when passed=true', () => {
@@ -520,9 +525,9 @@ describe('sendAnswered', () => {
     AnalyticsEvents.clon = '67.890';
     AnalyticsEvents.appVersion = '1.0.0';
     AnalyticsEvents.contentVersion = '2.0.0';
-    AnalyticsEvents.getAppTypeFromDataURL = jest.fn(() => 'test-app');
-    AnalyticsEvents.getAppLanguageFromDataURL = jest.fn(() => 'en');
-    AnalyticsEvents.joinLatLong = jest.fn(() => '12.345,67.890');
+    jest.spyOn(AnalyticsEvents, 'getAppTypeFromDataURL').mockReturnValue('test-app');
+    jest.spyOn(AnalyticsEvents, 'getAppLanguageFromDataURL').mockReturnValue('en');
+    jest.spyOn(AnalyticsEvents, 'joinLatLong').mockReturnValue('12.345,67.890');
   });
 
   it('should call logEvent with correct parameters for a correct answer', () => {
@@ -618,9 +623,9 @@ describe('sendLocation', () => {
     AnalyticsEvents.clon = '67.890';
     AnalyticsEvents.appVersion = '1.0.0';
     AnalyticsEvents.contentVersion = '2.0.0';
-    AnalyticsEvents.getAppTypeFromDataURL = jest.fn(() => 'test-app');
-    AnalyticsEvents.getAppLanguageFromDataURL = jest.fn(() => 'en');
-    AnalyticsEvents.joinLatLong = jest.fn(() => '12.345,67.890');
+    jest.spyOn(AnalyticsEvents, 'getAppTypeFromDataURL').mockReturnValue('test-app');
+    jest.spyOn(AnalyticsEvents, 'getAppLanguageFromDataURL').mockReturnValue('en');
+    jest.spyOn(AnalyticsEvents, 'joinLatLong').mockReturnValue('12.345,67.890');
   });
 
   it('should call logEvent twice (for user_location and initialized)', () => {
@@ -664,7 +669,7 @@ describe('sendLocation', () => {
   it('should handle missing latitude and longitude gracefully', () => {
     AnalyticsEvents.clat = null;
     AnalyticsEvents.clon = null;
-    AnalyticsEvents.joinLatLong = jest.fn(() => 'Unknown');
+    jest.spyOn(AnalyticsEvents, 'joinLatLong').mockReturnValue('Unknown');
 
     AnalyticsEvents.sendLocation();
 
@@ -689,23 +694,23 @@ describe('sendLocation', () => {
 });
 describe('getAppTypeFromDataURL', () => {
   test('should return the last segment of a hyphen-separated string', () => {
-    expect(AnalyticsEvents.getAppTypeFromDataURL('english-us-app')).toBe('test-app');
+    expect(AnalyticsEvents.getAppTypeFromDataURL('english-us-app')).toBe('app');
   });
 
   test('should return "NotAvailable" if the string is empty', () => {
-    expect(AnalyticsEvents.getAppTypeFromDataURL('')).toBe('test-app');
+    expect(AnalyticsEvents.getAppTypeFromDataURL('')).toBe('NotAvailable');
   });
 
   test('should return "NotAvailable" if there is no hyphen in the string', () => {
-    expect(AnalyticsEvents.getAppTypeFromDataURL('english')).toBe('test-app');
+    expect(AnalyticsEvents.getAppTypeFromDataURL('english')).toBe('NotAvailable');
   });
 
   test('should return correct app type for multi-hyphen string', () => {
-    expect(AnalyticsEvents.getAppTypeFromDataURL('west-african-english-app')).toBe('test-app');
+    expect(AnalyticsEvents.getAppTypeFromDataURL('west-african-english-app')).toBe('app');
   });
 
   test('should return correct app type when there is only one hyphen', () => {
-    expect(AnalyticsEvents.getAppTypeFromDataURL('test-app')).toBe('test-app');
+    expect(AnalyticsEvents.getAppTypeFromDataURL('test-app')).toBe('app');
   });
 });
 describe('getAppLanguageFromDataURL', () => {

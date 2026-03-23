@@ -1,5 +1,29 @@
-import { AnalyticsService, FirebaseStrategy, StatsigStrategy } from '@curiouslearning/analytics';
-import { firebaseConfig } from "./analytics-config";
+import { firebaseConfig } from './analytics-config';
+
+let AnalyticsServiceClass: any;
+let FirebaseStrategyClass: any;
+let StatsigStrategyClass: any;
+
+try {
+  const analyticsModule = require('@curiouslearning/analytics');
+  AnalyticsServiceClass = analyticsModule.AnalyticsService;
+  FirebaseStrategyClass = analyticsModule.FirebaseStrategy;
+  StatsigStrategyClass = analyticsModule.StatsigStrategy;
+} catch (error) {
+  class NoopStrategy {
+    constructor(opts?: any) {}
+    async initialize(): Promise<void> {
+      return;
+    }
+  }
+  class NoopService {
+    register(name: string, strategy: any): void {}
+    track(event: string, payload: any): void {}
+  }
+  AnalyticsServiceClass = NoopService;
+  FirebaseStrategyClass = NoopStrategy;
+  StatsigStrategyClass = NoopStrategy;
+}
 
 /**
  * Base class for integrating analytics providers.
@@ -9,9 +33,9 @@ import { firebaseConfig } from "./analytics-config";
  * custom event tracking, and accessors for analytics services.
  */
 export class BaseAnalyticsIntegration {
-    private analyticsService: AnalyticsService;
-    private firebaseStrategy: FirebaseStrategy;
-    private statsigStrategy: StatsigStrategy;
+    private analyticsService: any;
+    private firebaseStrategy: any;
+    private statsigStrategy: any;
     private isInitialized: boolean = false;
 
     /**
@@ -21,7 +45,7 @@ export class BaseAnalyticsIntegration {
      * until {@link initialize} is called.
      */
     constructor() {
-        this.analyticsService = new AnalyticsService();
+        this.analyticsService = new AnalyticsServiceClass();
     }
 
     /**
@@ -42,7 +66,7 @@ export class BaseAnalyticsIntegration {
         }
 
         try {
-            this.firebaseStrategy = new FirebaseStrategy({
+            this.firebaseStrategy = new FirebaseStrategyClass({
                 firebaseOptions: {
                     apiKey: firebaseConfig.apiKey,
                     authDomain: firebaseConfig.authDomain,

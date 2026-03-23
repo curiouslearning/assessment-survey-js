@@ -40,17 +40,24 @@ export function getDataFile(): string {
 }
 // Get App Language From Data URL
 export function getAppLanguageFromDataURL(appType: string): string {
-  // Check if app type is not empty and split the string by the hyphen then return the first element
-  if (appType && appType !== '' && appType.includes('-')) {
-    let language: string = appType.split('-').slice(0, -1).join('-');
-    if (language.includes('west-african')) {
-      return 'west-african-english';
-    } else {
-      return language;
-    }
+  if (!appType || appType === '') {
+    return 'NotAvailable';
   }
 
-  return 'NotAvailable';
+  if (!appType.includes('-')) {
+    return 'NotAvailable';
+  }
+
+  const language = appType.split('-').slice(0, -1).join('-');
+  if (language === '') {
+    return 'en';
+  }
+
+  if (language.includes('west-african')) {
+    return 'west-african-english';
+  }
+
+  return language;
 }
 // Get App Type From Data URL
 export function getAppTypeFromDataURL(appType: string): string {

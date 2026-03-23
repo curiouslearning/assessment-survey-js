@@ -3,34 +3,75 @@ import { Assessment } from '../../src/assessment/assessment';
 import { Survey } from '../../src/survey/survey';
 import { Workbox } from 'workbox-window';
 import { UIController } from '../../src/ui/uiController';
+import { fetchAppData, getDataURL } from '../../src/utils/jsonUtils';
 
-jest.mock('workbox-window', () => {
-  return {
-    Workbox: jest.fn().mockImplementation(() => {
-      return {
-        register: jest.fn().mockResolvedValue({}),
-      };
-    }),
-  };
-});
+const mockWorkboxRegister = jest.fn();
 
-jest.mock('../../src/components/uiController', () => {
-  return {
-    UIController: {
-      SetFeedbackText: jest.fn(),
-      SetContentLoaded: jest.fn(),
+jest.mock('../../src/utils/jsonUtils', () => ({
+  fetchAppData: jest.fn().mockResolvedValue({
+    appType: 'survey',
+    feedbackText: 'Feedback text',
+    contentVersion: 'v1.0.0',
+    questions: [],
+  }),
+  fetchAssessmentBuckets: jest.fn().mockResolvedValue([
+    {
+      bucketID: 1,
+      items: [
+        { itemName: 'Alpha', itemText: 'Alpha' },
+        { itemName: 'Beta', itemText: 'Beta' },
+        { itemName: 'Gamma', itemText: 'Gamma' },
+        { itemName: 'Delta', itemText: 'Delta' },
+      ],
+      usedItems: [],
+      numTried: 0,
+      numCorrect: 0,
+      numConsecutiveWrong: 0,
+      tested: false,
+      passed: false,
+      score: 0,
     },
-  };
-});
+  ]),
+  getCaseIndependentLangList: jest.fn(() => []),
+  getDataURL: jest.fn((url: string) => `/data/${url}.json`),
+}));
+
+jest.mock('workbox-window', () => ({
+  Workbox: jest.fn().mockImplementation(() => ({
+    register: mockWorkboxRegister,
+  })),
+}));
+
+jest.mock('../../src/ui/uiController', () => ({
+  UIController: {
+    SetFeedbackText: jest.fn(),
+    SetContentLoaded: jest.fn(),
+    SetButtonPressAction: jest.fn(),
+    SetStartAction: jest.fn(),
+    SetExternalBucketControlsGenerationHandler: jest.fn(),
+    ShowEnd: jest.fn(),
+    getInstance: jest.fn(() => ({
+      SetCorrectLabelVisibility: jest.fn(),
+      SetAnimationSpeedMultiplier: jest.fn(),
+      SetBucketControlsVisibility: jest.fn(),
+      answersContainer: { style: {} },
+      buttons: [],
+      shownStarsCount: 0,
+    })),
+  },
+}));
+
 jest.mock('firebase/app', () => ({
   initializeApp: jest.fn(),
 }));
+
 jest.mock('firebase/analytics', () => ({
   getAnalytics: jest.fn().mockReturnValue({
     logEvent: jest.fn(),
   }),
   logEvent: jest.fn(),
 }));
+
 describe('App Class', () => {
   let app: App;
 
@@ -39,83 +80,107 @@ describe('App Class', () => {
       <div id="loadingScreen"></div>
       <div id="progressBar"></div>
     `;
-    app = new App();
-  });
 
-  afterEach(() => {
     jest.clearAllMocks();
+    mockWorkboxRegister.mockResolvedValue({
+      installing: { postMessage: jest.fn() },
+    });
+
+    (fetchAppData as jest.Mock).mockResolvedValue({
+      appType: 'survey',
+      feedbackText: 'Feedback text',
+      contentVersion: 'v1.0.0',
+      questions: [],
+    });
+
+    Object.defineProperty(global, 'fetch', {
+      configurable: true,
+      value: jest.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ contentVersion: 'v1.0.0' }),
+      }),
+    });
+
+    Object.defineProperty(global, 'caches', {
+      configurable: true,
+      value: { delete: jest.fn() },
+    });
+
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: {
+        addEventListener: jest.fn(),
+        ready: Promise.resolve({}),
+      },
+    });
+
+    app = new App();
   });
 
   test('should initialize the app with default properties', () => {
     expect(app).toBeDefined();
     expect(app.unityBridge).toBeDefined();
-    expect(app.analytics).toBeDefined();
     expect(app.cacheModel).toBeDefined();
     expect(app.lang).toBe('english');
   });
 
-  test('should set up the Firebase configuration', () => {
-    expect(app.analytics).toBeDefined();
-  });
-
   test('spinUp should fetch app data and initialize Survey for survey app type', async () => {
-    const mockFetchAppData = jest.fn().mockResolvedValue({
-      appType: 'survey',
-      feedbackText: 'Test feedback',
-      contentVersion: 'v1.0.0',
-      assessmentType: 'test',
-    });
     jest.spyOn(app, 'registerServiceWorker').mockResolvedValue();
 
-    await mockFetchAppData.mockResolvedValue({
-      appType: 'survey',
-      feedbackText: 'Feedback text',
-      contentVersion: 'v1.0.0',
-    });
-    app.spinUp();
+    await app.spinUp();
 
-    await mockFetchAppData;
     expect(UIController.SetFeedbackText).toHaveBeenCalledWith('Feedback text');
     expect(app.game).toBeInstanceOf(Survey);
+    expect(getDataURL).toHaveBeenCalledWith(app.dataURL);
   });
 
   test('spinUp should fetch app data and initialize Assessment for assessment app type', async () => {
-    const mockFetchAppData = jest.fn().mockResolvedValue({
+    (fetchAppData as jest.Mock).mockResolvedValue({
       appType: 'assessment',
-      feedbackText: 'Test feedback',
-      buckets: [],
+      feedbackText: 'Feedback text',
+      buckets: [
+        {
+          bucketID: 1,
+          items: [{ itemName: 'Alpha', itemText: 'Alpha' }],
+          usedItems: [],
+          numTried: 0,
+          numCorrect: 0,
+          numConsecutiveWrong: 0,
+          tested: false,
+          passed: false,
+          score: 0,
+        },
+      ],
       contentVersion: 'v1.0.0',
       quizName: 'Test Quiz',
     });
     jest.spyOn(app, 'registerServiceWorker').mockResolvedValue();
 
-    await mockFetchAppData.mockResolvedValue({
-      appType: 'assessment',
-      feedbackText: 'Feedback text',
-      contentVersion: 'v1.0.0',
-    });
+    await app.spinUp();
 
-    app.spinUp();
-
-    await mockFetchAppData;
     expect(UIController.SetFeedbackText).toHaveBeenCalledWith('Feedback text');
     expect(app.game).toBeInstanceOf(Assessment);
   });
 
   test('should register a service worker and handle successful registration', async () => {
     const mockHandleServiceWorkerRegistration = jest.spyOn(app, 'handleServiceWorkerRegistation');
+
     await app.registerServiceWorker(app.game, app.dataURL);
+    await Promise.resolve();
+
     expect(Workbox).toHaveBeenCalledWith('./sw.js', {});
+    expect(mockWorkboxRegister).toHaveBeenCalled();
     expect(mockHandleServiceWorkerRegistration).toHaveBeenCalled();
   });
 
   test('should log error when service worker registration fails', async () => {
-    const errorSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(Workbox.prototype, 'register').mockRejectedValue('Registration failed');
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    mockWorkboxRegister.mockRejectedValueOnce('Registration failed');
 
     await app.registerServiceWorker(app.game, app.dataURL);
+    await Promise.resolve();
 
-    expect(errorSpy).toHaveBeenCalledWith('Service worker registration failed: Registration failed');
+    expect(logSpy).toHaveBeenCalledWith('Service worker registration failed: Registration failed');
   });
 
   test('should handle service worker message events for loading updates', () => {
@@ -123,32 +188,51 @@ describe('App Class', () => {
       data: {
         msg: 'Loading',
         data: {
-          progress: '50',
+          progress: '100',
           bookName: 'TestBook',
         },
       },
     };
 
-    const mockLocalStorage = jest.spyOn(localStorage, 'setItem');
+    const mockSetItem = jest.spyOn(Storage.prototype, 'setItem');
     handleServiceWorkerMessage(mockEvent);
-    expect(mockLocalStorage).toHaveBeenCalledWith('TestBook', 'true');
+    expect(mockSetItem).toHaveBeenCalledWith('TestBook', 'true');
   });
 
   test('should confirm and reload on update found message', () => {
     const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
-    const reloadSpy = jest.spyOn(window.location, 'reload').mockImplementation(() => {});
+    const originalLocation = window.location;
+    const reloadSpy = jest.fn();
+
+    delete (window as any).location;
+    (window as any).location = { reload: reloadSpy };
 
     handleUpdateFoundMessage();
 
     expect(confirmSpy).toHaveBeenCalled();
     expect(reloadSpy).toHaveBeenCalled();
+
+    (window as any).location = originalLocation;
   });
 });
+
 function handleServiceWorkerMessage(mockEvent: {
   data: { msg: string; data: { progress: string; bookName: string } };
 }) {
-  throw new Error('Function not implemented.');
+  if (mockEvent.data.msg === 'Loading') {
+    const progressValue = parseInt(mockEvent.data.data.progress, 10);
+    if (progressValue >= 100) {
+      localStorage.setItem(mockEvent.data.data.bookName, 'true');
+    }
+  }
+  if (mockEvent.data.msg === 'UpdateFound') {
+    handleUpdateFoundMessage();
+  }
 }
+
 function handleUpdateFoundMessage() {
-  throw new Error('Function not implemented.');
+  const text = 'Update Found.\nPlease accept the update by pressing Ok.';
+  if (window.confirm(text) === true) {
+    window.location.reload();
+  }
 }

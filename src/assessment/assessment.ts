@@ -21,7 +21,7 @@ enum searchStage {
   LinearSearchDown,
 }
 
-enum BucketGenMode {
+export enum BucketGenMode {
   RandomBST,
   LinearArrayBased,
 }
@@ -30,7 +30,7 @@ export class Assessment extends BaseQuiz {
   static readonly TYPE = 'assessment';
 
   public unityBridge;
-  public analyticsIntegration: AnalyticsIntegration;
+  public analyticsIntegration: AnalyticsIntegration | null;
   public currentNode: TreeNode;
   public currentQuestion: qData;
   public bucketArray: number[];
@@ -54,9 +54,26 @@ export class Assessment extends BaseQuiz {
     this.dataURL = dataURL;
     this.unityBridge = unityBridge;
     this.questionNumber = 0;
+    this.bucketArray = [];
+    this.buckets = [];
+    this.currentBucket = null as any;
+    this.commonProperties = {} as any;
+    this.currentLinearBucketIndex = 0;
+    this.currentLinearTargetIndex = 0;
+    this.basalBucket = 0;
+    this.ceilingBucket = 0;
+    this.currentNode = undefined as any;
+    this.currentQuestion = undefined as any;
+    this.max_score = 0;
+    this.score = 0;
+    this.devModeBucketGenSelect = document.getElementById(this.devModeBucketGenSelectId) as HTMLSelectElement;
     console.log('app initialized');
     this.setupUIHandlers();
-    this.analyticsIntegration = AnalyticsIntegration.getInstance();
+    try {
+      this.analyticsIntegration = AnalyticsIntegration.getInstance();
+    } catch (err) {
+      this.analyticsIntegration = null as any;
+    }
   }
 
   private setupUIHandlers(): void {
@@ -76,7 +93,9 @@ export class Assessment extends BaseQuiz {
 
   public handleBucketGenModeChange(event: Event): void {
     // TODO: Implement handleBucketGenModeChange
-    this.bucketGenMode = parseInt(this.devModeBucketGenSelect.value) as BucketGenMode;
+    if (this.devModeBucketGenSelect) {
+      this.bucketGenMode = parseInt(this.devModeBucketGenSelect.value) as BucketGenMode;
+    }
     this.buildBuckets(this.bucketGenMode).then(() => {
       // Finished building buckets
     });
@@ -200,7 +219,7 @@ export class Assessment extends BaseQuiz {
   public buildBuckets = async (bucketGenMode: BucketGenMode) => {
     // If we don't have the buckets loaded, load them and initialize the current node, which is the starting point
     if (this.buckets === undefined || this.buckets.length === 0) {
-      const res = fetchAssessmentBuckets(this.app.GetDataURL()).then((result) => {
+      const res = fetchAssessmentBuckets(this.app?.GetDataURL() ?? this.dataURL).then((result) => {
         this.buckets = result;
         this.numBuckets = result.length;
         console.log('buckets: ' + this.buckets);
@@ -310,7 +329,7 @@ export class Assessment extends BaseQuiz {
       eventString += theQ.answers[aNum].answerName + ',';
       options += theQ.answers[aNum].answerName + ',';
     }
-    this.analyticsIntegration.track(AnalyticsEventsType.ANSWERED, {
+    this.analyticsIntegration?.track?.(AnalyticsEventsType.ANSWERED, {
       type: 'answered',
       dt: elapsed,
       question_number: theQ.qNumber,
@@ -320,7 +339,7 @@ export class Assessment extends BaseQuiz {
       iscorrect: this.isAnswerCorrect(answer),
       options: options,
       bucket: bucket,
-    })
+    });
 
   }
   private isAnswerCorrect(answer: number) {
@@ -532,14 +551,14 @@ export class Assessment extends BaseQuiz {
       this.logBucketCompletedEvent(this.currentBucket, passed);
     }
     console.log('new  bucket is ' + newBucket.bucketID);
-    AudioController.PreloadBucket(newBucket, this.app.GetDataURL());
+    AudioController.PreloadBucket(newBucket, this.app?.GetDataURL() ?? this.dataURL);
     this.initBucket(newBucket);
   };
 
   public tryMoveBucketLinearArrayBased = (passed: boolean) => {
     const newBucket = this.buckets[this.currentLinearBucketIndex];
     console.log('New Bucket: ' + newBucket.bucketID);
-    AudioController.PreloadBucket(newBucket, this.app.GetDataURL());
+    AudioController.PreloadBucket(newBucket, this.app?.GetDataURL() ?? this.dataURL);
     this.initBucket(newBucket);
   };
 
@@ -673,13 +692,13 @@ export class Assessment extends BaseQuiz {
     return true;
   };
   private logBucketCompletedEvent(bucket: bucket, passed: boolean) {
-    this.analyticsIntegration.track(AnalyticsEventsType.BUCKET_COMPLETED, {
+    this.analyticsIntegration?.track?.(AnalyticsEventsType.BUCKET_COMPLETED, {
       type: 'bucketCompleted',
       bucketNumber: bucket.bucketID,
       numberTriedInBucket: bucket.numTried,
       numberCorrectInBucket: bucket.numCorrect,
       passedBucket: passed,
-    })
+    });
   }
 
   public override onEnd(): void {
@@ -711,7 +730,7 @@ export class Assessment extends BaseQuiz {
       isSynapseUser = true;
       integerRequiredScore = Number(requiredScore);
     }
-    this.analyticsIntegration.sendDataToThirdParty(score, this.commonProperties.cr_user_id, integerRequiredScore, nextAssessment, this.commonProperties.app);
+    this.analyticsIntegration?.sendDataToThirdParty?.(score, this.commonProperties?.cr_user_id, integerRequiredScore, nextAssessment, this.commonProperties?.app);
     if (window.parent) {
       window.parent.postMessage(
         {
@@ -723,7 +742,7 @@ export class Assessment extends BaseQuiz {
     }
     
     const maxScore = buckets.length * 100;
-    this.analyticsIntegration.track(AnalyticsEventsType.COMPLETED, {
+    this.analyticsIntegration?.track?.(AnalyticsEventsType.COMPLETED, {
       type: 'completed',
       score: score,
       maxScore,
@@ -733,7 +752,7 @@ export class Assessment extends BaseQuiz {
         nextAssessment: nextAssessment,
         requiredScore: integerRequiredScore
       })
-    })
+    });
 
     this.score = score;
     this.max_score = maxScore;
