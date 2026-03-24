@@ -120,9 +120,7 @@ export class AudioController {
           resolve();
         });
 
-        audio.play().then(() => {
-          resolve();
-        }).catch((error) => {
+        audio.play().catch((error) => {
           console.error('Error playing audio:', error);
           resolve();
         });

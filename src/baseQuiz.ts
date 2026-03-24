@@ -2,7 +2,7 @@ import { App } from './App';
 import { AnalyticsEvents } from './analytics/analyticsEvents';
 import { UIController } from './ui/uiController';
 import { UnityBridge } from './utils/unityBridge';
-// Minimal PubSub shim for tests and runtime if the external package is unavailable
+// Lightweight in-repo pub/sub used by quizzes to notify app-level listeners.
 class PubSub {
   private listeners: { [key: string]: Array<(payload?: any) => void> } = {};
 

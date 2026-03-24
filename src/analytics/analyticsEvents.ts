@@ -24,8 +24,15 @@ export class AnalyticsEvents {
 
   public static instance: AnalyticsEvents;
 
-  public constructor() {
+  private constructor() {
     // Initialize the class
+  }  private static getLinkedAnalytics(eventName: string): any | null {
+    if (!AnalyticsEvents.gana) {
+      console.warn(`AnalyticsEvents.gana is null; call AnalyticsEvents.linkAnalytics() before sending ${eventName}.`);
+      return null;
+    }
+
+    return AnalyticsEvents.gana;
   }
 
   static getInstance(): AnalyticsEvents {
@@ -87,13 +94,18 @@ export class AnalyticsEvents {
     AnalyticsEvents.appVersion = appVersion;
     AnalyticsEvents.contentVersion = contentVersion;
 
-    AnalyticsEvents.getLocation();
-
     var eventString = 'user ' + AnalyticsEvents.uuid + ' opened the assessment';
 
     console.log(eventString);
 
-    firebaseLogEvent(AnalyticsEvents.gana as any, 'opened', {});
+    const analytics = AnalyticsEvents.getLinkedAnalytics('opened');
+    if (!analytics) {
+      return;
+    }
+
+    AnalyticsEvents.getLocation();
+
+    firebaseLogEvent(analytics as any, 'opened', {});
   }
 
   // Get App Language From Data URL
@@ -130,11 +142,16 @@ export class AnalyticsEvents {
 
   // Send Location
   static sendLocation(): void {
+    const analytics = AnalyticsEvents.getLinkedAnalytics('user_location');
+    if (!analytics) {
+      return;
+    }
+
     var eventString =
       'Sending User coordinates: ' + AnalyticsEvents.uuid + ' : ' + AnalyticsEvents.clat + ', ' + AnalyticsEvents.clon;
     console.log(eventString);
 
-    firebaseLogEvent(AnalyticsEvents.gana as any, 'user_location', {
+    firebaseLogEvent(analytics as any, 'user_location', {
       user: AnalyticsEvents.uuid,
       lang: AnalyticsEvents.getAppLanguageFromDataURL(AnalyticsEvents.dataURL),
       app: AnalyticsEvents.getAppTypeFromDataURL(AnalyticsEvents.dataURL),
@@ -147,7 +164,7 @@ export class AnalyticsEvents {
     console.log('App Version: ' + AnalyticsEvents.appVersion);
     console.log('Content Version: ' + AnalyticsEvents.contentVersion);
 
-    firebaseLogEvent(AnalyticsEvents.gana as any, 'initialized', {
+    firebaseLogEvent(analytics as any, 'initialized', {
       type: 'initialized',
       clUserId: AnalyticsEvents.uuid,
       userSource: AnalyticsEvents.userSource,
@@ -334,7 +351,12 @@ export class AnalyticsEvents {
         requiredScore: integerRequiredScore
       }),
     };
-    firebaseLogEvent(AnalyticsEvents.gana || {}, 'completed', eventData);
+    const analytics = AnalyticsEvents.getLinkedAnalytics('completed');
+    if (!analytics) {
+      return;
+    }
+
+    firebaseLogEvent(analytics as any, 'completed', eventData);
 
   }
 

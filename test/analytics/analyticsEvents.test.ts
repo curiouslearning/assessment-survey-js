@@ -351,6 +351,7 @@ describe('sendFinished', () => {
     // Mock UUID and user source
     AnalyticsEvents.uuid = 'test-uuid';
     AnalyticsEvents.userSource = 'test-source';
+    AnalyticsEvents.gana = 'google-analytics-test';
     AnalyticsEvents.appVersion = '1.0.0';
     AnalyticsEvents.contentVersion = '2.0.0';
 

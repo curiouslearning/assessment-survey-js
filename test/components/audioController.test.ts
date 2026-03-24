@@ -56,7 +56,12 @@ describe('AudioController', () => {
     const instance = AudioController.getInstance();
     instance.allAudios[audioName] = new Audio();
 
-    const playSpy = jest.spyOn(instance.allAudios[audioName], 'play').mockResolvedValue(undefined);
+    const playSpy = jest.spyOn(instance.allAudios[audioName], 'play').mockImplementation(() => {
+      queueMicrotask(() => {
+        instance.allAudios[audioName].dispatchEvent(new Event('ended'));
+      });
+      return Promise.resolve();
+    });
 
     await new Promise<void>((resolve) => {
       AudioController.PlayAudio(audioName, resolve);

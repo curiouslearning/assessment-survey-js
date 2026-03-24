@@ -80,7 +80,7 @@ export class BaseAnalyticsIntegration {
             // this.analyticsService.register('statsig', statsigStrategy);
 
             this.isInitialized = true;
-            console.log("Analytics service initialized successfully with Firebase and Statsig");
+            console.log("Analytics service initialized successfully with Firebase");
         } catch (error) {
             console.error("Error while initializing analytics:", error);
             throw error;
@@ -119,7 +119,7 @@ export class BaseAnalyticsIntegration {
     /**
      * Gets the initialized Firebase app instance (if available).
      *
-     * @returns {any | undefined} The Firebase app instance, or undefined if not initialized.
+     * @returns {unknown | undefined} The Firebase app instance, or undefined if not initialized.
      */
     get firebaseApp(): unknown {
         return this.firebaseStrategy?.firebaseApp;
