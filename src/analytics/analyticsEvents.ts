@@ -61,9 +61,6 @@ export class AnalyticsEvents {
         AnalyticsEvents.clon = lon;
         AnalyticsEvents.latlong = '';
         lpieces = [];
-        // city = jsonResponse.city;
-        // region = jsonResponse.region;
-        // country = jsonResponse.country;
         AnalyticsEvents.sendLocation();
 
         return {};

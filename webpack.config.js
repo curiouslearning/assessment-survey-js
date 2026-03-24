@@ -1,8 +1,24 @@
 const path = require('path');
+const CopyPlugin = require('copy-webpack-plugin');
+
+const env = process.env.NODE_ENV || 'development';
+const isDev = (env !== 'production');
+const mode = isDev ? 'development' : 'production';
 
 module.exports = {
   entry: './src/App.ts',
-  devtool: 'inline-source-map',
+  mode,
+  devtool: isDev ? 'inline-source-map' : false,
+  plugins: [
+    new CopyPlugin({
+      patterns: [
+        { 
+          from: path.resolve(__dirname, 'public'), 
+          to: path.resolve(__dirname, 'dist') 
+        },
+      ],
+    }),
+  ],
   module: {
     rules: [
       {

@@ -11,6 +11,7 @@ import { fetchSurveyQuestions } from '../utils/jsonUtils';
 import { UnityBridge } from '../utils/unityBridge';
 
 export class Survey extends BaseQuiz {
+  static readonly TYPE = 'survey';
   public questionsData: qData[];
   public currentQuestionIndex: number;
 
@@ -56,6 +57,7 @@ export class Survey extends BaseQuiz {
 
   public startSurvey = () => {
     UIController.ReadyForNext(this.buildNewQuestion());
+    this.start();
   };
 
   public onQuestionEnd = () => {

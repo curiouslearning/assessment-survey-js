@@ -2,9 +2,19 @@ import { App } from './App';
 import { AnalyticsEvents } from './analytics/analyticsEvents';
 import { UIController } from './ui/uiController';
 import { UnityBridge } from './utils/unityBridge';
+import { PubSub } from '@curiouslearning/core'
 
-export abstract class BaseQuiz {
+export abstract class BaseQuiz extends PubSub {
+  static readonly TYPE: string = 'base';
+
   protected app: App;
+  protected quizEndData: any;
+  public id: string;
+  public type: string;
+  public score: number;
+  public max_score: number;
+  public startTime: number;
+  public endTime: number;
   public dataURL: string;
   public unityBridge: UnityBridge;
 
@@ -46,6 +56,7 @@ export abstract class BaseQuiz {
   public devModeAnimationSpeedMultiplierValue: HTMLElement;
 
   constructor() {
+    super();
     this.isInDevMode =
       window.location.href.includes('localhost') ||
       window.location.href.includes('127.0.0.1') ||
@@ -146,9 +157,15 @@ export abstract class BaseQuiz {
   public abstract handleAnswerButtonPress(ans: number, elapsed: number): void;
   public abstract HasQuestionsLeft(): boolean;
 
+  start() {
+    this.startTime = Date.now();
+  }
+
   public onEnd(): void {
     // sendFinished();
-    UIController.ShowEnd();
-    this.app.unityBridge.SendClose();
+    UIController.ShowEnd(); // TODO: non-game logic code. Move to App.ts
+    this.app.unityBridge.SendClose(); // TODO: non-game logic code. Move to App.ts
+    this.endTime = Date.now();
+    this.publish('ENDED', this);
   }
 }

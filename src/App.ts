@@ -2,7 +2,7 @@
  * App class that represents an entry point of the application.
  */
 
-import { getUUID, getUserSource, getDataFile } from './utils/urlUtils';
+import { getUUID, getUserSource, getDataFile, getAppLanguageFromDataURL, getAppTypeFromDataURL } from './utils/urlUtils';
 import { Survey } from './survey/survey';
 import { Assessment } from './assessment/assessment';
 import { UnityBridge } from './utils/unityBridge';
@@ -14,6 +14,9 @@ import { getAnalytics, logEvent } from 'firebase/analytics';
 import { Workbox } from 'workbox-window';
 import CacheModel from './components/cacheModel';
 import { UIController } from './ui/uiController';
+import { AnalyticsEventsType, AnalyticsIntegration } from './analytics/analytics-integration';
+import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from './utils/AnalyticsUtils';
+import { AndroidInterface } from '@curiouslearning/core';
 
 const appVersion: string = 'v1.1.3';
 
@@ -34,7 +37,7 @@ export class App {
   public unityBridge;
   public analytics;
   public game: BaseQuiz;
-
+  public analyticsIntegration: AnalyticsIntegration;
   cacheModel: CacheModel;
 
   lang: string = 'english';
@@ -47,30 +50,12 @@ export class App {
     this.dataURL = getDataFile();
     this.cacheModel = new CacheModel(this.dataURL, this.dataURL, new Set<string>());
 
-    // console.log("Data file: " + this.dataURL);
 
-    const firebaseConfig = {
-      apiKey: 'AIzaSyB8c2lBVi26u7YRL9sxOP97Uaq3yN8hTl4',
-      authDomain: 'ftm-b9d99.firebaseapp.com',
-      databaseURL: 'https://ftm-b9d99.firebaseio.com',
-      projectId: 'ftm-b9d99',
-      storageBucket: 'ftm-b9d99.appspot.com',
-      messagingSenderId: '602402387941',
-      appId: '1:602402387941:web:7b1b1181864d28b49de10c',
-      measurementId: 'G-FF1159TGCF',
-    };
-
-    const fapp = initializeApp(firebaseConfig);
-    const fanalytics = getAnalytics(fapp);
-
-    this.analytics = fanalytics;
-    logEvent(fanalytics, 'notification_received');
-    logEvent(fanalytics, 'test initialization event', {});
-
-    console.log('firebase initialized');
   }
 
   public async spinUp() {
+    await AnalyticsIntegration.initializeAnalytics();
+    this.analyticsIntegration = AnalyticsIntegration.getInstance();
     window.addEventListener('load', () => {
       console.log('Window Loaded!');
       (async () => {
@@ -87,9 +72,9 @@ export class App {
           let appType = data['appType'];
           let assessmentType = data['assessmentType'];
 
-          if (appType == 'survey') {
+          if (appType == Survey.TYPE) {
             this.game = new Survey(this.dataURL, this.unityBridge);
-          } else if (appType == 'assessment') {
+          } else if (appType == Assessment.TYPE) {
             // Get and add all the audio assets to the cache model
 
             let buckets = data['buckets'];
@@ -119,21 +104,56 @@ export class App {
 
           this.game.unityBridge = this.unityBridge;
 
-          AnalyticsEvents.setUuid(getUUID(), getUserSource());
-          AnalyticsEvents.linkAnalytics(this.analytics, this.dataURL);
-          AnalyticsEvents.setAssessmentType(assessmentType);
           contentVersion = data['contentVersion'];
-          AnalyticsEvents.sendInit(appVersion, data['contentVersion']);
+
+          this.setCommonProperties();
+          // AnalyticsEvents.sendInit(appVersion, data['contentVersion']);
+          this.logInitialAnalyticsEvents();
           // this.cacheModel.setAppName(this.cacheModel.appName + ':' + data["contentVersion"]);
 
           this.game.Run(this);
-        });
+
+          // NOTE: when adding new event handling, simply list it down here.
+          this.game.subscribe('ENDED', (gameInstance: BaseQuiz) => {
+            // we only log when its assessment, for survey we don't have the score and max score properties.
+            if (appType !== 'assessment') return;
+
+            const { cr_user_id, language } = getCommonAnalyticsEventsProperties();
+            const androidInterface = new AndroidInterface({
+              cr_user_id,
+              app_id: appType,
+              debug: false,
+              log: false
+            });
+            const { score, startTime, endTime, max_score } = gameInstance;
+            androidInterface.logUserSessionsData({
+              type: assessmentType || appType,
+              lang: language,
+              score,
+              max_score,
+              time_spent: endTime - startTime,
+              event_type: 'activity_completed'
+            });
+          });
+        }); 
 
         await this.registerServiceWorker(this.game, this.dataURL);
       })();
     });
   }
+  async setCommonProperties() {
+    setCommonAnalyticsEventsProperties(getUUID(), getAppLanguageFromDataURL(this.dataURL), getAppTypeFromDataURL(this.dataURL), getUserSource(), contentVersion, appVersion);
+  }
+  async logInitialAnalyticsEvents() {
+    const lat_lang = await getLocation();
+    setLocationProperty(lat_lang ?? 'NotAvailable');
+    this.analyticsIntegration.track(AnalyticsEventsType.OPENED, {})
 
+    this.analyticsIntegration.track(AnalyticsEventsType.USER_LOCATION, {});
+
+    this.analyticsIntegration.track(AnalyticsEventsType.INITIALIZE, { type: "initialized" })
+
+  }
   async registerServiceWorker(game: BaseQuiz, dataURL: string = '') {
     console.log('Registering service worker...');
 
