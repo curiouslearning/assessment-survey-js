@@ -26,7 +26,9 @@ export class AnalyticsEvents {
 
   private constructor() {
     // Initialize the class
-  }  private static getLinkedAnalytics(eventName: string): any | null {
+  }  
+  
+  private static getLinkedAnalytics(eventName: string): any | null {
     if (!AnalyticsEvents.gana) {
       console.warn(`AnalyticsEvents.gana is null; call AnalyticsEvents.linkAnalytics() before sending ${eventName}.`);
       return null;
@@ -181,6 +183,11 @@ export class AnalyticsEvents {
 
   // Send Answered
   static sendAnswered(theQ: qData, theA: number, elapsed: number): void {
+    const analytics = AnalyticsEvents.getLinkedAnalytics('answered');
+    if (!analytics) {
+      return;
+    }
+
     var ans = theQ.answers[theA - 1];
 
     var iscorrect = null;
@@ -211,7 +218,7 @@ export class AnalyticsEvents {
     console.log('Answered App Version: ' + AnalyticsEvents.appVersion);
     console.log('Content Version: ' + AnalyticsEvents.contentVersion);
 
-    firebaseLogEvent(AnalyticsEvents.gana as any, 'answered', {
+    firebaseLogEvent(analytics as any, 'answered', {
       type: 'answered',
       clUserId: AnalyticsEvents.uuid,
       userSource: AnalyticsEvents.userSource,
@@ -236,6 +243,11 @@ export class AnalyticsEvents {
 
   // Send Bucket
   static sendBucket(tb: bucket, passed: boolean): void {
+    const analytics = AnalyticsEvents.getLinkedAnalytics('bucketCompleted');
+    if (!analytics) {
+      return;
+    }
+
     var bn = tb.bucketID;
     var btried = tb.numTried;
     var bcorrect = tb.numCorrect;
@@ -256,7 +268,7 @@ export class AnalyticsEvents {
     console.log('Bucket Completed App Version: ' + AnalyticsEvents.appVersion);
     console.log('Content Version: ' + AnalyticsEvents.contentVersion);
 
-    firebaseLogEvent(AnalyticsEvents.gana as any, 'bucketCompleted', {
+    firebaseLogEvent(analytics as any, 'bucketCompleted', {
       type: 'bucketCompleted',
       clUserId: AnalyticsEvents.uuid,
       userSource: AnalyticsEvents.userSource,

@@ -18,12 +18,21 @@ class PubSub {
     if (!subs) {
       return;
     }
+
+    const errors: unknown[] = [];
     for (const callback of subs) {
       try {
         callback(payload);
       } catch (err) {
+        errors.push(err);
         console.error('PubSub callback error for event', event, err);
       }
+    }
+
+    const shouldThrowInCurrentEnv =
+      typeof process === 'undefined' || process?.env?.NODE_ENV !== 'production';
+    if (errors.length > 0 && shouldThrowInCurrentEnv) {
+      throw errors[0];
     }
   }
 }
@@ -51,7 +60,7 @@ export abstract class BaseQuiz extends PubSub {
   public animationSpeedMultiplier: number = 1;
 
   public devModeToggleButtonContainerId: string = 'devModeModalToggleButtonContainer';
-  public devModeToggleButtonContainer: HTMLElement;
+  public devModeToggleButtonContainer: HTMLElement | null;
 
   public devModeToggleButtonId: string = 'devModeModalToggleButton';
   public devModeToggleButton: HTMLButtonElement;
@@ -77,7 +86,7 @@ export abstract class BaseQuiz extends PubSub {
   public devModeAnimationSpeedMultiplierRange: HTMLInputElement;
 
   public devModeAnimationSpeedMultiplierValueId: string = 'devModeAnimationSpeedMultiplierValue';
-  public devModeAnimationSpeedMultiplierValue: HTMLElement;
+  public devModeAnimationSpeedMultiplierValue: HTMLElement | null;
 
   constructor() {
     super();
@@ -152,18 +161,9 @@ export abstract class BaseQuiz extends PubSub {
 
     if (this.devModeAnimationSpeedMultiplierRange) {
       this.devModeAnimationSpeedMultiplierRange.onchange = () => {
-        this.animationSpeedMultiplier = parseFloat(this.devModeAnimationSpeedMultiplierRange.value);
-        if (this.animationSpeedMultiplier < 0.2) {
-          this.animationSpeedMultiplier = 0.2;
-          this.devModeAnimationSpeedMultiplierRange.value = '0.2';
-        }
-
-        if (this.devModeAnimationSpeedMultiplierValue) {
-          this.devModeAnimationSpeedMultiplierValue.innerText = this.animationSpeedMultiplier.toString();
-        }
-        this.handleAnimationSpeedMultiplierChange();
+        this.syncAnimationSpeedMultiplier();
       };
-      this.animationSpeedMultiplier = parseFloat(this.devModeAnimationSpeedMultiplierRange.value);
+      this.syncAnimationSpeedMultiplier();
     }
 
     if (this.devModeToggleButtonContainer) {
@@ -176,7 +176,28 @@ export abstract class BaseQuiz extends PubSub {
   }
 
   public hideDevModeButton() {
-    this.devModeToggleButtonContainer.style.display = 'none';
+    if (this.devModeToggleButtonContainer) {
+      this.devModeToggleButtonContainer.style.display = 'none';
+    }
+  }
+
+  private syncAnimationSpeedMultiplier(): void {
+    if (!this.devModeAnimationSpeedMultiplierRange) {
+      return;
+    }
+
+    const parsedValue = parseFloat(this.devModeAnimationSpeedMultiplierRange.value);
+    this.animationSpeedMultiplier = Number.isFinite(parsedValue) ? parsedValue : 1;
+    if (this.animationSpeedMultiplier < 0.2) {
+      this.animationSpeedMultiplier = 0.2;
+      this.devModeAnimationSpeedMultiplierRange.value = '0.2';
+    }
+
+    if (this.devModeAnimationSpeedMultiplierValue) {
+      this.devModeAnimationSpeedMultiplierValue.innerText = this.animationSpeedMultiplier.toString();
+    }
+
+    this.handleAnimationSpeedMultiplierChange();
   }
 
   public abstract handleBucketGenModeChange(event: Event): void;

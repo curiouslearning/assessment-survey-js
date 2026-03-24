@@ -60,7 +60,7 @@ describe('getInstance', () => {
 
   test('should not create a new instance if one already exists', () => {
     const instance1 = AnalyticsEvents.getInstance();
-    AnalyticsEvents.instance = new AnalyticsEvents(); // Manually create a new instance
+    AnalyticsEvents.instance = undefined as unknown as AnalyticsEvents;
     const instance2 = AnalyticsEvents.getInstance();
     expect(instance1).not.toBe(instance2); // Should return the new instance
   });
@@ -752,6 +752,7 @@ describe('sendInit', () => {
   beforeEach(() => {
     jest.spyOn(console, 'log').mockImplementation(() => {}); // Mock console.log
     jest.spyOn(AnalyticsEvents, 'getLocation').mockImplementation(() => {}); // Mock getLocation
+    AnalyticsEvents.gana = 'google-analytics-test';
   });
 
   afterEach(() => {
