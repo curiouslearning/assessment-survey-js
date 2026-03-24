@@ -1,29 +1,17 @@
+import {
+  AbstractAnalyticsStrategy,
+  AnalyticsService,
+  FirebaseStrategy,
+  StatsigStrategy,
+} from '@curiouslearning/analytics';
+
 import { firebaseConfig } from './analytics-config';
 
-let AnalyticsServiceClass: any;
-let FirebaseStrategyClass: any;
-let StatsigStrategyClass: any;
-
-try {
-  const analyticsModule = require('@curiouslearning/analytics');
-  AnalyticsServiceClass = analyticsModule.AnalyticsService;
-  FirebaseStrategyClass = analyticsModule.FirebaseStrategy;
-  StatsigStrategyClass = analyticsModule.StatsigStrategy;
-} catch (error) {
-  class NoopStrategy {
-    constructor(opts?: any) {}
-    async initialize(): Promise<void> {
-      return;
-    }
-  }
-  class NoopService {
-    register(name: string, strategy: any): void {}
-    track(event: string, payload: any): void {}
-  }
-  AnalyticsServiceClass = NoopService;
-  FirebaseStrategyClass = NoopStrategy;
-  StatsigStrategyClass = NoopStrategy;
+interface AnalyticsProvider extends AbstractAnalyticsStrategy {
+  firebaseApp?: unknown;
 }
+
+type StatsigStrategyConstructor = typeof StatsigStrategy;
 
 /**
  * Base class for integrating analytics providers.
@@ -33,10 +21,10 @@ try {
  * custom event tracking, and accessors for analytics services.
  */
 export class BaseAnalyticsIntegration {
-    private analyticsService: any;
-    private firebaseStrategy: any;
-    private statsigStrategy: any;
-    private isInitialized: boolean = false;
+    private analyticsService: AnalyticsService;
+    private firebaseStrategy?: AnalyticsProvider;
+    private isInitialized = false;
+    private readonly statsigStrategyClass: StatsigStrategyConstructor = StatsigStrategy;
 
     /**
      * Creates a new instance of BaseAnalyticsIntegration.
@@ -45,7 +33,7 @@ export class BaseAnalyticsIntegration {
      * until {@link initialize} is called.
      */
     constructor() {
-        this.analyticsService = new AnalyticsServiceClass();
+        this.analyticsService = new AnalyticsService();
     }
 
     /**
@@ -66,7 +54,7 @@ export class BaseAnalyticsIntegration {
         }
 
         try {
-            this.firebaseStrategy = new FirebaseStrategyClass({
+            this.firebaseStrategy = new FirebaseStrategy({
                 firebaseOptions: {
                     apiKey: firebaseConfig.apiKey,
                     authDomain: firebaseConfig.authDomain,
@@ -83,13 +71,13 @@ export class BaseAnalyticsIntegration {
             await this.firebaseStrategy.initialize();
             this.analyticsService.register('firebase', this.firebaseStrategy);
 
-            // Example of Statsig initialization (commented out)
-            // this.statsigStrategy = new StatsigStrategy({
+            // Example of Statsig initialization (commented out for now)
+            // const statsigStrategy = new StatsigStrategy({
             //     clientKey: statsigConfig.clientKey,
             //     statsigUser: { userID: getUUID() || statsigConfig.userId }
             // });
-            // await this.statsigStrategy.initialize();
-            // this.analyticsService.register('statsig', this.statsigStrategy);
+            // await statsigStrategy.initialize();
+            // this.analyticsService.register('statsig', statsigStrategy);
 
             this.isInitialized = true;
             console.log("Analytics service initialized successfully with Firebase and Statsig");
@@ -124,7 +112,7 @@ export class BaseAnalyticsIntegration {
      *
      * @returns {AnalyticsService} The analytics service used for managing providers.
      */
-    get analytics() {
+    get analytics(): AnalyticsService {
         return this.analyticsService;
     }
 
@@ -133,7 +121,7 @@ export class BaseAnalyticsIntegration {
      *
      * @returns {any | undefined} The Firebase app instance, or undefined if not initialized.
      */
-    get firebaseApp() {
+    get firebaseApp(): unknown {
         return this.firebaseStrategy?.firebaseApp;
     }
 
