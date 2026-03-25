@@ -10,6 +10,7 @@ module.exports = {
     'node_modules/**/*',
     'data/**/*',
     'src/**/*',
+    'coverage/**/*',
     'workbox-config.js',
     'sw-src.js',
     'tsconfig.json',
