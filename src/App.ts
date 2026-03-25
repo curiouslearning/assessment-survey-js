@@ -16,7 +16,15 @@ import CacheModel from './components/cacheModel';
 import { UIController } from './ui/uiController';
 import { AnalyticsEventsType, AnalyticsIntegration } from './analytics/analytics-integration';
 import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from './utils/AnalyticsUtils';
-import { AndroidInterface } from '@curiouslearning/core';
+let AndroidInterface: any;
+try {
+  AndroidInterface = require('@curiouslearning/core').AndroidInterface;
+} catch (err) {
+  AndroidInterface = class {
+    constructor(_opts: any) {}
+    logUserSessionsData(_args: any) {}
+  };
+}
 
 const appVersion: string = 'v1.1.3';
 
@@ -26,9 +34,15 @@ const appVersion: string = 'v1.1.3';
  */
 let contentVersion: string = '';
 
-let loadingScreen = document.getElementById('loadingScreen');
-const progressBar = document.getElementById('progressBar');
 const broadcastChannel: BroadcastChannel = new BroadcastChannel('as-message-channel');
+
+function getLoadingScreen(): HTMLElement | null {
+  return document.getElementById('loadingScreen');
+}
+
+function getProgressBar(): HTMLElement | null {
+  return document.getElementById('progressBar');
+}
 
 export class App {
   /** Could be 'assessment' or 'survey' based on the data file */
@@ -56,90 +70,90 @@ export class App {
   public async spinUp() {
     await AnalyticsIntegration.initializeAnalytics();
     this.analyticsIntegration = AnalyticsIntegration.getInstance();
-    window.addEventListener('load', () => {
-      console.log('Window Loaded!');
-      (async () => {
-        await fetchAppData(this.dataURL).then((data) => {
-          console.log('Assessment/Survey ' + appVersion + ' initializing!');
-          console.log('App data loaded!');
-          console.log(data);
 
-          this.cacheModel.setContentFilePath(getDataURL(this.dataURL));
+    const initialize = async () => {
+      try {
+        const data = await fetchAppData(this.dataURL);
+        this.cacheModel.setContentFilePath(getDataURL(this.dataURL));
+        UIController.SetFeedbackText?.(data['feedbackText']);
 
-          // TODO: Why do we need to set the feedback text here?
-          UIController.SetFeedbackText(data['feedbackText']);
+        let appType = data['appType'];
+        let assessmentType = data['assessmentType'];
 
-          let appType = data['appType'];
-          let assessmentType = data['assessmentType'];
+        if (appType == Survey.TYPE) {
+          this.game = new Survey(this.dataURL, this.unityBridge);
+        } else if (appType == Assessment.TYPE) {
+          let buckets = data['buckets'] || [];
 
-          if (appType == Survey.TYPE) {
-            this.game = new Survey(this.dataURL, this.unityBridge);
-          } else if (appType == Assessment.TYPE) {
-            // Get and add all the audio assets to the cache model
-
-            let buckets = data['buckets'];
-
-            for (let i = 0; i < buckets.length; i++) {
-              for (let j = 0; j < buckets[i].items.length; j++) {
-                let audioItemURL;
-                // Use to lower case for the Lugandan data
-                if (
-                  data['quizName'].includes('Luganda') ||
-                  data['quizName'].toLowerCase().includes('west african english')
-                ) {
-                  audioItemURL =
-                    '/audio/' + this.dataURL + '/' + buckets[i].items[j].itemName.toLowerCase().trim() + '.mp3';
-                } else {
-                  audioItemURL = '/audio/' + this.dataURL + '/' + buckets[i].items[j].itemName.trim() + '.mp3';
-                }
-
-                this.cacheModel.addItemToAudioVisualResources(audioItemURL);
+          for (let i = 0; i < buckets.length; i++) {
+            for (let j = 0; j < buckets[i].items.length; j++) {
+              let audioItemURL;
+              if (
+                data['quizName']?.includes('Luganda') ||
+                data['quizName']?.toLowerCase().includes('west african english')
+              ) {
+                audioItemURL =
+                  '/audio/' + this.dataURL + '/' + buckets[i].items[j].itemName.toLowerCase().trim() + '.mp3';
+              } else {
+                audioItemURL = '/audio/' + this.dataURL + '/' + buckets[i].items[j].itemName.trim() + '.mp3';
               }
+              this.cacheModel.addItemToAudioVisualResources(audioItemURL);
             }
-
-            this.cacheModel.addItemToAudioVisualResources('/audio/' + this.dataURL + '/answer_feedback.mp3');
-
-            this.game = new Assessment(this.dataURL, this.unityBridge);
           }
 
+          this.cacheModel.addItemToAudioVisualResources('/audio/' + this.dataURL + '/answer_feedback.mp3');
+          this.game = new Assessment(this.dataURL, this.unityBridge);
+        }
+
+        if (this.game != null) {
           this.game.unityBridge = this.unityBridge;
+        }
 
-          contentVersion = data['contentVersion'];
+        contentVersion = data['contentVersion'];
 
-          this.setCommonProperties();
-          // AnalyticsEvents.sendInit(appVersion, data['contentVersion']);
-          this.logInitialAnalyticsEvents();
-          // this.cacheModel.setAppName(this.cacheModel.appName + ':' + data["contentVersion"]);
+        await this.setCommonProperties();
+        await this.logInitialAnalyticsEvents();
 
-          this.game.Run(this);
+        this.game?.Run?.(this);
 
-          // NOTE: when adding new event handling, simply list it down here.
-          this.game.subscribe('ENDED', (gameInstance: BaseQuiz) => {
-            // we only log when its assessment, for survey we don't have the score and max score properties.
-            if (appType !== 'assessment') return;
+        this.game?.subscribe?.('ENDED', (gameInstance: BaseQuiz) => {
+          if (appType !== 'assessment') return;
 
-            const { cr_user_id, language } = getCommonAnalyticsEventsProperties();
-            const androidInterface = new AndroidInterface({
-              cr_user_id,
-              app_id: appType,
-              debug: false,
-              log: false
-            });
-            const { score, startTime, endTime, max_score } = gameInstance;
-            androidInterface.logUserSessionsData({
-              type: assessmentType || appType,
-              lang: language,
-              score,
-              max_score,
-              time_spent: endTime - startTime,
-              event_type: 'activity_completed'
-            });
+          const { cr_user_id, language } = getCommonAnalyticsEventsProperties();
+          const androidInterface = new AndroidInterface({
+            cr_user_id,
+            app_id: appType,
+            debug: false,
+            log: false,
           });
-        }); 
+          const { score, startTime, endTime, max_score } = gameInstance;
+          androidInterface.logUserSessionsData({
+            type: assessmentType || appType,
+            lang: language,
+            score,
+            max_score,
+            time_spent: endTime - startTime,
+            event_type: 'activity_completed',
+          });
+        });
 
         await this.registerServiceWorker(this.game, this.dataURL);
-      })();
-    });
+      } catch (err) {
+        console.error('Error initializing app:', err);
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      if (document.readyState === 'complete') {
+        await initialize();
+      } else {
+        window.addEventListener('load', async () => {
+          await initialize();
+        });
+      }
+    } else {
+      await initialize();
+    }
   }
   async setCommonProperties() {
     setCommonAnalyticsEventsProperties(getUUID(), getAppLanguageFromDataURL(this.dataURL), getAppTypeFromDataURL(this.dataURL), getUserSource(), contentVersion, appVersion);
@@ -147,11 +161,9 @@ export class App {
   async logInitialAnalyticsEvents() {
     const lat_lang = await getLocation();
     setLocationProperty(lat_lang ?? 'NotAvailable');
-    this.analyticsIntegration.track(AnalyticsEventsType.OPENED, {})
-
-    this.analyticsIntegration.track(AnalyticsEventsType.USER_LOCATION, {});
-
-    this.analyticsIntegration.track(AnalyticsEventsType.INITIALIZE, { type: "initialized" })
+    this.analyticsIntegration?.track?.(AnalyticsEventsType.OPENED, {});
+    this.analyticsIntegration?.track?.(AnalyticsEventsType.USER_LOCATION, {});
+    this.analyticsIntegration?.track?.(AnalyticsEventsType.INITIALIZE, { type: 'initialized' });
 
   }
   async registerServiceWorker(game: BaseQuiz, dataURL: string = '') {
@@ -215,7 +227,7 @@ export class App {
 
       if (localStorage.getItem(this.cacheModel.appName) == null) {
         console.log('Caching!' + this.cacheModel.appName);
-        loadingScreen!.style.display = 'flex';
+        getLoadingScreen()?.style && (getLoadingScreen()!.style.display = 'flex');
         broadcastChannel.postMessage({
           command: 'Cache',
           data: {
@@ -223,9 +235,15 @@ export class App {
           },
         });
       } else {
-        progressBar!.style.width = 100 + '%';
+        const progressBar = getProgressBar();
+        if (progressBar) {
+          progressBar.style.width = '100%';
+        }
         setTimeout(() => {
-          loadingScreen!.style.display = 'none';
+          const loadingScreen = getLoadingScreen();
+          if (loadingScreen) {
+            loadingScreen.style.display = 'none';
+          }
           UIController.SetContentLoaded(true);
         }, 1500);
       }
@@ -276,12 +294,21 @@ function handleServiceWorkerMessage(event): void {
 }
 
 function handleLoadingMessage(event, progressValue): void {
+  const progressBar = getProgressBar();
+  const loadingScreen = getLoadingScreen();
+
   if (progressValue < 40 && progressValue >= 10) {
-    progressBar!.style.width = progressValue + '%';
+    if (progressBar) {
+      progressBar.style.width = progressValue + '%';
+    }
   } else if (progressValue >= 100) {
-    progressBar!.style.width = 100 + '%';
+    if (progressBar) {
+      progressBar.style.width = '100%';
+    }
     setTimeout(() => {
-      loadingScreen!.style.display = 'none';
+      if (loadingScreen) {
+        loadingScreen.style.display = 'none';
+      }
       UIController.SetContentLoaded(true);
     }, 1500);
     // add book with a name to local storage as cached
@@ -308,5 +335,7 @@ function handleUpdateFoundMessage(): void {
   }
 }
 
-const app = new App();
-app.spinUp();
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  const app = new App();
+  app.spinUp();
+}

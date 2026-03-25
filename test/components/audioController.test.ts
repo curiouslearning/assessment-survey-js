@@ -30,9 +30,9 @@ describe('AudioController', () => {
 
     const instance = AudioController.getInstance();
     expect(instance.wavToCache).toContain('audio/testData/answer_feedback.mp3');
-    expect(instance.allAudios).toHaveProperty('question-audio.mp3', expect.any(Audio));
-    expect(instance.allImages).toHaveProperty('question-image.png', expect.any(Image));
-    expect(instance.allImages).toHaveProperty('answer-image.png', expect.any(Image));
+    expect(instance.allAudios['question-audio.mp3']).toBeInstanceOf(HTMLAudioElement);
+    expect(instance.allImages['question-image.png']).toBeInstanceOf(HTMLImageElement);
+    expect(instance.allImages['answer-image.png']).toBeInstanceOf(HTMLImageElement);
   });
 
   test('FilterAndAddAudioToAllAudios should handle audio formats', () => {
@@ -40,7 +40,7 @@ describe('AudioController', () => {
     AudioController.FilterAndAddAudioToAllAudios(audioURL);
 
     const instance = AudioController.getInstance();
-    expect(instance.allAudios).toHaveProperty('example-audio.mp3', expect.any(Audio));
+    expect(instance.allAudios['example-audio.mp3']).toBeInstanceOf(HTMLAudioElement);
   });
 
   test('AddImageToAllImages should cache images', () => {
@@ -48,7 +48,7 @@ describe('AudioController', () => {
     AudioController.AddImageToAllImages(imageURL);
 
     const instance = AudioController.getInstance();
-    expect(instance.allImages).toHaveProperty(imageURL, expect.any(Image));
+    expect(instance.allImages[imageURL]).toBeInstanceOf(HTMLImageElement);
   });
 
   test('PlayAudio should play an audio file if it exists', async () => {
@@ -56,7 +56,12 @@ describe('AudioController', () => {
     const instance = AudioController.getInstance();
     instance.allAudios[audioName] = new Audio();
 
-    const playSpy = jest.spyOn(instance.allAudios[audioName], 'play').mockResolvedValue(undefined);
+    const playSpy = jest.spyOn(instance.allAudios[audioName], 'play').mockImplementation(() => {
+      queueMicrotask(() => {
+        instance.allAudios[audioName].dispatchEvent(new Event('ended'));
+      });
+      return Promise.resolve();
+    });
 
     await new Promise<void>((resolve) => {
       AudioController.PlayAudio(audioName, resolve);
@@ -96,7 +101,7 @@ describe('AudioController', () => {
     AudioController.PreloadBucket(newBucket, 'testData');
 
     const instance = AudioController.getInstance();
-    expect(instance.allAudios).toHaveProperty('bucket-audio.mp3', expect.any(Audio));
+    expect(instance.allAudios['bucket-audio.mp3']).toBeInstanceOf(HTMLAudioElement);
   });
 
   test('PlayDing should play the feedback audio', () => {
@@ -110,7 +115,7 @@ describe('AudioController', () => {
 
   test('PlayCorrect should play the correct audio', () => {
     const instance = AudioController.getInstance();
-    const playSpy = jest.spyOn(instance['feedbackAudio'], 'play').mockImplementation();
+    const playSpy = jest.spyOn(instance['correctAudio'], 'play').mockImplementation();
 
     AudioController.PlayCorrect();
 

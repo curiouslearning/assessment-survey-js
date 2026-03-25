@@ -144,11 +144,29 @@ export class AudioController {
   }
 
   public static PlayDing(): void {
-    AudioController.getInstance().feedbackAudio.play();
+    try {
+      const playReturn = AudioController.getInstance().feedbackAudio?.play?.();
+      if (playReturn && typeof (playReturn as Promise<void>).catch === 'function') {
+        (playReturn as Promise<void>).catch((err) => {
+          console.warn('AudioController.PlayDing play failed', err);
+        });
+      }
+    } catch (err) {
+      console.warn('AudioController.PlayDing failed', err);
+    }
   }
 
   public static PlayCorrect(): void {
-    AudioController.getInstance().correctAudio.play();
+    try {
+      const playReturn = AudioController.getInstance().correctAudio?.play?.();
+      if (playReturn && typeof (playReturn as Promise<void>).catch === 'function') {
+        (playReturn as Promise<void>).catch((err) => {
+          console.warn('AudioController.PlayCorrect play failed', err);
+        });
+      }
+    } catch (err) {
+      console.warn('AudioController.PlayCorrect failed', err);
+    }
   }
 
   public static getInstance(): AudioController {

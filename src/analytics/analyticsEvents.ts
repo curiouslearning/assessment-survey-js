@@ -2,30 +2,39 @@
 // to send to an analytics recorder (firebase? lrs?)
 
 import { qData, answerData } from '../components/questionData';
-import { logEvent } from 'firebase/analytics';
+import { logEvent as firebaseLogEvent } from 'firebase/analytics';
 import { bucket } from '../assessment/bucketData';
 import { getNextAssessment, getRequiredScore } from '../utils/urlUtils';
 
 // Create a singleton class for the analytics events
 export class AnalyticsEvents {
-  protected static uuid: string;
-  protected static userSource: string;
-  protected static clat;
-  protected static clon;
-  protected static gana;
-  protected static latlong;
+  public static uuid: string = '';
+  public static userSource: string = '';
+  public static clat: string = '';
+  public static clon: string = '';
+  public static gana: any = null;
+  public static latlong: string = '';
   // var city, region, country;
-  protected static dataURL;
+  public static dataURL: string = '';
 
-  protected static appVersion;
-  protected static contentVersion;
+  public static appVersion: string = '';
+  public static contentVersion: string = '';
 
-  protected static assessmentType: string;
+  public static assessmentType: string = '';
 
-  static instance: AnalyticsEvents;
+  public static instance: AnalyticsEvents;
 
   private constructor() {
     // Initialize the class
+  }  
+  
+  private static getLinkedAnalytics(eventName: string): any | null {
+    if (!AnalyticsEvents.gana) {
+      console.warn(`AnalyticsEvents.gana is null; call AnalyticsEvents.linkAnalytics() before sending ${eventName}.`);
+      return null;
+    }
+
+    return AnalyticsEvents.gana;
   }
 
   static getInstance(): AnalyticsEvents {
@@ -71,7 +80,7 @@ export class AnalyticsEvents {
   }
 
   // Link Analytics
-  static linkAnalytics(newgana, dataurl): void {
+  static linkAnalytics(newgana: any, dataurl: string): void {
     AnalyticsEvents.gana = newgana;
     AnalyticsEvents.dataURL = dataurl;
   }
@@ -87,28 +96,40 @@ export class AnalyticsEvents {
     AnalyticsEvents.appVersion = appVersion;
     AnalyticsEvents.contentVersion = contentVersion;
 
-    AnalyticsEvents.getLocation();
-
     var eventString = 'user ' + AnalyticsEvents.uuid + ' opened the assessment';
 
     console.log(eventString);
 
-    logEvent(AnalyticsEvents.gana, 'opened', {});
+    const analytics = AnalyticsEvents.getLinkedAnalytics('opened');
+    if (!analytics) {
+      return;
+    }
+
+    AnalyticsEvents.getLocation();
+
+    firebaseLogEvent(analytics as any, 'opened', {});
   }
 
   // Get App Language From Data URL
   static getAppLanguageFromDataURL(appType: string): string {
-    // Check if app type is not empty and split the string by the hyphen then return the first element
-    if (appType && appType !== '' && appType.includes('-')) {
-      let language: string = appType.split('-').slice(0, -1).join('-');
-      if (language.includes('west-african')) {
-        return 'west-african-english';
-      } else {
-        return language;
-      }
+    if (!appType || appType === '') {
+      return 'NotAvailable';
     }
 
-    return 'NotAvailable';
+    if (!appType.includes('-')) {
+      return 'NotAvailable';
+    }
+
+    const language = appType.split('-').slice(0, -1).join('-');
+    if (language === '') {
+      return 'en';
+    }
+
+    if (language.includes('west-african')) {
+      return 'west-african-english';
+    }
+
+    return language;
   }
 
   // Get App Type From Data URL
@@ -123,11 +144,16 @@ export class AnalyticsEvents {
 
   // Send Location
   static sendLocation(): void {
+    const analytics = AnalyticsEvents.getLinkedAnalytics('user_location');
+    if (!analytics) {
+      return;
+    }
+
     var eventString =
       'Sending User coordinates: ' + AnalyticsEvents.uuid + ' : ' + AnalyticsEvents.clat + ', ' + AnalyticsEvents.clon;
     console.log(eventString);
 
-    logEvent(AnalyticsEvents.gana, 'user_location', {
+    firebaseLogEvent(analytics as any, 'user_location', {
       user: AnalyticsEvents.uuid,
       lang: AnalyticsEvents.getAppLanguageFromDataURL(AnalyticsEvents.dataURL),
       app: AnalyticsEvents.getAppTypeFromDataURL(AnalyticsEvents.dataURL),
@@ -140,7 +166,7 @@ export class AnalyticsEvents {
     console.log('App Version: ' + AnalyticsEvents.appVersion);
     console.log('Content Version: ' + AnalyticsEvents.contentVersion);
 
-    logEvent(AnalyticsEvents.gana, 'initialized', {
+    firebaseLogEvent(analytics as any, 'initialized', {
       type: 'initialized',
       clUserId: AnalyticsEvents.uuid,
       userSource: AnalyticsEvents.userSource,
@@ -157,6 +183,11 @@ export class AnalyticsEvents {
 
   // Send Answered
   static sendAnswered(theQ: qData, theA: number, elapsed: number): void {
+    const analytics = AnalyticsEvents.getLinkedAnalytics('answered');
+    if (!analytics) {
+      return;
+    }
+
     var ans = theQ.answers[theA - 1];
 
     var iscorrect = null;
@@ -187,7 +218,7 @@ export class AnalyticsEvents {
     console.log('Answered App Version: ' + AnalyticsEvents.appVersion);
     console.log('Content Version: ' + AnalyticsEvents.contentVersion);
 
-    logEvent(AnalyticsEvents.gana, 'answered', {
+    firebaseLogEvent(analytics as any, 'answered', {
       type: 'answered',
       clUserId: AnalyticsEvents.uuid,
       userSource: AnalyticsEvents.userSource,
@@ -212,6 +243,11 @@ export class AnalyticsEvents {
 
   // Send Bucket
   static sendBucket(tb: bucket, passed: boolean): void {
+    const analytics = AnalyticsEvents.getLinkedAnalytics('bucketCompleted');
+    if (!analytics) {
+      return;
+    }
+
     var bn = tb.bucketID;
     var btried = tb.numTried;
     var bcorrect = tb.numCorrect;
@@ -232,7 +268,7 @@ export class AnalyticsEvents {
     console.log('Bucket Completed App Version: ' + AnalyticsEvents.appVersion);
     console.log('Content Version: ' + AnalyticsEvents.contentVersion);
 
-    logEvent(AnalyticsEvents.gana, 'bucketCompleted', {
+    firebaseLogEvent(analytics as any, 'bucketCompleted', {
       type: 'bucketCompleted',
       clUserId: AnalyticsEvents.uuid,
       userSource: AnalyticsEvents.userSource,
@@ -291,7 +327,7 @@ export class AnalyticsEvents {
       isSynapseUser = true;
       integerRequiredScore = Number(requiredScore);
     }
-    AnalyticsEvents.sendDataToThirdParty(score, AnalyticsEvents.uuid, integerRequiredScore, nextAssessment);
+    AnalyticsEvents.sendDataToThirdParty(score, AnalyticsEvents.uuid);
     // Attempt to send the score to the parent curious frame if it exists
     if (window.parent) {
       window.parent.postMessage(
@@ -327,11 +363,16 @@ export class AnalyticsEvents {
         requiredScore: integerRequiredScore
       }),
     };
-    logEvent(AnalyticsEvents.gana, 'completed', eventData);
+    const analytics = AnalyticsEvents.getLinkedAnalytics('completed');
+    if (!analytics) {
+      return;
+    }
+
+    firebaseLogEvent(analytics as any, 'completed', eventData);
 
   }
 
-  static sendDataToThirdParty(score: number, uuid: string, requiredScore: Number, nextAssessment: string): void {
+  static sendDataToThirdParty(score: number, uuid: string, requiredScore?: number, nextAssessment?: string): void {
     // Send data to the third party
     console.log('Attempting to send score to a third party! Score: ', score);
 
@@ -346,19 +387,27 @@ export class AnalyticsEvents {
       return;
     }
 
+    const value: any = {
+      type: 'assessment',
+      score: score,
+      completed: true,
+    };
+    if (AnalyticsEvents.assessmentType) {
+      value.subType = AnalyticsEvents.assessmentType;
+    }
+    if (typeof requiredScore !== 'undefined') {
+      value.requiredScore = requiredScore;
+    }
+    if (typeof nextAssessment !== 'undefined') {
+      value.nextAssessment = nextAssessment;
+    }
+
     const payload = {
       user: uuid,
       page: '111108121363615',
       event: {
         type: 'external',
-        value: {
-          type: 'assessment',
-          subType: AnalyticsEvents.assessmentType,
-          score: score,
-          requiredScore: requiredScore,
-          nextAssessment: nextAssessment,
-          completed: true,
-        },
+        value,
       },
     };
 

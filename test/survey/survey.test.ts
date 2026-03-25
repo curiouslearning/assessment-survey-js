@@ -2,19 +2,24 @@ import { Survey } from '../../src/survey/survey';
 import { UIController } from '../../src/ui/uiController';
 import { AudioController } from '../../src/components/audioController';
 import { App } from '../../src/App';
-import { fetchSurveyQuestions } from '../../src/utils/jsonUtils';
+import { fetchAppData, fetchSurveyQuestions } from '../../src/utils/jsonUtils';
 import { UnityBridge } from '../../src/utils/unityBridge';
 
-jest.mock('../../src/components/jsonUtils', () => ({
+jest.mock('../../src/utils/jsonUtils', () => ({
+  fetchAppData: jest.fn(),
   fetchSurveyQuestions: jest.fn(),
+  getDataURL: jest.fn((url: string) => `/data/${url}.json`),
 }));
 
-jest.mock('../../src/components/uiController', () => ({
-  SetButtonPressAction: jest.fn(),
-  SetStartAction: jest.fn(),
-  ReadyForNext: jest.fn(),
-  SetFeedbackVisibile: jest.fn(),
-  AddStar: jest.fn(),
+jest.mock('../../src/ui/uiController', () => ({
+  UIController: {
+    SetButtonPressAction: jest.fn(),
+    SetStartAction: jest.fn(),
+    ReadyForNext: jest.fn(),
+    SetFeedbackVisibile: jest.fn(),
+    AddStar: jest.fn(),
+    ShowEnd: jest.fn(),
+  },
 }));
 
 jest.mock('firebase/app', () => ({
@@ -29,10 +34,12 @@ jest.mock('firebase/analytics', () => ({
 }));
 
 jest.mock('../../src/components/audioController', () => ({
-  PrepareAudioAndImagesForSurvey: jest.fn(),
+  AudioController: {
+    PrepareAudioAndImagesForSurvey: jest.fn(),
+  },
 }));
 
-jest.mock('../../src/components/unityBridge', () => ({
+jest.mock('../../src/utils/unityBridge', () => ({
   UnityBridge: jest.fn().mockImplementation(() => ({
     SendLoaded: jest.fn(),
     SendMessage: jest.fn(),
@@ -58,9 +65,28 @@ describe('Survey', () => {
     mockUnityBridge = new UnityBridge();
     survey = new Survey('testDataURL', mockUnityBridge);
 
+    (fetchAppData as jest.Mock).mockResolvedValue({});
     (fetchSurveyQuestions as jest.Mock).mockResolvedValue([
-      { itemName: 'Question1', itemText: 'What is 1+1?' },
-      { itemName: 'Question2', itemText: 'What is 2+2?' },
+      {
+        qName: 'Question1',
+        qNumber: 1,
+        qTarget: 'Math',
+        promptText: 'What is 1+1?',
+        promptAudio: 'question1.mp3',
+        answers: [{ answerName: '2' }, { answerName: '3' }],
+        correct: '2',
+        bucket: 1,
+      },
+      {
+        qName: 'Question2',
+        qNumber: 2,
+        qTarget: 'Math',
+        promptText: 'What is 2+2?',
+        promptAudio: 'question2.mp3',
+        answers: [{ answerName: '4' }, { answerName: '5' }],
+        correct: '4',
+        bucket: 1,
+      },
     ]);
   });
 
@@ -81,8 +107,26 @@ describe('Survey', () => {
 
     expect(fetchSurveyQuestions).toHaveBeenCalledWith(mockApp.dataURL);
     expect(survey.questionsData).toEqual([
-      { itemName: 'Question1', itemText: 'What is 1+1?' },
-      { itemName: 'Question2', itemText: 'What is 2+2?' },
+      {
+        qName: 'Question1',
+        qNumber: 1,
+        qTarget: 'Math',
+        promptText: 'What is 1+1?',
+        promptAudio: 'question1.mp3',
+        answers: [{ answerName: '2' }, { answerName: '3' }],
+        correct: '2',
+        bucket: 1,
+      },
+      {
+        qName: 'Question2',
+        qNumber: 2,
+        qTarget: 'Math',
+        promptText: 'What is 2+2?',
+        promptAudio: 'question2.mp3',
+        answers: [{ answerName: '4' }, { answerName: '5' }],
+        correct: '4',
+        bucket: 1,
+      },
     ]);
     expect(AudioController.PrepareAudioAndImagesForSurvey).toHaveBeenCalledWith(
       survey.questionsData,
@@ -95,7 +139,16 @@ describe('Survey', () => {
     await survey.Run(mockApp);
     const question = survey.buildNewQuestion();
 
-    expect(question).toEqual({ itemName: 'Question1', itemText: 'What is 1+1?' });
+    expect(question).toEqual({
+      qName: 'Question1',
+      qNumber: 1,
+      qTarget: 'Math',
+      promptText: 'What is 1+1?',
+      promptAudio: 'question1.mp3',
+      answers: [{ answerName: '2' }, { answerName: '3' }],
+      correct: '2',
+      bucket: 1,
+    });
   });
 
   it('should indicate whether there are questions left', async () => {

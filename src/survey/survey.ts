@@ -22,8 +22,13 @@ export class Survey extends BaseQuiz {
     this.dataURL = dataURL;
     this.unityBridge = unityBridge;
     this.currentQuestionIndex = 0;
-    UIController.SetButtonPressAction(this.handleAnswerButtonPress);
-    UIController.SetStartAction(this.startSurvey);
+    this.questionsData = [];
+    if (UIController && typeof UIController.SetButtonPressAction === 'function') {
+      UIController.SetButtonPressAction(this.handleAnswerButtonPress);
+    }
+    if (UIController && typeof UIController.SetStartAction === 'function') {
+      UIController.SetStartAction(this.startSurvey);
+    }
   }
 
   public handleAnimationSpeedMultiplierChange(): void {
@@ -48,11 +53,10 @@ export class Survey extends BaseQuiz {
 
   public async Run(app: App) {
     this.app = app;
-    this.buildQuestionList().then((result) => {
-      this.questionsData = result;
-      AudioController.PrepareAudioAndImagesForSurvey(this.questionsData, this.app.GetDataURL());
-      this.unityBridge.SendLoaded();
-    });
+    const result = await Promise.resolve(this.buildQuestionList());
+    this.questionsData = result;
+    AudioController.PrepareAudioAndImagesForSurvey(this.questionsData, this.app?.GetDataURL() ?? this.dataURL);
+    this.unityBridge?.SendLoaded?.();
   }
 
   public startSurvey = () => {
@@ -84,9 +88,11 @@ export class Survey extends BaseQuiz {
     }, 2000);
   };
 
-  public buildQuestionList = () => {
-    const surveyQuestions = fetchSurveyQuestions(this.app.dataURL);
-    return surveyQuestions;
+  public buildQuestionList = (): Promise<qData[]> | qData[] => {
+    if (typeof fetchSurveyQuestions !== 'function') {
+      return [];
+    }
+    return fetchSurveyQuestions(this.app?.dataURL ?? this.dataURL);
   };
 
   public HasQuestionsLeft(): boolean {

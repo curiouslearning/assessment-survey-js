@@ -4,7 +4,7 @@ import { randFrom, shuffleArray } from '../utils/mathUtils';
 import { getDataFile } from '../utils/urlUtils';
 
 export class UIController {
-  private static instance: UIController | null = null;
+  public static instance: UIController | null = null;
 
   private landingContainerId = 'landWrap';
   public landingContainer: HTMLElement;
@@ -31,23 +31,23 @@ export class UIController {
   public answersContainer: HTMLElement;
 
   private answerButton1Id = 'answerButton1';
-  private answerButton1: HTMLElement;
+  public answerButton1: HTMLElement;
   private answerButton2Id = 'answerButton2';
-  private answerButton2: HTMLElement;
+  public answerButton2: HTMLElement;
   private answerButton3Id = 'answerButton3';
-  private answerButton3: HTMLElement;
+  public answerButton3: HTMLElement;
   private answerButton4Id = 'answerButton4';
-  private answerButton4: HTMLElement;
+  public answerButton4: HTMLElement;
   private answerButton5Id = 'answerButton5';
-  private answerButton5: HTMLElement;
+  public answerButton5: HTMLElement;
   private answerButton6Id = 'answerButton6';
-  private answerButton6: HTMLElement;
+  public answerButton6: HTMLElement;
 
   private playButtonId = 'pbutton';
-  private playButton: HTMLElement;
+  public playButton: HTMLElement;
 
   private chestImgId = 'chestImage';
-  private chestImg: HTMLElement;
+  public chestImg: HTMLElement;
 
   public nextQuestion = null;
 
@@ -68,19 +68,19 @@ export class UIController {
 
   public buttons = [];
 
-  private buttonPressCallback: Function;
-  private startPressCallback: Function;
+  public buttonPressCallback: Function;
+  public startPressCallback: Function;
 
   public buttonsActive: boolean = false;
 
-  private devModeCorrectLabelVisibility: boolean = false;
-  private devModeBucketControlsEnabled: boolean = false;
+  public devModeCorrectLabelVisibility: boolean = false;
+  public devModeBucketControlsEnabled: boolean = false;
 
   public animationSpeedMultiplier: number = 1;
 
   public externalBucketControlsGenerationHandler: (container: HTMLElement, clickCallback: () => void) => void;
 
-  private init(): void {
+  public init(): void {
     // Initialize required containers
     this.landingContainer = document.getElementById(this.landingContainerId);
     this.gameContainer = document.getElementById(this.gameContainerId);
@@ -108,23 +108,23 @@ export class UIController {
     this.initEventListeners();
   }
 
-  private initializeStars(): void {
+  public initializeStars(): void {
+    this.stars = [];
+    this.starPositions = [];
+    this.starContainer.innerHTML = '';
+
     for (let i = 0; i < 20; i++) {
       const newStar = document.createElement('img');
-
-      // newStar.src = "img/star.png";
       newStar.id = 'star' + i;
-
       newStar.classList.add('topstarv');
-
       this.starContainer.appendChild(newStar);
 
-      this.starContainer.innerHTML += '';
-
       if (i == 9) {
-        this.starContainer.innerHTML += '<br>';
+        const br = document.createElement('br');
+        this.starContainer.appendChild(br);
       }
 
+      this.stars.push(i);
       this.stars.push(i);
     }
 
@@ -164,46 +164,52 @@ export class UIController {
     return false;
   }
 
-  private initEventListeners(): void {
+  public initEventListeners(): void {
     // TODO: refactor this
-    this.answerButton1.addEventListener('click', () => {
-      this.answerButtonPress(1);
-    });
+    if (this.answerButton1) {
+      this.answerButton1.addEventListener('click', () => {
+        this.answerButtonPress(1);
+      });
+      this.buttons.push(this.answerButton1);
+    }
 
-    this.buttons.push(this.answerButton1);
+    if (this.answerButton2) {
+      this.answerButton2.addEventListener('click', () => {
+        this.answerButtonPress(2);
+      });
+      this.buttons.push(this.answerButton2);
+    }
 
-    this.answerButton2.addEventListener('click', () => {
-      this.answerButtonPress(2);
-    });
+    if (this.answerButton3) {
+      this.answerButton3.addEventListener('click', () => {
+        this.answerButtonPress(3);
+      });
+      this.buttons.push(this.answerButton3);
+    }
 
-    this.buttons.push(this.answerButton2);
+    if (this.answerButton4) {
+      this.answerButton4.addEventListener('click', () => {
+        this.answerButtonPress(4);
+      });
+      this.buttons.push(this.answerButton4);
+    }
 
-    this.answerButton3.addEventListener('click', () => {
-      this.answerButtonPress(3);
-    });
+    if (this.answerButton5) {
+      this.answerButton5.addEventListener('click', () => {
+        this.answerButtonPress(5);
+      });
+      this.buttons.push(this.answerButton5);
+    }
 
-    this.buttons.push(this.answerButton3);
+    if (this.answerButton6) {
+      this.answerButton6.addEventListener('click', () => {
+        this.answerButtonPress(6);
+      });
+      this.buttons.push(this.answerButton6);
+    }
 
-    this.answerButton4.addEventListener('click', () => {
-      this.answerButtonPress(4);
-    });
-
-    this.buttons.push(this.answerButton4);
-
-    this.answerButton5.addEventListener('click', () => {
-      this.answerButtonPress(5);
-    });
-
-    this.buttons.push(this.answerButton5);
-
-    this.answerButton6.addEventListener('click', () => {
-      this.answerButtonPress(6);
-    });
-
-    this.buttons.push(this.answerButton6);
-
-    this.landingContainer.addEventListener('click', () => {
-      if (localStorage.getItem(getDataFile()) && UIController.getInstance().contentLoaded) {
+    this.landingContainer?.addEventListener('click', () => {
+      if (this.contentLoaded && this.startPressCallback) {
         this.showGame();
       }
     });
@@ -271,7 +277,7 @@ export class UIController {
     }
   }
 
-  private enableAnswerButton(): void {
+  public enableAnswerButton(): void {
     UIController.getInstance().buttonsActive = true;
   }
 
@@ -281,7 +287,7 @@ export class UIController {
   }
 
   //functions to show/hide the different containers
-  private showLanding(): void {
+  public showLanding(): void {
     this.landingContainer.style.display = 'flex';
     this.gameContainer.style.display = 'none';
     this.endContainer.style.display = 'none';
@@ -293,12 +299,14 @@ export class UIController {
     UIController.getInstance().endContainer.style.display = 'flex';
   }
 
-  private showGame(): void {
+  public showGame(): void {
     this.landingContainer.style.display = 'none';
     this.gameContainer.style.display = 'grid';
     this.endContainer.style.display = 'none';
     this.allStart = Date.now();
-    this.startPressCallback();
+    if (typeof this.startPressCallback === 'function') {
+      this.startPressCallback();
+    }
   }
 
   public static SetFeedbackVisibile(visible: boolean, isCorrect: boolean) {
@@ -369,7 +377,11 @@ export class UIController {
 
   public static ShowAudioAnimation(playing: boolean = false) {
     if (!UIController.getInstance().devModeBucketControlsEnabled) {
-      const playButtonImg = UIController.getInstance().playButton.querySelector('img');
+      let playButtonImg = UIController.getInstance().playButton.querySelector('img') as HTMLImageElement;
+      if (!playButtonImg) {
+        playButtonImg = document.createElement('img');
+        UIController.getInstance().playButton.appendChild(playButtonImg);
+      }
       if (playing) {
         playButtonImg.src = 'animation/SoundButton.gif';
       } else {
@@ -402,7 +414,7 @@ export class UIController {
         console.log('next question button pressed');
         console.log(newQuestion.promptAudio);
 
-        if ('promptAudio' in newQuestion) {
+        if (newQuestion && newQuestion.promptAudio) {
           AudioController.PlayAudio(newQuestion.promptAudio, undefined, UIController.ShowAudioAnimation);
         }
       });
@@ -418,9 +430,11 @@ export class UIController {
       newQuestion = UIController.getInstance().nextQuestion;
     }
 
-    if ('promptImg' in newQuestion) {
+    if (newQuestion && newQuestion.promptImg) {
       var tmpimg = AudioController.GetImage(newQuestion.promptImg);
-      UIController.getInstance().questionsContainer.appendChild(tmpimg);
+      if (tmpimg) {
+        UIController.getInstance().questionsContainer.appendChild(tmpimg);
+      }
     }
 
     qCode += newQuestion.promptText;
@@ -435,9 +449,10 @@ export class UIController {
   }
 
   public static AddStar(): void {
-    var starToShow = document.getElementById(
-      'star' + UIController.getInstance().stars[UIController.getInstance().qAnsNum]
-    ) as HTMLImageElement;
+    var starToShow = document.getElementById('star' + UIController.getInstance().qAnsNum) as HTMLImageElement;
+    if (!starToShow) {
+      throw new Error('Star element not found');
+    }
     starToShow.src = '../animation/Star.gif';
     starToShow.classList.add('topstarv');
     starToShow.classList.remove('topstarh');
@@ -502,7 +517,7 @@ export class UIController {
     starToShow.src = '../img/star_after_animation.gif';
   }
 
-  private answerButtonPress(buttonNum: number): void {
+  public answerButtonPress(buttonNum: number): void {
     const allButtonsVisible = this.buttons.every((button) => button.style.visibility === 'visible');
     console.log(this.buttonsActive, allButtonsVisible);
     if (this.buttonsActive === true) {
