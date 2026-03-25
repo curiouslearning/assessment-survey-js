@@ -2,8 +2,33 @@ version: 2.1
 
 orbs:
   aws-s3: circleci/aws-s3@3.0
+  node: circleci/node@7.0.0
 
 jobs:
+  build_and_publish:
+    executor: node/default
+    steps:
+      - checkout
+      - run: sudo npm install -g npm@latest
+      - node/install-packages:
+          cache-path: ~/project/node_modules
+      - run: npm run build:package
+      - run: mkdir -p ~/.ssh
+      - run: ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - run: npx semantic-release
+
+  build_and_publish_dryrun:
+    executor: node/default
+    steps:
+      - checkout
+      - run: sudo npm install -g npm@latest
+      - node/install-packages:
+          cache-path: ~/project/node_modules
+      - run: npm run build:package
+      - run: mkdir -p ~/.ssh
+      - run: ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - run: npx semantic-release --dry-run --branches "$CIRCLE_BRANCH"
+
   s3-deploy:
     docker:
       - image: 'cimg/python:3.6'
@@ -43,6 +68,40 @@ workflows:
               only:
                 - develop
       - s3-deploy-prod:
+          filters:
+            branches:
+              only:
+                - main
+
+  dryrun_test_and_publish:
+    # Run test + semantic-release dry-run on non-main branches to validate CI/CD safely.
+    jobs:
+      - node/test
+      - build_and_publish_dryrun:
+          context:
+            - github-context
+            - npmjs-context
+          requires:
+            - node/test
+
+  test_and_publish:
+    # Run the test jobs first, then the release only when all the test jobs are successful
+    jobs:
+      - node/test
+      - hold_for_publish:
+          type: approval
+          requires:
+            - node/test
+          filters:
+            branches:
+              only:
+                - main
+      - build_and_publish:
+          context:
+            - github-context
+            - npmjs-context
+          requires:
+            - hold_for_publish
           filters:
             branches:
               only:
