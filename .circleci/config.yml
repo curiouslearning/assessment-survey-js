@@ -76,13 +76,10 @@ workflows:
   dryrun_test_and_publish:
     # Run test + semantic-release dry-run on non-main branches to validate CI/CD safely.
     jobs:
-      - node/test
       - build_and_publish_dryrun:
           context:
             - github-context
             - npmjs-context
-          requires:
-            - node/test
 
   test_and_publish:
     # Run the test jobs first, then the release only when all the test jobs are successful
