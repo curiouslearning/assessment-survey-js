@@ -24,7 +24,7 @@ jobs:
       - run: npm run build:package
       - run: mkdir -p ~/.ssh
       - run: ssh-keyscan github.com >> ~/.ssh/known_hosts
-      - run: npm run release
+      - run: npx semantic-release@25.0.3
 
   build_and_publish_dryrun:
     executor:
@@ -37,7 +37,7 @@ jobs:
       - run: npm run build:package
       - run: mkdir -p ~/.ssh
       - run: ssh-keyscan github.com >> ~/.ssh/known_hosts
-      - run: npm run release -- --dry-run --branches "$CIRCLE_BRANCH"
+      - run: npx semantic-release@25.0.3 --dry-run --branches "$CIRCLE_BRANCH"
 
   s3-deploy:
     docker:
