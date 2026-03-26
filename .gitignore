@@ -12,6 +12,7 @@ build
 */build/.well-known/*
 dist
 /dist
+/lib
 
 # Common ignores
 .DS_Store

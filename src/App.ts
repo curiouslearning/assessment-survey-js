@@ -1,7 +1,3 @@
-/**
- * App class that represents an entry point of the application.
- */
-
 import { getUUID, getUserSource, getDataFile, getAppLanguageFromDataURL, getAppTypeFromDataURL, configureRuntimeConfig } from '@utils/urlUtils';
 import { Survey } from '@survey/survey';
 import { Assessment } from '@assessment/assessment';
@@ -13,9 +9,11 @@ import { Workbox } from 'workbox-window';
 import CacheModel from '@components/cacheModel';
 import { UIController } from '@ui/uiController';
 import { AnalyticsEventsType, AnalyticsIntegration } from '@analytics/analytics-integration';
+import { AnalyticsConfig } from '@analytics/base-analytics-integration';
 import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from '@utils/AnalyticsUtils';
 import { AndroidInterface } from '@curiouslearning/core';
 import { ASSET_PATHS } from '@configs/assetsPaths';
+
 const appVersion: string = 'v1.1.3';
 
 /**
@@ -44,6 +42,7 @@ export interface AppStartupConfig {
   endpoint?: string;
   organization?: string;
   hostIntegrationAdapters?: HostIntegrationAdapters;
+  analyticsConfig?: AnalyticsConfig; // added
 }
 
 export interface SummaryData {
@@ -114,8 +113,11 @@ export class App {
       UIController.SetLoadingVisible(false);
     }
 
-    await AnalyticsIntegration.initializeAnalytics();
-    this.analyticsIntegration = AnalyticsIntegration.getInstance();
+    if (config.analyticsConfig) {
+      await AnalyticsIntegration.initializeAnalytics(config.analyticsConfig);
+      this.analyticsIntegration = AnalyticsIntegration.getInstance();
+    }
+
     const initialize = async () => {
       console.log('Window Loaded!');
       await this.initializeGame();
@@ -241,19 +243,19 @@ export class App {
       });
     });
   }
+
   async setCommonProperties() {
     setCommonAnalyticsEventsProperties(getUUID(), getAppLanguageFromDataURL(this.dataURL), getAppTypeFromDataURL(this.dataURL), getUserSource(), contentVersion, appVersion);
   }
+
   async logInitialAnalyticsEvents() {
     const lat_lang = await getLocation();
     setLocationProperty(lat_lang ?? 'NotAvailable');
-    this.analyticsIntegration.track(AnalyticsEventsType.OPENED, {})
-
-    this.analyticsIntegration.track(AnalyticsEventsType.USER_LOCATION, {});
-
-    this.analyticsIntegration.track(AnalyticsEventsType.INITIALIZE, { type: "initialized" })
-
+    this.analyticsIntegration?.track(AnalyticsEventsType.OPENED, {})
+    this.analyticsIntegration?.track(AnalyticsEventsType.USER_LOCATION, {});
+    this.analyticsIntegration?.track(AnalyticsEventsType.INITIALIZE, { type: "initialized" })
   }
+
   async registerServiceWorker(game: BaseQuiz, dataURL: string = '', skipLoadingScreen: boolean = false) {
     console.log('Registering service worker...');
 
