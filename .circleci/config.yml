@@ -16,7 +16,7 @@ jobs:
   build_and_publish:
     executor:
       name: node/default
-      tag: '20.11'
+      tag: '24.10'
     steps:
       - checkout
       - node/install-packages:
@@ -29,7 +29,7 @@ jobs:
   build_and_publish_dryrun:
     executor:
       name: node/default
-      tag: '20.11'
+      tag: '24.10'
     steps:
       - checkout
       - node/install-packages:
