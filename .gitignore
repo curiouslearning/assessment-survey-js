@@ -12,6 +12,7 @@ build
 */build/.well-known/*
 dist
 /dist
+lib
 /lib
 
 # Common ignores

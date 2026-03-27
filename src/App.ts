@@ -3,7 +3,7 @@ import { Survey } from '@survey/survey';
 import { Assessment } from '@assessment/assessment';
 import { UnityBridge } from '@utils/unityBridge';
 import { BaseQuiz } from './baseQuiz';
-import { fetchAppData, getDataURL } from '@utils/jsonUtils';
+import { fetchAppData, getDataURL, setDataBaseUrl } from '@utils/jsonUtils';
 import { resolveAssetPath, setAssetBaseUrl } from '@utils/assetUtils';
 import { Workbox } from 'workbox-window';
 import CacheModel from '@components/cacheModel';
@@ -26,6 +26,7 @@ const broadcastChannel: BroadcastChannel = new BroadcastChannel('as-message-chan
 
 export interface AppStartupConfig {
   dataURL?: string;
+  dataBaseUrl?: string;
   enableServiceWorker?: boolean;
   waitForWindowLoad?: boolean;
   skipLoadingScreen?: boolean;
@@ -157,6 +158,7 @@ export class App {
 
   private applyRuntimeConfig(config: AppStartupConfig): void {
     setAssetBaseUrl(config.assetBaseUrl ?? '');
+    setDataBaseUrl(config.dataBaseUrl ?? '');
 
     configureRuntimeConfig({
       data: config.dataURL,
