@@ -1,3 +1,6 @@
+/**
+ * App class that represents an entry point of the application.
+ */
 import { getUUID, getUserSource, getDataFile, getAppLanguageFromDataURL, getAppTypeFromDataURL, configureRuntimeConfig } from '@utils/urlUtils';
 import { Survey } from '@survey/survey';
 import { Assessment } from '@assessment/assessment';
@@ -43,7 +46,7 @@ export interface AppStartupConfig {
   endpoint?: string;
   organization?: string;
   hostIntegrationAdapters?: HostIntegrationAdapters;
-  analyticsConfig?: AnalyticsConfig; // added
+  analyticsConfig?: AnalyticsConfig;
 }
 
 export interface SummaryData {
