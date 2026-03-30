@@ -118,8 +118,12 @@ export class App {
     }
 
     if (config.analyticsConfig) {
-      await AnalyticsIntegration.initializeAnalytics(config.analyticsConfig);
-      this.analyticsIntegration = AnalyticsIntegration.getInstance();
+      try {
+        await AnalyticsIntegration.initializeAnalytics(config.analyticsConfig);
+        this.analyticsIntegration = AnalyticsIntegration.getInstance();
+      } catch (error) {
+        console.warn('Analytics initialization failed. Continuing without analytics.', error);
+      }
     }
 
     const initialize = async () => {
