@@ -1,5 +1,4 @@
 const path = require('path');
-
 const nodeEnv = process.env.NODE_ENV || 'development';
 const isDev = nodeEnv !== 'production';
 
@@ -12,10 +11,6 @@ module.exports = {
       {
         directory: path.join(__dirname, 'public'),
       },
-      // {
-      //   directory: path.join(__dirname, 'data'),
-      //   publicPath: '/data',
-      // },
        {
         directory: path.join(__dirname), // serve sw.js from root
         publicPath: '/',
@@ -53,5 +48,5 @@ module.exports = {
   output: {
     filename: 'dist/bundle.js',
     path: path.resolve(__dirname),
-  },
+  }
 };

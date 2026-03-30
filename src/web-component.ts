@@ -1,6 +1,7 @@
 import { App, AppStartupConfig, createApp } from './App';
 import { buildAssessmentSurveyFragment, normalizeBaseUrl, normalizeHostTheme } from './ui/dom-template';
 import { UIController } from '@ui/uiController';
+import { AnalyticsConfig } from '@analytics/base-analytics-integration';
 
 const DEFAULT_TAG_NAME = 'assessment-survey-player';
 const DEFAULT_ASSET_BASE_URL = '/assets';
@@ -54,6 +55,12 @@ function getFirstAttributeValue(element: HTMLElement, names: string[]): string |
 export class AssessmentSurveyPlayerElement extends HTMLElement {
   private appInstance: App | null = null;
   private isInitialized = false;
+  private analyticsConfig: AnalyticsConfig | null = null;
+
+  // exposed method for host app to inject analytics config
+  public setAnalyticsConfig(config: AnalyticsConfig): void {
+    this.analyticsConfig = config;
+  }
 
   connectedCallback(): void {
     if (this.isInitialized) {
@@ -104,6 +111,7 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
       enableParentPostMessage: toBooleanAttribute(this.getAttribute('enable-parent-post-message'), modeDefaults.enableParentPostMessage),
       waitForWindowLoad: false,
       uiRoot: this,
+      analyticsConfig: this.analyticsConfig ?? undefined,
       hostIntegrationAdapters: {
         onLoaded: () => this.dispatchEvent(new CustomEvent('loaded')),
         onClose: () => this.dispatchEvent(new CustomEvent('closed')),
@@ -120,6 +128,7 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
   disconnectedCallback(): void {
     this.appInstance = null;
     this.isInitialized = false;
+    this.analyticsConfig = null;
     UIController.Reset();
   }
 }
