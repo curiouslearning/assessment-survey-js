@@ -1,4 +1,5 @@
-import { AnalyticsService, FirebaseStrategy, StatsigStrategy } from '@curiouslearning/analytics';
+import { AnalyticsService, StatsigStrategy } from '@curiouslearning/analytics';
+import { NamedFirebaseStrategy } from './named-firebase-strategy';
 
 export interface AnalyticsConfig {
     apiKey: string;
@@ -20,7 +21,7 @@ export interface AnalyticsConfig {
  */
 export class BaseAnalyticsIntegration {
     private analyticsService: AnalyticsService;
-    private firebaseStrategy: FirebaseStrategy;
+    private namedFirebaseStrategy: NamedFirebaseStrategy;
     private statsigStrategy: StatsigStrategy;
     private isInitialized: boolean = false;
 
@@ -53,8 +54,7 @@ export class BaseAnalyticsIntegration {
         }
 
         try {
-            this.firebaseStrategy = new FirebaseStrategy({
-                firebaseOptions: {
+            const firebaseOptions = {
                     apiKey: config.apiKey,
                     authDomain: config.authDomain,
                     databaseURL: config.databaseURL,
@@ -63,12 +63,11 @@ export class BaseAnalyticsIntegration {
                     messagingSenderId: config.messagingSenderId,
                     appId: config.appId,
                     measurementId: config.measurementId,
-                },
-                userProperties: {}
-            });
+            };
 
-            await this.firebaseStrategy.initialize();
-            this.analyticsService.register('firebase', this.firebaseStrategy);
+            this.namedFirebaseStrategy = new NamedFirebaseStrategy(firebaseOptions);
+            await this.namedFirebaseStrategy.initialize();
+            this.analyticsService.register('firebase', this.namedFirebaseStrategy);
 
             // Example of Statsig initialization (commented out)
             // this.statsigStrategy = new StatsigStrategy({
@@ -79,10 +78,9 @@ export class BaseAnalyticsIntegration {
             // this.analyticsService.register('statsig', this.statsigStrategy);
 
             this.isInitialized = true;
-            console.log("Analytics service initialized successfully with Firebase and Statsig");
+            console.log("Analytics service initialized successfully.");
         } catch (error) {
-            console.error("Error while initializing analytics:", error);
-            throw error;
+            console.warn("Analytics initialization skipped due to error:", error);
         }
     }
 
@@ -121,7 +119,7 @@ export class BaseAnalyticsIntegration {
      * @returns {any | undefined} The Firebase app instance, or undefined if not initialized.
      */
     get firebaseApp(): any {
-        return this.firebaseStrategy?.firebaseApp;
+        return this.namedFirebaseStrategy?.firebaseApp;
     }
 
     /**
