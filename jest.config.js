@@ -4,6 +4,13 @@ module.exports = {
   testEnvironment: 'jsdom',
   moduleNameMapper: {
     '^@curiouslearning/analytics$': '<rootDir>/node_modules/@curiouslearning/analytics/dist/index.js',
+    '^@analytics/(.*)$': '<rootDir>/src/analytics/$1',
+    '^@assessment/(.*)$': '<rootDir>/src/assessment/$1',
+    '^@components/(.*)$': '<rootDir>/src/components/$1',
+    '^@configs/(.*)$': '<rootDir>/src/config/$1',
+    '^@survey/(.*)$': '<rootDir>/src/survey/$1',
+    '^@ui/(.*)$': '<rootDir>/src/ui/$1',
+    '^@utils/(.*)$': '<rootDir>/src/utils/$1',
   },
 
   transform: {

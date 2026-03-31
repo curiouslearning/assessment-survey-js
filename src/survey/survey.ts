@@ -50,10 +50,11 @@ export class Survey extends BaseQuiz {
 
   public async Run(app: App) {
     this.app = app;
-    this.buildQuestionList().then((result) => {
+    Promise.resolve(this.buildQuestionList()).then((result) => {
       this.questionsData = result;
       AudioController.PrepareAudioAndImagesForSurvey(this.questionsData, this.app.GetDataURL());
       this.app.notifyLoaded();
+      this.unityBridge?.SendLoaded?.();
     });
   }
 
@@ -86,7 +87,10 @@ export class Survey extends BaseQuiz {
     }, 2000);
   };
 
-  public buildQuestionList = () => {
+  public buildQuestionList = (): Promise<qData[]> | qData[] => {
+    if (typeof fetchSurveyQuestions !== 'function') {
+      return [];
+    }
     const surveyQuestions = fetchSurveyQuestions(this.app.dataURL);
     return surveyQuestions;
   };

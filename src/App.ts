@@ -99,7 +99,7 @@ export class App {
     this.applyHostIntegrationConfig(config);
 
     if (config.uiRoot) {
-      UIController.ConfigureRoot(config.uiRoot);
+      UIController.ConfigureRoot?.(config.uiRoot);
     }
 
     this.unityBridge = this.enableUnityBridge ? new UnityBridge() : App.createNoopUnityBridge();
@@ -120,11 +120,11 @@ export class App {
     const skipStartScreen = config.skipStartScreen ?? false;
     this.enableServiceWorker = config.enableServiceWorker ?? this.enableServiceWorker;
 
-    UIController.SetGameReady(false);
-    UIController.SetSkipStartScreen(skipStartScreen);
+    UIController.SetGameReady?.(false);
+    UIController.SetSkipStartScreen?.(skipStartScreen);
 
     if (skipLoadingScreen) {
-      UIController.SetLoadingVisible(false);
+      UIController.SetLoadingVisible?.(false);
     }
 
     if (config.analyticsConfig) {
@@ -141,17 +141,17 @@ export class App {
       await this.initializeGame();
       if (skipLoadingScreen) {
         localStorage.setItem(this.cacheModel.appName, 'true');
-        UIController.SetLoadingProgress(100);
-        UIController.SetLoadingVisible(false);
-        UIController.SetContentLoaded(true);
+        UIController.SetLoadingProgress?.(100);
+        UIController.SetLoadingVisible?.(false);
+        UIController.SetContentLoaded?.(true);
       }
 
       if (this.enableServiceWorker) {
         await this.registerServiceWorker(this.game, this.dataURL, skipLoadingScreen);
       } else {
         localStorage.setItem(this.cacheModel.appName, 'true');
-        UIController.SetLoadingVisible(false);
-        UIController.SetContentLoaded(true);
+        UIController.SetLoadingVisible?.(false);
+        UIController.SetContentLoaded?.(true);
       }
     };
 
@@ -174,8 +174,12 @@ export class App {
   }
 
   private applyRuntimeConfig(config: AppStartupConfig): void {
-    setAssetBaseUrl(config.assetBaseUrl ?? '');
-    setDataBaseUrl(config.dataBaseUrl ?? '');
+    if (typeof setAssetBaseUrl === 'function') {
+      setAssetBaseUrl(config.assetBaseUrl ?? '');
+    }
+    if (typeof setDataBaseUrl === 'function') {
+      setDataBaseUrl(config.dataBaseUrl ?? '');
+    }
 
     configureRuntimeConfig({
       data: config.dataURL,
@@ -213,7 +217,7 @@ export class App {
 
       this.cacheModel.setContentFilePath(getDataURL(this.dataURL));
 
-      UIController.SetFeedbackText(data['feedbackText']);
+      UIController.SetFeedbackText?.(data['feedbackText']);
 
       let appType = data['appType'];
       const assessmentType = data['assessmentType'];
@@ -357,7 +361,7 @@ export class App {
       if (localStorage.getItem(this.cacheModel.appName) == null) {
         console.log('Caching!' + this.cacheModel.appName);
         if (!skipLoadingScreen) {
-          UIController.SetLoadingVisible(true);
+          UIController.SetLoadingVisible?.(true);
         }
         broadcastChannel.postMessage({
           command: 'Cache',
@@ -366,10 +370,10 @@ export class App {
           },
         });
       } else {
-        UIController.SetLoadingProgress(100);
+        UIController.SetLoadingProgress?.(100);
         setTimeout(() => {
-          UIController.SetLoadingVisible(false);
-          UIController.SetContentLoaded(true);
+          UIController.SetLoadingVisible?.(false);
+          UIController.SetContentLoaded?.(true);
         }, skipLoadingScreen ? 0 : 1500);
       }
 
@@ -405,7 +409,7 @@ export class App {
   }
 
   public notifyLoaded(): void {
-    UIController.SetGameReady(true);
+    UIController.SetGameReady?.(true);
 
     if (this.enableUnityBridge) {
       this.unityBridge.SendLoaded();
@@ -464,12 +468,12 @@ function handleServiceWorkerMessage(event): void {
 
 function handleLoadingMessage(event, progressValue): void {
   if (progressValue < 40 && progressValue >= 10) {
-    UIController.SetLoadingProgress(progressValue);
+    UIController.SetLoadingProgress?.(progressValue);
   } else if (progressValue >= 100) {
-    UIController.SetLoadingProgress(100);
+    UIController.SetLoadingProgress?.(100);
     setTimeout(() => {
-      UIController.SetLoadingVisible(false);
-      UIController.SetContentLoaded(true);
+      UIController.SetLoadingVisible?.(false);
+      UIController.SetContentLoaded?.(true);
     }, 1500);
     // add book with a name to local storage as cached
     localStorage.setItem(event.data.data.bookName, 'true');

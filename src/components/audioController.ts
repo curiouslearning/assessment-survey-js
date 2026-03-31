@@ -27,7 +27,7 @@ export class AudioController {
   public static PrepareAudioAndImagesForSurvey(questionsData: qData[], dataURL: string): void {
     AudioController.getInstance().dataURL = dataURL;
     const feedbackSoundPath = resolveAssetPath(ASSET_PATHS.AUDIO.feedbackAudio(AudioController.getInstance().dataURL));
-    AudioController.getInstance().wavToCache.push(feedbackSoundPath);
+    AudioController.getInstance().wavToCache.push(ASSET_PATHS.AUDIO.feedbackAudio(AudioController.getInstance().dataURL));
     AudioController.getInstance().correctAudio.src = feedbackSoundPath;
     AudioController.getInstance().feedbackAudio.src = feedbackSoundPath;
 
@@ -90,8 +90,8 @@ export class AudioController {
   }
 
   private static safePlay(audio: HTMLAudioElement, label: string): void {
-    if (!audio || !audio.src) {
-      console.warn(`${label} audio source is not set.`);
+    if (!audio) {
+      console.warn(`${label} audio is not available.`);
       return;
     }
 
@@ -154,12 +154,12 @@ export class AudioController {
 
   public static PlayDing(): void {
     const instance = AudioController.getInstance();
-    if (instance.feedbackAudio?.src) {
+    if (instance.feedbackAudio) {
       AudioController.safePlay(instance.feedbackAudio, 'Ding');
       return;
     }
 
-    if (instance.correctAudio?.src) {
+    if (instance.correctAudio) {
       AudioController.safePlay(instance.correctAudio, 'Ding fallback');
     }
   }

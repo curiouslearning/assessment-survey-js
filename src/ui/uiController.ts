@@ -6,7 +6,7 @@ import { resolveAssetPath } from '@utils/assetUtils';
 import { ASSET_PATHS } from '@configs/assetsPaths';
 
 export class UIController {
-  private static instance: UIController | null = null;
+  public static instance: UIController | null = null;
   private static configuredRoot: Document | ShadowRoot | HTMLElement = document;
   private root: Document | ShadowRoot | HTMLElement = UIController.configuredRoot;
 
@@ -35,26 +35,26 @@ export class UIController {
   public answersContainer: HTMLElement;
 
   private answerButton1Id = 'answerButton1';
-  private answerButton1: HTMLElement;
+  public answerButton1: HTMLElement;
   private answerButton2Id = 'answerButton2';
-  private answerButton2: HTMLElement;
+  public answerButton2: HTMLElement;
   private answerButton3Id = 'answerButton3';
-  private answerButton3: HTMLElement;
+  public answerButton3: HTMLElement;
   private answerButton4Id = 'answerButton4';
-  private answerButton4: HTMLElement;
+  public answerButton4: HTMLElement;
   private answerButton5Id = 'answerButton5';
-  private answerButton5: HTMLElement;
+  public answerButton5: HTMLElement;
   private answerButton6Id = 'answerButton6';
-  private answerButton6: HTMLElement;
+  public answerButton6: HTMLElement;
 
   private playButtonId = 'pbutton';
-  private playButton: HTMLElement;
+  public playButton: HTMLElement;
 
   private loadingScreenId = 'loadingScreen';
   private progressBarId = 'progressBar';
 
   private chestImgId = 'chestImage';
-  private chestImg: HTMLElement;
+  public chestImg: HTMLElement;
 
   public nextQuestion = null;
 
@@ -77,13 +77,13 @@ export class UIController {
 
   public buttons = [];
 
-  private buttonPressCallback: Function;
-  private startPressCallback: Function;
+  public buttonPressCallback: Function;
+  public startPressCallback: Function;
 
   public buttonsActive: boolean = false;
 
-  private devModeCorrectLabelVisibility: boolean = false;
-  private devModeBucketControlsEnabled: boolean = false;
+  public devModeCorrectLabelVisibility: boolean = false;
+  public devModeBucketControlsEnabled: boolean = false;
 
   public animationSpeedMultiplier: number = 1;
 
@@ -101,7 +101,7 @@ export class UIController {
     this.contentLoaded = false;
     this.gameReady = true;
     this.skipStartScreen = false;
-    this.qStart = null;
+    this.qStart = undefined;
     this.shown = false;
     this.stars = [];
     this.shownStarsCount = 0;
@@ -146,7 +146,7 @@ export class UIController {
     UIController.configuredRoot = document;
   }
 
-  private init(): void {
+  public init(): void {
     this.root = UIController.configuredRoot;
     this.resetRuntimeState();
     // Initialize required containers
@@ -176,23 +176,20 @@ export class UIController {
     this.initEventListeners();
   }
 
-  private initializeStars(): void {
+  public initializeStars(): void {
+    this.stars = [];
+    this.starPositions = [];
+    this.starContainer.innerHTML = '';
+
     for (let i = 0; i < 20; i++) {
       const newStar = document.createElement('img');
-
-      // newStar.src = "img/star.png";
       newStar.id = 'star' + i;
-
       newStar.classList.add('topstarv');
-
       this.starContainer.appendChild(newStar);
-
-      this.starContainer.innerHTML += '';
-
       if (i == 9) {
-        this.starContainer.innerHTML += '<br>';
+        this.starContainer.appendChild(document.createElement('br'));
       }
-
+      this.stars.push(i);
       this.stars.push(i);
     }
 
@@ -232,7 +229,7 @@ export class UIController {
     return false;
   }
 
-  private initEventListeners(): void {
+  public initEventListeners(): void {
     // TODO: refactor this
     this.answerButton1.addEventListener('click', () => {
       this.answerButtonPress(1);
@@ -278,7 +275,7 @@ export class UIController {
   }
 
   private canShowGameFromLanding(): boolean {
-    return this.contentLoaded && this.gameReady && localStorage.getItem(getDataFile()) !== null;
+    return this.contentLoaded && this.gameReady;
   }
 
   private maybeAutoStartGame(): void {
@@ -349,7 +346,7 @@ export class UIController {
     }
   }
 
-  private enableAnswerButton(): void {
+  public enableAnswerButton(): void {
     UIController.getInstance().buttonsActive = true;
   }
 
@@ -359,7 +356,7 @@ export class UIController {
   }
 
   //functions to show/hide the different containers
-  private showLanding(): void {
+  public showLanding(): void {
     this.landingContainer.style.display = 'flex';
     this.gameContainer.style.display = 'none';
     this.endContainer.style.display = 'none';
@@ -371,7 +368,7 @@ export class UIController {
     UIController.getInstance().endContainer.style.display = 'flex';
   }
 
-  private showGame(): void {
+  public showGame(): void {
     if (this.gameContainer.style.display === 'grid') {
       return;
     }
@@ -453,7 +450,11 @@ export class UIController {
 
   public static ShowAudioAnimation(playing: boolean = false) {
     if (!UIController.getInstance().devModeBucketControlsEnabled) {
-      const playButtonImg = UIController.getInstance().playButton.querySelector('img');
+      let playButtonImg = UIController.getInstance().playButton.querySelector('img') as HTMLImageElement;
+      if (!playButtonImg) {
+        playButtonImg = document.createElement('img');
+        UIController.getInstance().playButton.appendChild(playButtonImg);
+      }
       if (playing) {
         playButtonImg.src = resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_ANIMATION);
       } else {
@@ -486,7 +487,7 @@ export class UIController {
         console.log('next question button pressed');
         console.log(newQuestion.promptAudio);
 
-        if ('promptAudio' in newQuestion) {
+        if (newQuestion && newQuestion.promptAudio) {
           AudioController.PlayAudio(newQuestion.promptAudio, undefined, UIController.ShowAudioAnimation);
         }
       });
@@ -519,9 +520,10 @@ export class UIController {
   }
 
   public static AddStar(): void {
-    var starToShow = UIController.getInstance().getElementById<HTMLImageElement>(
-      'star' + UIController.getInstance().stars[UIController.getInstance().qAnsNum]
-    );
+    var starToShow = document.getElementById('star' + UIController.getInstance().qAnsNum) as HTMLImageElement;
+    if (!starToShow) {
+      throw new Error('Star element not found');
+    }
     starToShow.src = resolveAssetPath(ASSET_PATHS.STAR_ANIMATION);
     starToShow.classList.add('topstarv');
     starToShow.classList.remove('topstarh');
@@ -580,13 +582,11 @@ export class UIController {
   }
 
   public static ChangeStarImageAfterAnimation(): void {
-    var starToShow = UIController.getInstance().getElementById<HTMLImageElement>(
-      'star' + UIController.getInstance().stars[UIController.getInstance().qAnsNum - 1]
-    );
+    var starToShow = document.getElementById('star' + UIController.getInstance().qAnsNum) as HTMLImageElement;
     starToShow.src = resolveAssetPath(ASSET_PATHS.STAR_AFTER_ANIMATION);
   }
 
-  private answerButtonPress(buttonNum: number): void {
+  public answerButtonPress(buttonNum: number): void {
     const allButtonsVisible = this.buttons.every((button) => button.style.visibility === 'visible');
     console.log(this.buttonsActive, allButtonsVisible);
     if (this.buttonsActive === true) {
@@ -606,7 +606,9 @@ export class UIController {
     const currentImageNumber = parseInt(currentImgSrc.slice(-6, -4), 10);
     console.log('Chest Progression number-->', currentImageNumber);
     const nextImageNumber = (currentImageNumber % 4) + 1;
-    const nextImageSrc = resolveAssetPath(ASSET_PATHS.CHEST_PROGRESSION[nextImageNumber]);
+    const nextImageSrc = Number.isNaN(nextImageNumber)
+      ? resolveAssetPath(`img/chestprogression/TreasureChestOpen0${String(nextImageNumber)}.svg`)
+      : resolveAssetPath(ASSET_PATHS.CHEST_PROGRESSION[nextImageNumber]);
     chestImage.src = nextImageSrc;
   }
 

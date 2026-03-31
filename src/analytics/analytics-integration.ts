@@ -2,6 +2,7 @@ import { getCommonAnalyticsEventsProperties } from "@utils/AnalyticsUtils";
 import { getEndpoint, getOrganization } from "@utils/urlUtils";
 import { Answered, BucketCompleted, CommonEventProperties, Completed, Initialized, Opened, UserLocation } from "./analytics-event-interface";
 import { AnalyticsConfig, BaseAnalyticsIntegration } from "./base-analytics-integration";
+import { firebaseConfig } from "./analytics-config";
 
 export const enum AnalyticsEventsType {
     INITIALIZE = 'initialized',
@@ -41,7 +42,7 @@ export class AnalyticsIntegration extends BaseAnalyticsIntegration {
         };
     }
 
-    public static async initializeAnalytics(config: AnalyticsConfig): Promise<void> {
+    public static async initializeAnalytics(config: AnalyticsConfig = firebaseConfig): Promise<void> {
         if (!this.instance) {
             this.instance = new AnalyticsIntegration();
         }
