@@ -11,6 +11,8 @@ import { fetchSurveyQuestions } from '@utils/jsonUtils';
 import { UnityBridge } from '@utils/unityBridge';
 
 export class Survey extends BaseQuiz {
+  static readonly TYPE = 'survey';
+
   public questionsData: qData[];
   public currentQuestionIndex: number;
 
@@ -21,6 +23,7 @@ export class Survey extends BaseQuiz {
     this.dataURL = dataURL;
     this.unityBridge = unityBridge;
     this.currentQuestionIndex = 0;
+    this.questionsData = [];
     UIController.SetButtonPressAction(this.handleAnswerButtonPress);
     UIController.SetStartAction(this.startSurvey);
   }

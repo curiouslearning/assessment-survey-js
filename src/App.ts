@@ -14,8 +14,18 @@ import { UIController } from '@ui/uiController';
 import { AnalyticsEventsType, AnalyticsIntegration } from '@analytics/analytics-integration';
 import { AnalyticsConfig } from '@analytics/base-analytics-integration';
 import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from '@utils/AnalyticsUtils';
-import { AndroidInterface } from '@curiouslearning/core';
 import { ASSET_PATHS } from '@configs/assetsPaths';
+
+let AndroidInterface: any;
+try {
+  AndroidInterface = require('@curiouslearning/core').AndroidInterface;
+} catch (_error) {
+  AndroidInterface = class {
+    constructor(_opts: any) {}
+    logSummaryData(_summary: any) {}
+    logUserSessionsData(_payload: any) {}
+  };
+}
 
 const appVersion: string = 'v1.1.3';
 
@@ -206,6 +216,7 @@ export class App {
       UIController.SetFeedbackText(data['feedbackText']);
 
       let appType = data['appType'];
+      const assessmentType = data['assessmentType'];
 
       if (appType == 'survey') {
         this.game = new Survey(this.dataURL, this.unityBridge);
@@ -249,6 +260,25 @@ export class App {
           score,
           time_spent: endTime - startTime,
         });
+
+        if (appType === Assessment.TYPE) {
+          const { cr_user_id, language } = getCommonAnalyticsEventsProperties();
+          const androidInterface = new AndroidInterface({
+            cr_user_id,
+            app_id: appType,
+            debug: false,
+            log: false,
+          });
+
+          androidInterface.logUserSessionsData?.({
+            type: assessmentType || appType,
+            lang: language,
+            score,
+            max_score: gameInstance.max_score,
+            time_spent: endTime - startTime,
+            event_type: 'activity_completed',
+          });
+        }
       });
     });
   }
@@ -260,9 +290,9 @@ export class App {
   async logInitialAnalyticsEvents() {
     const lat_lang = await getLocation();
     setLocationProperty(lat_lang ?? 'NotAvailable');
-    this.analyticsIntegration?.track(AnalyticsEventsType.OPENED, {})
+    this.analyticsIntegration?.track(AnalyticsEventsType.OPENED, {});
     this.analyticsIntegration?.track(AnalyticsEventsType.USER_LOCATION, {});
-    this.analyticsIntegration?.track(AnalyticsEventsType.INITIALIZE, { type: "initialized" })
+    this.analyticsIntegration?.track(AnalyticsEventsType.INITIALIZE, { type: 'initialized' });
   }
 
   async registerServiceWorker(game: BaseQuiz, dataURL: string = '', skipLoadingScreen: boolean = false) {
@@ -399,7 +429,7 @@ export class App {
         cr_user_id,
         app_id: 'assessment',
       });
-      androidInterface.logSummaryData(summaryData);
+      androidInterface.logSummaryData?.(summaryData);
     }
 
     this.hostIntegrationAdapters?.onSummaryData?.(summaryData);

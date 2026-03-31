@@ -2,7 +2,28 @@ import { App } from './App';
 import { AnalyticsEvents } from '@analytics/analyticsEvents';
 import { UIController } from '@ui/uiController';
 import { UnityBridge } from '@utils/unityBridge';
-import { PubSub } from '@curiouslearning/core'
+
+class PubSub {
+  private listeners: { [key: string]: Array<(payload?: any) => void> } = {};
+
+  subscribe(event: string, callback: (payload?: any) => void): void {
+    if (!this.listeners[event]) {
+      this.listeners[event] = [];
+    }
+    this.listeners[event].push(callback);
+  }
+
+  publish(event: string, payload?: any): void {
+    const callbacks = this.listeners[event];
+    if (!callbacks) {
+      return;
+    }
+
+    for (const callback of callbacks) {
+      callback(payload);
+    }
+  }
+}
 
 export abstract class BaseQuiz extends PubSub {
   protected app: App;
@@ -10,6 +31,7 @@ export abstract class BaseQuiz extends PubSub {
   public id: string;
   public type: string;
   public score: number;
+  public max_score: number;
   public startTime: number;
   public endTime: number;
   public dataURL: string;

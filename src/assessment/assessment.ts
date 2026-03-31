@@ -27,8 +27,10 @@ enum BucketGenMode {
 }
 
 export class Assessment extends BaseQuiz {
+  static readonly TYPE = 'assessment';
+
   public unityBridge;
-  public analyticsIntegration: AnalyticsIntegration;
+  public analyticsIntegration: AnalyticsIntegration | null;
   public currentNode: TreeNode;
   public currentQuestion: qData;
   public bucketArray: number[];
@@ -52,9 +54,25 @@ export class Assessment extends BaseQuiz {
     this.dataURL = dataURL;
     this.unityBridge = unityBridge;
     this.questionNumber = 0;
+    this.bucketArray = [];
+    this.buckets = [];
+    this.currentBucket = null as any;
+    this.commonProperties = {} as any;
+    this.currentLinearBucketIndex = 0;
+    this.currentLinearTargetIndex = 0;
+    this.basalBucket = 0;
+    this.ceilingBucket = 0;
+    this.currentNode = undefined as any;
+    this.currentQuestion = undefined as any;
+    this.max_score = 0;
+    this.score = 0;
     console.log('app initialized');
     this.setupUIHandlers();
-    this.analyticsIntegration = AnalyticsIntegration.getInstance();
+    try {
+      this.analyticsIntegration = AnalyticsIntegration.getInstance();
+    } catch (_error) {
+      this.analyticsIntegration = null;
+    }
   }
 
   private setupUIHandlers(): void {
@@ -307,7 +325,7 @@ export class Assessment extends BaseQuiz {
       eventString += theQ.answers[aNum].answerName + ',';
       options += theQ.answers[aNum].answerName + ',';
     }
-    this.analyticsIntegration.track(AnalyticsEventsType.ANSWERED, {
+    this.analyticsIntegration?.track?.(AnalyticsEventsType.ANSWERED, {
       type: 'answered',
       dt: elapsed,
       question_number: theQ.qNumber,
@@ -317,7 +335,7 @@ export class Assessment extends BaseQuiz {
       iscorrect: this.isAnswerCorrect(answer),
       options: options,
       bucket: bucket,
-    })
+    });
 
   }
   private isAnswerCorrect(answer: number) {
@@ -670,13 +688,13 @@ export class Assessment extends BaseQuiz {
     return true;
   };
   private logBucketCompletedEvent(bucket: bucket, passed: boolean) {
-    this.analyticsIntegration.track(AnalyticsEventsType.BUCKET_COMPLETED, {
+    this.analyticsIntegration?.track?.(AnalyticsEventsType.BUCKET_COMPLETED, {
       type: 'bucketCompleted',
       bucketNumber: bucket.bucketID,
       numberTriedInBucket: bucket.numTried,
       numberCorrectInBucket: bucket.numCorrect,
       passedBucket: passed,
-    })
+    });
   }
 
   public override onEnd(): void {
@@ -708,21 +726,29 @@ export class Assessment extends BaseQuiz {
       isSynapseUser = true;
       integerRequiredScore = Number(requiredScore);
     }
-    this.analyticsIntegration.sendDataToThirdParty(score, this.commonProperties.cr_user_id, integerRequiredScore, nextAssessment, this.commonProperties.app);
+    this.analyticsIntegration?.sendDataToThirdParty?.(
+      score,
+      this.commonProperties?.cr_user_id,
+      integerRequiredScore,
+      nextAssessment,
+      this.commonProperties?.app
+    );
     this.app.notifyAssessmentCompleted(score);
 
-    this.analyticsIntegration.track(AnalyticsEventsType.COMPLETED, {
+    const maxScore = buckets.length * 100;
+    this.analyticsIntegration?.track?.(AnalyticsEventsType.COMPLETED, {
       type: 'completed',
       score: score,
-      maxScore: buckets.length * 100,
+      maxScore,
       basalBucket: basalBucketID,
       ceilingBucket: ceilingBucketID,
       ...(isSynapseUser && {
         nextAssessment: nextAssessment,
         requiredScore: integerRequiredScore
       })
-    })
+    });
 
     this.score = score;
+    this.max_score = maxScore;
   }
 }

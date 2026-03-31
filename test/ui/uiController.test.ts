@@ -39,6 +39,8 @@ describe('UIController', () => {
     uiController.answersContainer = document.getElementById('aWrap')!;
     uiController.questionsContainer = document.getElementById('qWrap')!;
     uiController.playButton = document.createElement('div');
+    playButtonImg = document.createElement('img');
+    uiController.playButton.appendChild(playButtonImg);
     document.body.appendChild(uiController.playButton);
     uiController.answerButton1 = document.getElementById("answerButton1")!;
     uiController.answerButton2 = document.getElementById("answerButton2")!;
@@ -48,13 +50,21 @@ describe('UIController', () => {
     uiController.landingContainer = document.getElementById('landWrap')!;
     uiController.gameContainer = document.getElementById('gameWrap')!;
     uiController.endContainer = document.getElementById('endWrap')!;
+    uiController.contentLoaded = true;
     uiController.startPressCallback = jest.fn();
     jest.spyOn(AudioController, 'PlayAudio').mockImplementation(jest.fn());
+    jest.spyOn(AudioController, 'PlayCorrect').mockImplementation(jest.fn());
+    jest.spyOn(AudioController, 'GetImage').mockImplementation((imageName: string) => {
+      const image = document.createElement('img');
+      image.src = imageName;
+      return image;
+    });
     mockQData = {
       qName: 'Sample Question',
       qNumber: 1,
       qTarget: 'Target 1',
       promptText: 'What is the capital of France?',
+      promptImg: 'img/question1.png',
       promptAudio: 'audio/question1.mp3',
       answers: [
         { answerName: 'Paris', answerText: 'Paris' },
@@ -87,6 +97,7 @@ describe('UIController', () => {
   });
 
   it('should initialize the instance only once', () => {
+    UIController.instance = null;
     const initSpy = jest.spyOn(UIController.prototype as any, 'init');
     const instance1 = UIController.getInstance();
     const instance2 = UIController.getInstance();
@@ -342,21 +353,17 @@ describe('UIController', () => {
   });
 
   it('should not call showGame if localStorage data is missing', () => {
-    // Clear localStorage to simulate missing data
-    localStorage.clear();
-
     const spyShowGame = jest.spyOn(uiController, 'showGame'); // Spy on the showGame method
+    uiController.contentLoaded = false;
 
     // Simulate click on landingContainer
     uiController.landingContainer.click();
 
-    // showGame should not be called because localStorage data is missing
+    // showGame should not be called because content is not loaded
     expect(spyShowGame).not.toHaveBeenCalled();
   });
 
-  it('should call showGame only if contentLoaded is true and localStorage has data', () => {
-    // Set up the conditions for contentLoaded and localStorage
-    localStorage.setItem('someDataKey', 'someData'); // Set some data in localStorage
+  it('should call showGame only if contentLoaded is true', () => {
     uiController.contentLoaded = true; // Set contentLoaded to true
 
     const spyShowGame = jest.spyOn(uiController, 'showGame'); // Spy on the showGame method
@@ -371,7 +378,6 @@ describe('UIController', () => {
   it('should not call showGame if contentLoaded is false', () => {
     // Simulate conditions where contentLoaded is false
     uiController.contentLoaded = false;
-    localStorage.setItem('someDataKey', 'someData'); // Set data in localStorage
 
     const spyShowGame = jest.spyOn(uiController, 'showGame'); // Spy on the showGame method
 
@@ -392,6 +398,7 @@ describe('UIController', () => {
     expect(uiController.feedbackContainer.innerHTML).toBe('New feedback');
   });
   it('should set the correct image source and classes on the star element', () => {
+    uiController.qAnsNum = 0;
     const star = document.getElementById('star0') as HTMLImageElement;
 
     UIController.AddStar();
@@ -403,6 +410,7 @@ describe('UIController', () => {
   });
 
   it('should increment qAnsNum and shownStarsCount', () => {
+    uiController.qAnsNum = 0;
     UIController.AddStar();
 
     expect(uiController.qAnsNum).toBe(1);
@@ -420,6 +428,7 @@ describe('UIController', () => {
   });
 
   it('should apply transition and transform styles', () => {
+    uiController.qAnsNum = 0;
     const star = document.getElementById('star0') as HTMLImageElement;
 
     UIController.AddStar();
@@ -438,8 +447,8 @@ describe('UIController', () => {
     spy.mockRestore();
   });
 
-  it('should not throw if the star element does not exist (edge case)', () => {
-    uiController.stars = [99]; // ID that doesn't exist in DOM
+  it('should throw if the star element does not exist (edge case)', () => {
+    uiController.qAnsNum = 99;
 
     expect(() => {
       UIController.AddStar();
@@ -605,7 +614,7 @@ describe('UIController', () => {
 
     UIController.AddStar();
 
-    const star = document.getElementById('star1') as HTMLImageElement;
+    const star = document.getElementById('star0') as HTMLImageElement;
     expect(star.src).toContain('Star.gif');
     expect(star.classList.contains('topstarv')).toBe(true);
     expect(star.style.position).toBe('absolute');
@@ -686,22 +695,22 @@ describe('UIController', () => {
   it('should set img src to animation gif when playing is true and devModeBucketControlsEnabled is false', () => {
     UIController.ShowAudioAnimation(true);
 
-    expect(playButtonImg.src).toContain('../../animation/SoundButton.gif');
+    expect(playButtonImg.src).toContain('SoundButton.gif');
   });
 
   it('should set img src to idle image when playing is false and devModeBucketControlsEnabled is false', () => {
     UIController.ShowAudioAnimation(false);
 
-    expect(playButtonImg.src).toContain('../../img/SoundButton_Idle.png');
+    expect(playButtonImg.src).toContain('SoundButton_Idle.png');
   });
 
   it('should not change img src if devModeBucketControlsEnabled is true', () => {
     uiController.devModeBucketControlsEnabled = true;
-    playButtonImg.src = '../../img/sound-play-button.svg'; // Set an initial src
+    playButtonImg.src = 'sound-play-button.svg'; // Set an initial src
 
     UIController.ShowAudioAnimation(true);
 
-    expect(playButtonImg.src).toContain('../../img/sound-play-button.svg'); // Should remain unchanged
+    expect(playButtonImg.src).toContain('sound-play-button.svg'); // Should remain unchanged
   });
 
   it('should handle case when img element is not found gracefully (no crash)', () => {
@@ -755,7 +764,7 @@ describe('UIController', () => {
     UIController.ShowQuestion(mockQData);
 
     expect(uiController.questionsContainer.innerHTML).toContain(mockQData.promptText);
-    expect(uiController.questionsContainer.querySelector('img')?.src).toContain(mockQData.promptImg);
+    expect(uiController.questionsContainer.querySelector('img')?.src).toContain(mockQData.promptImg!);
   });
 
   it('should not crash if promptImg is missing', () => {

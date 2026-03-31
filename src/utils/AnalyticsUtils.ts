@@ -88,6 +88,10 @@ export function calculateScore(buckets: bucket[], basalBucketID: number): number
     return score;
 }
 
+export function getMaxScore(buckets: bucket[], basalBucketID: number): number {
+    return buckets?.find(bucket => bucket.bucketID === basalBucketID)?.items.length * 100 || 0;
+}
+
 export function getCeilingBucketID(buckets: bucket[]): number {
     let bucketID = 0;
 
