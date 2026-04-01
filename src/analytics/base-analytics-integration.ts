@@ -1,6 +1,7 @@
 import { AnalyticsService, FirebaseStrategy, StatsigStrategy } from '@curiouslearning/analytics';
 
 export interface AnalyticsConfig {
+    firebaseName: string;
     apiKey: string;
     authDomain: string;
     databaseURL: string;
@@ -54,6 +55,7 @@ export class BaseAnalyticsIntegration {
 
         try {
             this.firebaseStrategy = new FirebaseStrategy({
+                firebaseName: config.firebaseName,
                 firebaseOptions: {
                     apiKey: config.apiKey,
                     authDomain: config.authDomain,
