@@ -72,6 +72,7 @@ async function main() {
         messagingSenderId: firebaseConfig.messagingSenderId,
         appId: firebaseConfig.appId,
         measurementId: firebaseConfig.measurementId,
+        firebaseName: 'AssessmentSurveyStandalone',
     });
 
     startStandaloneApp({ assetBaseUrl });
