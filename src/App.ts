@@ -13,19 +13,9 @@ import CacheModel from '@components/cacheModel';
 import { UIController } from '@ui/uiController';
 import { AnalyticsEventsType, AnalyticsIntegration } from '@analytics/analytics-integration';
 import { AnalyticsConfig } from '@analytics/base-analytics-integration';
+import { AndroidInterface } from '@curiouslearning/core';
 import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from '@utils/AnalyticsUtils';
 import { ASSET_PATHS } from '@configs/assetsPaths';
-
-let AndroidInterface: any;
-try {
-  AndroidInterface = require('@curiouslearning/core').AndroidInterface;
-} catch (_error) {
-  AndroidInterface = class {
-    constructor(_opts: any) {}
-    logSummaryData(_summary: any) {}
-    logUserSessionsData(_payload: any) {}
-  };
-}
 
 const appVersion: string = 'v1.1.3';
 
