@@ -209,9 +209,9 @@ If you use manual mode, your host template must include the expected IDs used by
 	- `devModeAnimationSpeedMultiplierRange`
 	- `devModeAnimationSpeedMultiplierValue`
 
-### What is overrideable from host today
+### What is overridable from host today
 
-Overrideable via `AppStartupConfig`:
+Overridable via `AppStartupConfig`:
 
 - Data/config: `dataURL`, `userId`, `userSource`, `requiredScore`, `nextAssessment`, `endpoint`, `organization`
 - Asset/runtime: `assetBaseUrl`, `dataBaseUrl`, `waitForWindowLoad`, `skipLoadingScreen`, `skipStartScreen`
