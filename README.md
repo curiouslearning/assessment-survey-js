@@ -31,9 +31,9 @@
 This repository now supports two build targets:
 
 - Standalone app bundle (for direct hosting):
-	- `npm run build:standalone`
+  - `npm run build:standalone`
 - Package build (for npm distribution):
-	- `npm run build:package`
+  - `npm run build:package`
 
 The package build emits ESM JS + type declarations into `lib/`.
 
