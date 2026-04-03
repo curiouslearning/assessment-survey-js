@@ -72,16 +72,21 @@ jobs:
 workflows:
   s3-deploy-workflow:
     jobs:
+      - node/test
       - s3-deploy:
           filters:
             branches:
               only:
                 - develop
+          requires:
+            - node/test
       - s3-deploy-prod:
           filters:
             branches:
               only:
                 - main
+          requires:
+            - node/test
 
   dryrun_test_and_publish:
     when: << pipeline.parameters.run_dryrun_test_and_publish >>
