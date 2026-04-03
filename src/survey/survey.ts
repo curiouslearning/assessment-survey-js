@@ -1,17 +1,18 @@
 //this is where the code will go for linearly iterating through the
 //questions in a data.json file that identifies itself as a survey
 
-import { UIController } from '../ui/uiController';
-import { AudioController } from '../components/audioController';
-import { qData, answerData } from '../components/questionData';
-import { AnalyticsEvents } from '../analytics/analyticsEvents';
+import { UIController } from '@ui/uiController';
+import { AudioController } from '@components/audioController';
+import { qData, answerData } from '@components/questionData';
+import { AnalyticsEvents } from '@analytics/analyticsEvents';
 import { App } from '../App';
 import { BaseQuiz } from '../baseQuiz';
-import { fetchSurveyQuestions } from '../utils/jsonUtils';
-import { UnityBridge } from '../utils/unityBridge';
+import { fetchSurveyQuestions } from '@utils/jsonUtils';
+import { UnityBridge } from '@utils/unityBridge';
 
 export class Survey extends BaseQuiz {
   static readonly TYPE = 'survey';
+
   public questionsData: qData[];
   public currentQuestionIndex: number;
 
@@ -23,12 +24,8 @@ export class Survey extends BaseQuiz {
     this.unityBridge = unityBridge;
     this.currentQuestionIndex = 0;
     this.questionsData = [];
-    if (UIController && typeof UIController.SetButtonPressAction === 'function') {
-      UIController.SetButtonPressAction(this.handleAnswerButtonPress);
-    }
-    if (UIController && typeof UIController.SetStartAction === 'function') {
-      UIController.SetStartAction(this.startSurvey);
-    }
+    UIController.SetButtonPressAction(this.handleAnswerButtonPress);
+    UIController.SetStartAction(this.startSurvey);
   }
 
   public handleAnimationSpeedMultiplierChange(): void {
@@ -53,10 +50,12 @@ export class Survey extends BaseQuiz {
 
   public async Run(app: App) {
     this.app = app;
-    const result = await Promise.resolve(this.buildQuestionList());
-    this.questionsData = result;
-    AudioController.PrepareAudioAndImagesForSurvey(this.questionsData, this.app?.GetDataURL() ?? this.dataURL);
-    this.unityBridge?.SendLoaded?.();
+    Promise.resolve(this.buildQuestionList()).then((result) => {
+      this.questionsData = result;
+      AudioController.PrepareAudioAndImagesForSurvey(this.questionsData, this.app.GetDataURL());
+      this.app.notifyLoaded();
+      this.unityBridge?.SendLoaded?.();
+    });
   }
 
   public startSurvey = () => {
@@ -92,7 +91,8 @@ export class Survey extends BaseQuiz {
     if (typeof fetchSurveyQuestions !== 'function') {
       return [];
     }
-    return fetchSurveyQuestions(this.app?.dataURL ?? this.dataURL);
+    const surveyQuestions = fetchSurveyQuestions(this.app.dataURL);
+    return surveyQuestions;
   };
 
   public HasQuestionsLeft(): boolean {

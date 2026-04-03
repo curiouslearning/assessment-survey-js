@@ -25,3 +25,203 @@
 ```
 
 ```
+
+## npm package outputs
+
+This repository now supports two build targets:
+
+- Standalone app bundle (for direct hosting):
+  - `npm run build:standalone`
+- Package build (for npm distribution):
+  - `npm run build:package`
+
+The package build emits ESM JS + type declarations into `lib/`.
+
+## Working locally with this package
+
+Use this workflow when developing `@curiouslearning/assessment-survey` and testing changes in a separate host app without publishing to npm.
+
+### Option A: Use `npm link` (fast iteration)
+
+In this package repo (`assessment-survey-js`):
+
+```bash
+npm run build:package
+npm link
+```
+
+In your host app repo:
+
+```bash
+npm link @curiouslearning/assessment-survey
+```
+
+After making changes here, rebuild to refresh `lib/`:
+
+```bash
+npm run build:package
+```
+
+When done, unlink in the host app:
+
+```bash
+npm unlink @curiouslearning/assessment-survey
+```
+
+And optionally remove the global link from this package repo:
+
+```bash
+npm unlink
+```
+
+### Option B: Use local tarball (closest to publish)
+
+In this package repo:
+
+```bash
+npm run build:package
+npm pack
+```
+
+Then install the generated `.tgz` in your host app:
+
+```bash
+npm install ../assessment-survey-js/curiouslearning-assessment-survey-0.0.1.tgz
+```
+
+Use this option to validate exactly what files are included in the distributed package.
+
+## Web component usage (host integration)
+
+The package exports a custom element registration entry.
+
+### Register globally
+
+```ts
+import '@curiouslearning/assessment-survey/register';
+```
+
+### Render component
+
+```html
+<assessment-survey-player
+	data-key="zulu-lettersounds"
+	user-id="123"
+	user-source="host-app"
+	asset-base-url="/assets/assessment-survey"
+	data-base-url="/assets/assessment-survey"
+	host-theme="ftm-dim"
+	embed-mode="true"
+></assessment-survey-player>
+```
+
+`embed-mode="true"` applies host-friendly defaults (`skip-loading-screen=true`, `skip-start-screen=true`, `enable-service-worker=false`, `enable-unity-bridge=false`, `enable-android-summary=false`, `enable-parent-post-message=false`).
+
+You can still set any of those attributes explicitly when a host needs a different value. Explicit attribute values always override the `embed-mode` preset.
+
+`data-base-url` is optional. If omitted, the component uses `asset-base-url` for `data-key` JSON loading.
+
+`skip-loading-screen` remains recommended in host integration mode when the host app preloads and caches the selected language pack before mounting the component.
+
+`host-theme="ftm-dim"` is an optional embed-only visual variant that replaces the default gradient with a dim transparent background so host content can remain visible behind the assessment UI.
+
+### Listen to events
+
+```ts
+const player = document.querySelector('assessment-survey-player');
+
+player?.addEventListener('loaded', () => {
+	console.log('Assessment loaded');
+});
+
+player?.addEventListener('completed', (event: Event) => {
+	const customEvent = event as CustomEvent;
+	console.log('Assessment completed', customEvent.detail);
+});
+```
+
+## Load and cache only one selected language
+
+Use a single language/content key at a time (for example: `zulu-lettersounds`).
+
+- Resolve selected key in host app:
+	- selectedKey = userSelectedLanguageKey ?? defaultLanguageKey
+- Render component with only that key:
+	- `data-key="<selectedKey>"`
+- Preload and cache only this pack in host service worker:
+	- `/assets/assessment-survey/data/<selectedKey>.json`
+	- `/assets/assessment-survey/audio/<selectedKey>/**`
+	- shared static assets once (`css`, `img`, `animation`)
+
+Recommended host behavior:
+
+- Do not precache all language folders.
+- Warm only selected/default language at host startup.
+- On language change, invalidate old key and warm new key.
+- Track readiness marker by key and content version:
+	- `assessment:<selectedKey>:<contentVersion>:ready`
+
+## Manual host wrapper mode (instantiate `App` directly)
+
+You can skip the built-in `<assessment-survey-player>` and instantiate `App` directly from your own host web component.
+
+### Host TypeScript usage
+
+```ts
+import { createApp, type AppStartupConfig } from '@curiouslearning/assessment-survey';
+
+const config: AppStartupConfig = {
+	dataURL: 'zulu-lettersounds',
+	uiRoot: hostElement, // your host component root element
+	assetBaseUrl: '/assets/assessment-survey',
+	dataBaseUrl: '/assets/assessment-survey',
+	waitForWindowLoad: false,
+	skipLoadingScreen: true,
+	skipStartScreen: true,
+	enableServiceWorker: false,
+	enableUnityBridge: false,
+	enableAndroidSummary: false,
+	enableParentPostMessage: false
+};
+
+const app = createApp(config);
+app.spinUp(config);
+```
+
+### Required DOM IDs in host template
+
+If you use manual mode, your host template must include the expected IDs used by UI logic:
+
+- `landWrap`, `gameWrap`, `endWrap`
+- `starWrapper`, `qWrap`, `feedbackWrap`, `aWrap`
+- `answerButton1` ... `answerButton6`
+- `pbutton`, `chestImage`
+- `loadingScreen`, `progressBar`
+- Dev mode controls:
+	- `devModeModalToggleButtonContainer`
+	- `devModeModalToggleButton`
+	- `devModeSettingsModal`
+	- `devModeBucketGenSelect`
+	- `devModeCorrectLabelShownCheckbox`
+	- `devModeBucketInfoShownCheckbox`
+	- `devModeBucketInfoContainer`
+	- `devModeBucketControlsShownCheckbox`
+	- `devModeAnimationSpeedMultiplierRange`
+	- `devModeAnimationSpeedMultiplierValue`
+
+### What is overridable from host today
+
+Overridable via `AppStartupConfig`:
+
+- Data/config: `dataURL`, `userId`, `userSource`, `requiredScore`, `nextAssessment`, `endpoint`, `organization`
+- Asset/runtime: `assetBaseUrl`, `dataBaseUrl`, `waitForWindowLoad`, `skipLoadingScreen`, `skipStartScreen`
+- Integrations: `enableServiceWorker`, `enableUnityBridge`, `enableAndroidSummary`, `enableParentPostMessage`
+- Host callbacks via `hostIntegrationAdapters`:
+	- `onLoaded`, `onClose`, `onSummaryData`, `onAssessmentCompleted`
+
+Not fully overrideable yet:
+
+- Multiple concurrent player instances (current UI controller is singleton-oriented)
+- Deep UI structure changes without keeping required IDs
+- Full replacement of internal game flow without forking game classes
+

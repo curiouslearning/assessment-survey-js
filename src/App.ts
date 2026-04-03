@@ -1,30 +1,21 @@
 /**
  * App class that represents an entry point of the application.
  */
-
-import { getUUID, getUserSource, getDataFile, getAppLanguageFromDataURL, getAppTypeFromDataURL } from './utils/urlUtils';
-import { Survey } from './survey/survey';
-import { Assessment } from './assessment/assessment';
-import { UnityBridge } from './utils/unityBridge';
-import { AnalyticsEvents } from './analytics/analyticsEvents';
+import { getUUID, getUserSource, getDataFile, getAppLanguageFromDataURL, getAppTypeFromDataURL, configureRuntimeConfig } from '@utils/urlUtils';
+import { Survey } from '@survey/survey';
+import { Assessment } from '@assessment/assessment';
+import { UnityBridge } from '@utils/unityBridge';
 import { BaseQuiz } from './baseQuiz';
-import { fetchAppData, getDataURL } from './utils/jsonUtils';
-import { initializeApp } from 'firebase/app';
-import { getAnalytics, logEvent } from 'firebase/analytics';
+import { fetchAppData, getDataURL, setDataBaseUrl } from '@utils/jsonUtils';
+import { resolveAssetPath, setAssetBaseUrl } from '@utils/assetUtils';
 import { Workbox } from 'workbox-window';
-import CacheModel from './components/cacheModel';
-import { UIController } from './ui/uiController';
-import { AnalyticsEventsType, AnalyticsIntegration } from './analytics/analytics-integration';
-import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from './utils/AnalyticsUtils';
-let AndroidInterface: any;
-try {
-  AndroidInterface = require('@curiouslearning/core').AndroidInterface;
-} catch (err) {
-  AndroidInterface = class {
-    constructor(_opts: any) {}
-    logUserSessionsData(_args: any) {}
-  };
-}
+import CacheModel from '@components/cacheModel';
+import { UIController } from '@ui/uiController';
+import { AnalyticsEventsType, AnalyticsIntegration } from '@analytics/analytics-integration';
+import { AnalyticsConfig } from '@analytics/base-analytics-integration';
+import { AndroidInterface } from '@curiouslearning/core';
+import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from '@utils/AnalyticsUtils';
+import { ASSET_PATHS } from '@configs/assetsPaths';
 
 const appVersion: string = 'v1.1.3';
 
@@ -36,12 +27,44 @@ let contentVersion: string = '';
 
 const broadcastChannel: BroadcastChannel = new BroadcastChannel('as-message-channel');
 
-function getLoadingScreen(): HTMLElement | null {
-  return document.getElementById('loadingScreen');
+export interface AppStartupConfig {
+  dataURL?: string;
+  dataBaseUrl?: string;
+  enableServiceWorker?: boolean;
+  waitForWindowLoad?: boolean;
+  skipLoadingScreen?: boolean;
+  skipStartScreen?: boolean;
+  uiRoot?: Document | ShadowRoot | HTMLElement;
+  assetBaseUrl?: string;
+  enableUnityBridge?: boolean;
+  enableAndroidSummary?: boolean;
+  enableParentPostMessage?: boolean;
+  userId?: string;
+  userSource?: string;
+  requiredScore?: string;
+  nextAssessment?: string;
+  endpoint?: string;
+  organization?: string;
+  hostIntegrationAdapters?: HostIntegrationAdapters;
+  analyticsConfig?: AnalyticsConfig;
 }
 
-function getProgressBar(): HTMLElement | null {
-  return document.getElementById('progressBar');
+export interface SummaryData {
+  app_type: string;
+  score: number;
+  time_spent: number;
+}
+
+export interface AssessmentCompletedPayload {
+  type: 'assessment_completed';
+  score: number;
+}
+
+export interface HostIntegrationAdapters {
+  onLoaded?: () => void;
+  onClose?: () => void;
+  onSummaryData?: (summary: SummaryData) => void;
+  onAssessmentCompleted?: (payload: AssessmentCompletedPayload) => void;
 }
 
 export class App {
@@ -53,72 +76,186 @@ export class App {
   public game: BaseQuiz;
   public analyticsIntegration: AnalyticsIntegration;
   cacheModel: CacheModel;
+  public enableServiceWorker: boolean;
+  public enableUnityBridge: boolean;
+  public enableAndroidSummary: boolean;
+  public enableParentPostMessage: boolean;
+  public hostIntegrationAdapters: HostIntegrationAdapters;
 
   lang: string = 'english';
 
-  constructor() {
-    this.unityBridge = new UnityBridge();
+  constructor(config: AppStartupConfig = {}) {
+    this.applyRuntimeConfig(config);
+    this.applyHostIntegrationConfig(config);
+
+    if (config.uiRoot) {
+      UIController.ConfigureRoot?.(config.uiRoot);
+    }
+
+    this.unityBridge = this.enableUnityBridge ? new UnityBridge() : App.createNoopUnityBridge();
 
     console.log('Initializing app...');
 
-    this.dataURL = getDataFile();
+    this.dataURL = config.dataURL ?? getDataFile();
+    this.enableServiceWorker = config.enableServiceWorker ?? true;
     this.cacheModel = new CacheModel(this.dataURL, this.dataURL, new Set<string>());
-
-
   }
 
-  public async spinUp() {
-    await AnalyticsIntegration.initializeAnalytics();
-    this.analyticsIntegration = AnalyticsIntegration.getInstance();
+  public async spinUp(config: AppStartupConfig = {}) {
+    this.applyRuntimeConfig(config);
+    this.applyHostIntegrationConfig(config);
+
+    const waitForWindowLoad = config.waitForWindowLoad ?? true;
+    const skipLoadingScreen = config.skipLoadingScreen ?? false;
+    const skipStartScreen = config.skipStartScreen ?? false;
+    this.enableServiceWorker = config.enableServiceWorker ?? this.enableServiceWorker;
+
+    UIController.SetGameReady?.(false);
+    UIController.SetSkipStartScreen?.(skipStartScreen);
+
+    if (skipLoadingScreen) {
+      UIController.SetLoadingVisible?.(false);
+    }
+
+    if (config.analyticsConfig) {
+      try {
+        await AnalyticsIntegration.initializeAnalytics(config.analyticsConfig);
+        this.analyticsIntegration = AnalyticsIntegration.getInstance();
+      } catch (error) {
+        console.warn('Analytics initialization failed. Continuing without analytics.', error);
+      }
+    }
 
     const initialize = async () => {
-      try {
-        const data = await fetchAppData(this.dataURL);
-        this.cacheModel.setContentFilePath(getDataURL(this.dataURL));
-        UIController.SetFeedbackText?.(data['feedbackText']);
+      console.log('Window Loaded!');
+      await this.initializeGame();
+      if (skipLoadingScreen) {
+        localStorage.setItem(this.cacheModel.appName, 'true');
+        UIController.SetLoadingProgress?.(100);
+        UIController.SetLoadingVisible?.(false);
+        UIController.SetContentLoaded?.(true);
+      }
 
-        let appType = data['appType'];
-        let assessmentType = data['assessmentType'];
+      if (this.enableServiceWorker) {
+        await this.registerServiceWorker(this.game, this.dataURL, skipLoadingScreen);
+      } else {
+        localStorage.setItem(this.cacheModel.appName, 'true');
+        UIController.SetLoadingVisible?.(false);
+        UIController.SetContentLoaded?.(true);
+      }
+    };
 
-        if (appType == Survey.TYPE) {
-          this.game = new Survey(this.dataURL, this.unityBridge);
-        } else if (appType == Assessment.TYPE) {
-          let buckets = data['buckets'] || [];
+    if (!waitForWindowLoad || document.readyState === 'complete') {
+      await initialize();
+      return;
+    }
 
-          for (let i = 0; i < buckets.length; i++) {
-            for (let j = 0; j < buckets[i].items.length; j++) {
-              let audioItemURL;
-              if (
-                data['quizName']?.includes('Luganda') ||
-                data['quizName']?.toLowerCase().includes('west african english')
-              ) {
-                audioItemURL =
-                  '/audio/' + this.dataURL + '/' + buckets[i].items[j].itemName.toLowerCase().trim() + '.mp3';
-              } else {
-                audioItemURL = '/audio/' + this.dataURL + '/' + buckets[i].items[j].itemName.trim() + '.mp3';
-              }
-              this.cacheModel.addItemToAudioVisualResources(audioItemURL);
+    window.addEventListener('load', () => {
+      initialize();
+    });
+  }
+
+  private static createNoopUnityBridge() {
+    return {
+      SendMessage: (_message: string) => { },
+      SendLoaded: () => { },
+      SendClose: () => { },
+    };
+  }
+
+  private applyRuntimeConfig(config: AppStartupConfig): void {
+    if (typeof setAssetBaseUrl === 'function') {
+      setAssetBaseUrl(config.assetBaseUrl ?? '');
+    }
+    if (typeof setDataBaseUrl === 'function') {
+      setDataBaseUrl(config.dataBaseUrl ?? '');
+    }
+
+    configureRuntimeConfig({
+      data: config.dataURL,
+      cr_user_id: config.userId,
+      userSource: config.userSource,
+      requiredScore: config.requiredScore,
+      nextAssessment: config.nextAssessment,
+      endpoint: config.endpoint,
+      organization: config.organization,
+    });
+
+    if (config.dataURL) {
+      this.dataURL = config.dataURL;
+      if (this.cacheModel) {
+        this.cacheModel.setAppName(config.dataURL);
+      }
+    }
+  }
+
+  private applyHostIntegrationConfig(config: AppStartupConfig): void {
+    this.enableUnityBridge = config.enableUnityBridge ?? this.enableUnityBridge ?? true;
+    this.enableAndroidSummary = config.enableAndroidSummary ?? this.enableAndroidSummary ?? true;
+    this.enableParentPostMessage = config.enableParentPostMessage ?? this.enableParentPostMessage ?? true;
+    this.hostIntegrationAdapters = {
+      ...(this.hostIntegrationAdapters ?? {}),
+      ...(config.hostIntegrationAdapters ?? {}),
+    };
+  }
+
+  private async initializeGame(): Promise<void> {
+    await fetchAppData(this.dataURL).then((data) => {
+      console.log('Assessment/Survey ' + appVersion + ' initializing!');
+      console.log('App data loaded!');
+      console.log(data);
+
+      this.cacheModel.setContentFilePath(getDataURL(this.dataURL));
+
+      UIController.SetFeedbackText?.(data['feedbackText']);
+
+      let appType = data['appType'];
+      const assessmentType = data['assessmentType'];
+
+      if (appType == 'survey') {
+        this.game = new Survey(this.dataURL, this.unityBridge);
+      } else if (appType == 'assessment') {
+        let buckets = data['buckets'];
+
+        for (let i = 0; i < buckets.length; i++) {
+          for (let j = 0; j < buckets[i].items.length; j++) {
+            let audioItemURL;
+            if (
+              data['quizName'].includes('Luganda') ||
+              data['quizName'].toLowerCase().includes('west african english')
+            ) {
+              audioItemURL = resolveAssetPath(ASSET_PATHS.AUDIO.itemAudio(this.dataURL, buckets[i].items[j].itemName.toLowerCase().trim()));
+            } else {
+              audioItemURL = resolveAssetPath(ASSET_PATHS.AUDIO.itemAudio(this.dataURL, buckets[i].items[j].itemName.trim()));
             }
+
+            this.cacheModel.addItemToAudioVisualResources(audioItemURL);
           }
-
-          this.cacheModel.addItemToAudioVisualResources('/audio/' + this.dataURL + '/answer_feedback.mp3');
-          this.game = new Assessment(this.dataURL, this.unityBridge);
         }
 
-        if (this.game != null) {
-          this.game.unityBridge = this.unityBridge;
-        }
+        this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.feedbackAudio(this.dataURL)));
 
-        contentVersion = data['contentVersion'];
+        this.game = new Assessment(this.dataURL, this.unityBridge);
+      }
 
-        await this.setCommonProperties();
-        await this.logInitialAnalyticsEvents();
+      this.game.unityBridge = this.unityBridge;
 
-        this.game?.Run?.(this);
+      contentVersion = data['contentVersion'];
 
-        this.game?.subscribe?.('ENDED', (gameInstance: BaseQuiz) => {
-          if (appType !== 'assessment') return;
+      this.setCommonProperties();
+      this.logInitialAnalyticsEvents();
 
+      this.game.Run(this);
+
+      this.game.subscribe('ENDED', (gameInstance: BaseQuiz) => {
+        const { score, startTime, endTime } = gameInstance;
+        this.notifySummaryData({
+          app_type: appType,
+          score,
+          time_spent: endTime - startTime,
+        });
+
+        if (appType === Assessment.TYPE) {
           const { cr_user_id, language } = getCommonAnalyticsEventsProperties();
           const androidInterface = new AndroidInterface({
             cr_user_id,
@@ -126,47 +263,33 @@ export class App {
             debug: false,
             log: false,
           });
-          const { score, startTime, endTime, max_score } = gameInstance;
-          androidInterface.logUserSessionsData({
+
+          androidInterface.logUserSessionsData?.({
             type: assessmentType || appType,
             lang: language,
             score,
-            max_score,
+            max_score: gameInstance.max_score,
             time_spent: endTime - startTime,
             event_type: 'activity_completed',
           });
-        });
-
-        await this.registerServiceWorker(this.game, this.dataURL);
-      } catch (err) {
-        console.error('Error initializing app:', err);
-      }
-    };
-
-    if (typeof window !== 'undefined') {
-      if (document.readyState === 'complete') {
-        await initialize();
-      } else {
-        window.addEventListener('load', async () => {
-          await initialize();
-        });
-      }
-    } else {
-      await initialize();
-    }
+        }
+      });
+    });
   }
+
   async setCommonProperties() {
     setCommonAnalyticsEventsProperties(getUUID(), getAppLanguageFromDataURL(this.dataURL), getAppTypeFromDataURL(this.dataURL), getUserSource(), contentVersion, appVersion);
   }
+
   async logInitialAnalyticsEvents() {
     const lat_lang = await getLocation();
     setLocationProperty(lat_lang ?? 'NotAvailable');
-    this.analyticsIntegration?.track?.(AnalyticsEventsType.OPENED, {});
-    this.analyticsIntegration?.track?.(AnalyticsEventsType.USER_LOCATION, {});
-    this.analyticsIntegration?.track?.(AnalyticsEventsType.INITIALIZE, { type: 'initialized' });
-
+    this.analyticsIntegration?.track(AnalyticsEventsType.OPENED, {});
+    this.analyticsIntegration?.track(AnalyticsEventsType.USER_LOCATION, {});
+    this.analyticsIntegration?.track(AnalyticsEventsType.INITIALIZE, { type: 'initialized' });
   }
-  async registerServiceWorker(game: BaseQuiz, dataURL: string = '') {
+
+  async registerServiceWorker(game: BaseQuiz, dataURL: string = '', skipLoadingScreen: boolean = false) {
     console.log('Registering service worker...');
 
     if ('serviceWorker' in navigator) {
@@ -227,7 +350,9 @@ export class App {
 
       if (localStorage.getItem(this.cacheModel.appName) == null) {
         console.log('Caching!' + this.cacheModel.appName);
-        getLoadingScreen()?.style && (getLoadingScreen()!.style.display = 'flex');
+        if (!skipLoadingScreen) {
+          UIController.SetLoadingVisible?.(true);
+        }
         broadcastChannel.postMessage({
           command: 'Cache',
           data: {
@@ -235,17 +360,11 @@ export class App {
           },
         });
       } else {
-        const progressBar = getProgressBar();
-        if (progressBar) {
-          progressBar.style.width = '100%';
-        }
+        UIController.SetLoadingProgress?.(100);
         setTimeout(() => {
-          const loadingScreen = getLoadingScreen();
-          if (loadingScreen) {
-            loadingScreen.style.display = 'none';
-          }
-          UIController.SetContentLoaded(true);
-        }, 1500);
+          UIController.SetLoadingVisible?.(false);
+          UIController.SetContentLoaded?.(true);
+        }, skipLoadingScreen ? 0 : 1500);
       }
 
       broadcastChannel.onmessage = (event) => {
@@ -278,6 +397,50 @@ export class App {
   public GetDataURL(): string {
     return this.dataURL;
   }
+
+  public notifyLoaded(): void {
+    UIController.SetGameReady?.(true);
+
+    if (this.enableUnityBridge) {
+      this.unityBridge.SendLoaded();
+    }
+
+    this.hostIntegrationAdapters?.onLoaded?.();
+  }
+
+  public notifyClose(): void {
+    if (this.enableUnityBridge) {
+      this.unityBridge.SendClose();
+    }
+
+    this.hostIntegrationAdapters?.onClose?.();
+  }
+
+  public notifySummaryData(summaryData: SummaryData): void {
+    if (this.enableAndroidSummary) {
+      const { cr_user_id } = getCommonAnalyticsEventsProperties();
+      const androidInterface = new AndroidInterface({
+        cr_user_id,
+        app_id: 'assessment',
+      });
+      androidInterface.logSummaryData?.(summaryData);
+    }
+
+    this.hostIntegrationAdapters?.onSummaryData?.(summaryData);
+  }
+
+  public notifyAssessmentCompleted(score: number): void {
+    const payload: AssessmentCompletedPayload = {
+      type: 'assessment_completed',
+      score,
+    };
+
+    if (this.enableParentPostMessage && window.parent) {
+      window.parent.postMessage(payload, 'https://synapse.curiouscontent.org/');
+    }
+
+    this.hostIntegrationAdapters?.onAssessmentCompleted?.(payload);
+  }
 }
 
 broadcastChannel.addEventListener('message', handleServiceWorkerMessage);
@@ -294,22 +457,13 @@ function handleServiceWorkerMessage(event): void {
 }
 
 function handleLoadingMessage(event, progressValue): void {
-  const progressBar = getProgressBar();
-  const loadingScreen = getLoadingScreen();
-
   if (progressValue < 40 && progressValue >= 10) {
-    if (progressBar) {
-      progressBar.style.width = progressValue + '%';
-    }
+    UIController.SetLoadingProgress?.(progressValue);
   } else if (progressValue >= 100) {
-    if (progressBar) {
-      progressBar.style.width = '100%';
-    }
+    UIController.SetLoadingProgress?.(100);
     setTimeout(() => {
-      if (loadingScreen) {
-        loadingScreen.style.display = 'none';
-      }
-      UIController.SetContentLoaded(true);
+      UIController.SetLoadingVisible?.(false);
+      UIController.SetContentLoaded?.(true);
     }, 1500);
     // add book with a name to local storage as cached
     localStorage.setItem(event.data.data.bookName, 'true');
@@ -335,7 +489,13 @@ function handleUpdateFoundMessage(): void {
   }
 }
 
-if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-  const app = new App();
-  app.spinUp();
+export function createApp(config: AppStartupConfig = {}): App {
+  return new App(config);
+}
+
+export function startStandaloneApp(config: AppStartupConfig = {}): App {
+  console.log(config);
+  const app = new App(config);
+  app.spinUp(config);
+  return app;
 }

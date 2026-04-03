@@ -1,17 +1,16 @@
-import {
-  AbstractAnalyticsStrategy,
-  AnalyticsService,
-  FirebaseStrategy,
-  StatsigStrategy,
-} from '@curiouslearning/analytics';
+import { AnalyticsService, FirebaseStrategy, StatsigStrategy } from '@curiouslearning/analytics';
 
-import { firebaseConfig } from './analytics-config';
-
-interface AnalyticsProvider extends AbstractAnalyticsStrategy {
-  firebaseApp?: unknown;
+export interface AnalyticsConfig {
+    firebaseName: string;
+    apiKey: string;
+    authDomain: string;
+    databaseURL: string;
+    projectId: string;
+    storageBucket: string;
+    messagingSenderId: string;
+    appId: string;
+    measurementId: string;
 }
-
-type StatsigStrategyConstructor = typeof StatsigStrategy;
 
 /**
  * Base class for integrating analytics providers.
@@ -22,9 +21,9 @@ type StatsigStrategyConstructor = typeof StatsigStrategy;
  */
 export class BaseAnalyticsIntegration {
     private analyticsService: AnalyticsService;
-    private firebaseStrategy?: AnalyticsProvider;
-    private isInitialized = false;
-    private readonly statsigStrategyClass: StatsigStrategyConstructor = StatsigStrategy;
+    private firebaseStrategy: FirebaseStrategy;
+    private statsigStrategy: StatsigStrategy;
+    private isInitialized: boolean = false;
 
     /**
      * Creates a new instance of BaseAnalyticsIntegration.
@@ -45,25 +44,27 @@ export class BaseAnalyticsIntegration {
      *
      * Ensures initialization only happens once.
      *
+     * @param {AnalyticsConfig} config - The Firebase analytics configuration object.
      * @returns {Promise<void>} A promise that resolves when analytics have been initialized.
      * @throws {Error} If initialization fails.
      */
-    public async initialize(): Promise<void> {
+    public async initialize(config: AnalyticsConfig): Promise<void> {
         if (this.isInitialized) {
             return;
         }
 
         try {
             this.firebaseStrategy = new FirebaseStrategy({
+                firebaseName: config.firebaseName,
                 firebaseOptions: {
-                    apiKey: firebaseConfig.apiKey,
-                    authDomain: firebaseConfig.authDomain,
-                    databaseURL: firebaseConfig.databaseURL,
-                    projectId: firebaseConfig.projectId,
-                    storageBucket: firebaseConfig.storageBucket,
-                    messagingSenderId: firebaseConfig.messagingSenderId,
-                    appId: firebaseConfig.appId,
-                    measurementId: firebaseConfig.measurementId,
+                    apiKey: config.apiKey,
+                    authDomain: config.authDomain,
+                    databaseURL: config.databaseURL,
+                    projectId: config.projectId,
+                    storageBucket: config.storageBucket,
+                    messagingSenderId: config.messagingSenderId,
+                    appId: config.appId,
+                    measurementId: config.measurementId,
                 },
                 userProperties: {}
             });
@@ -71,16 +72,16 @@ export class BaseAnalyticsIntegration {
             await this.firebaseStrategy.initialize();
             this.analyticsService.register('firebase', this.firebaseStrategy);
 
-            // Example of Statsig initialization (commented out for now)
-            // const statsigStrategy = new StatsigStrategy({
+            // Example of Statsig initialization (commented out)
+            // this.statsigStrategy = new StatsigStrategy({
             //     clientKey: statsigConfig.clientKey,
             //     statsigUser: { userID: getUUID() || statsigConfig.userId }
             // });
-            // await statsigStrategy.initialize();
-            // this.analyticsService.register('statsig', statsigStrategy);
+            // await this.statsigStrategy.initialize();
+            // this.analyticsService.register('statsig', this.statsigStrategy);
 
             this.isInitialized = true;
-            console.log("Analytics service initialized successfully with Firebase");
+            console.log("Analytics service initialized successfully with Firebase and Statsig");
         } catch (error) {
             console.error("Error while initializing analytics:", error);
             throw error;
@@ -112,16 +113,16 @@ export class BaseAnalyticsIntegration {
      *
      * @returns {AnalyticsService} The analytics service used for managing providers.
      */
-    get analytics(): AnalyticsService {
+    get analytics() {
         return this.analyticsService;
     }
 
     /**
      * Gets the initialized Firebase app instance (if available).
      *
-     * @returns {unknown | undefined} The Firebase app instance, or undefined if not initialized.
+     * @returns {any | undefined} The Firebase app instance, or undefined if not initialized.
      */
-    get firebaseApp(): unknown {
+    get firebaseApp(): any {
         return this.firebaseStrategy?.firebaseApp;
     }
 

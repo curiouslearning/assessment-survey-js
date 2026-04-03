@@ -1,8 +1,10 @@
 //code for loading audios
 
 import { qData } from './questionData';
-import { bucket, bucketItem } from '../assessment/bucketData';
-import { getCaseIndependentLangList } from '../utils/jsonUtils';
+import { bucket, bucketItem } from '@assessment/bucketData';
+import { getCaseIndependentLangList } from '@utils/jsonUtils';
+import { resolveAssetPath } from '@utils/assetUtils';
+import { ASSET_PATHS } from '@configs/assetsPaths';
 
 export class AudioController {
   private static instance: AudioController | null = null;
@@ -14,23 +16,20 @@ export class AudioController {
   public allImages: any = {};
   public dataURL: string = '';
 
-  private correctSoundPath = 'dist/audio/Correct.wav';
-
   private feedbackAudio: any = null;
   private correctAudio: any = null;
 
   private init(): void {
     this.feedbackAudio = new Audio();
-    this.feedbackAudio.src = this.correctSoundPath;
     this.correctAudio = new Audio();
   }
 
   public static PrepareAudioAndImagesForSurvey(questionsData: qData[], dataURL: string): void {
     AudioController.getInstance().dataURL = dataURL;
-    const feedbackSoundPath = 'audio/' + AudioController.getInstance().dataURL + '/answer_feedback.mp3';
-
-    AudioController.getInstance().wavToCache.push(feedbackSoundPath);
+    const feedbackSoundPath = resolveAssetPath(ASSET_PATHS.AUDIO.feedbackAudio(AudioController.getInstance().dataURL));
+    AudioController.getInstance().wavToCache.push(ASSET_PATHS.AUDIO.feedbackAudio(AudioController.getInstance().dataURL));
     AudioController.getInstance().correctAudio.src = feedbackSoundPath;
+    AudioController.getInstance().feedbackAudio.src = feedbackSoundPath;
 
     for (var questionIndex in questionsData) {
       let questionData = questionsData[questionIndex];
@@ -56,7 +55,7 @@ export class AudioController {
   public static AddImageToAllImages(newImageURL: string): void {
     console.log('Add image: ' + newImageURL);
     let newImage = new Image();
-    newImage.src = newImageURL;
+    newImage.src = resolveAssetPath(newImageURL);
     AudioController.getInstance().allImages[newImageURL] = newImage;
   }
 
@@ -73,12 +72,7 @@ export class AudioController {
     console.log('Filtered: ' + newAudioURL);
 
     let newAudio = new Audio();
-    if (getCaseIndependentLangList().includes(AudioController.getInstance().dataURL.split('-')[0])) {
-      newAudio.src = 'audio/' + AudioController.getInstance().dataURL + '/' + newAudioURL;
-    } else {
-      newAudio.src = 'audio/' + AudioController.getInstance().dataURL + '/' + newAudioURL;
-    }
-
+    newAudio.src = resolveAssetPath(ASSET_PATHS.AUDIO.itemAudio(AudioController.getInstance().dataURL, newAudioURL));
     AudioController.getInstance().allAudios[newAudioURL] = newAudio;
 
     console.log(newAudio.src);
@@ -86,11 +80,26 @@ export class AudioController {
 
   public static PreloadBucket(newBucket: bucket, dataURL) {
     AudioController.getInstance().dataURL = dataURL;
-    AudioController.getInstance().correctAudio.src =
-      'audio/' + AudioController.getInstance().dataURL + '/answer_feedback.mp3';
+    const feedbackSoundPath = resolveAssetPath(ASSET_PATHS.AUDIO.feedbackAudio(AudioController.getInstance().dataURL));
+    AudioController.getInstance().correctAudio.src = feedbackSoundPath;
+    AudioController.getInstance().feedbackAudio.src = feedbackSoundPath;
     for (var itemIndex in newBucket.items) {
       var item = newBucket.items[itemIndex];
       AudioController.FilterAndAddAudioToAllAudios(item.itemName.toLowerCase());
+    }
+  }
+
+  private static safePlay(audio: HTMLAudioElement, label: string): void {
+    if (!audio) {
+      console.warn(`${label} audio is not available.`);
+      return;
+    }
+
+    const playResult = audio.play();
+    if (playResult && typeof playResult.catch === 'function') {
+      playResult.catch((error) => {
+        console.warn(`${label} audio failed to play from source '${audio.src}'`, error);
+      });
     }
   }
 
@@ -144,29 +153,19 @@ export class AudioController {
   }
 
   public static PlayDing(): void {
-    try {
-      const playReturn = AudioController.getInstance().feedbackAudio?.play?.();
-      if (playReturn && typeof (playReturn as Promise<void>).catch === 'function') {
-        (playReturn as Promise<void>).catch((err) => {
-          console.warn('AudioController.PlayDing play failed', err);
-        });
-      }
-    } catch (err) {
-      console.warn('AudioController.PlayDing failed', err);
+    const instance = AudioController.getInstance();
+    if (instance.feedbackAudio) {
+      AudioController.safePlay(instance.feedbackAudio, 'Ding');
+      return;
+    }
+
+    if (instance.correctAudio) {
+      AudioController.safePlay(instance.correctAudio, 'Ding fallback');
     }
   }
 
   public static PlayCorrect(): void {
-    try {
-      const playReturn = AudioController.getInstance().correctAudio?.play?.();
-      if (playReturn && typeof (playReturn as Promise<void>).catch === 'function') {
-        (playReturn as Promise<void>).catch((err) => {
-          console.warn('AudioController.PlayCorrect play failed', err);
-        });
-      }
-    } catch (err) {
-      console.warn('AudioController.PlayCorrect failed', err);
-    }
+    AudioController.safePlay(AudioController.getInstance().correctAudio, 'Correct');
   }
 
   public static getInstance(): AudioController {

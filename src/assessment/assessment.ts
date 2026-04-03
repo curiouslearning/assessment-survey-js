@@ -1,19 +1,19 @@
 //this is where the logic for handling the buckets will go
 //
 //once we start adding in the assessment functionality
-import { UIController } from '../ui/uiController';
-import { qData, answerData } from '../components/questionData';
-import { AnalyticsEvents } from '../analytics/analyticsEvents';
+import { UIController } from '@ui/uiController';
+import { qData, answerData } from '@components/questionData';
+import { AnalyticsEvents } from '@analytics/analyticsEvents';
 import { App } from '../App';
 import { bucket, bucketItem } from './bucketData';
 import { BaseQuiz } from '../baseQuiz';
-import { fetchAssessmentBuckets } from '../utils/jsonUtils';
-import { TreeNode, sortedArrayToIDsBST } from '../components/tNode';
-import { randFrom, shuffleArray } from '../utils/mathUtils';
-import { AudioController } from '../components/audioController';
-import { AnalyticsEventsType, AnalyticsIntegration } from '../analytics/analytics-integration';
-import { calculateScore, getBasalBucketID, getCeilingBucketID, getCommonAnalyticsEventsProperties, getMaxScore } from '../utils/AnalyticsUtils';
-import { getNextAssessment, getRequiredScore } from '../utils/urlUtils';
+import { fetchAssessmentBuckets } from '@utils/jsonUtils';
+import { TreeNode, sortedArrayToIDsBST } from '@components/tNode';
+import { randFrom, shuffleArray } from '@utils/mathUtils';
+import { AudioController } from '@components/audioController';
+import { AnalyticsEventsType, AnalyticsIntegration } from '@analytics/analytics-integration';
+import { calculateScore, getBasalBucketID, getCeilingBucketID, getCommonAnalyticsEventsProperties } from '@utils/AnalyticsUtils';
+import { getNextAssessment, getRequiredScore } from '@utils/urlUtils';
 
 enum searchStage {
   BinarySearch,
@@ -66,13 +66,12 @@ export class Assessment extends BaseQuiz {
     this.currentQuestion = undefined as any;
     this.max_score = 0;
     this.score = 0;
-    this.devModeBucketGenSelect = document.getElementById(this.devModeBucketGenSelectId) as HTMLSelectElement;
     console.log('app initialized');
     this.setupUIHandlers();
     try {
       this.analyticsIntegration = AnalyticsIntegration.getInstance();
-    } catch (err) {
-      this.analyticsIntegration = null as any;
+    } catch (_error) {
+      this.analyticsIntegration = null;
     }
   }
 
@@ -86,16 +85,13 @@ export class Assessment extends BaseQuiz {
     this.app = applink;
     this.buildBuckets(this.bucketGenMode).then((result) => {
       console.log(this.currentBucket);
-      this.max_score = getMaxScore(this.buckets, this.basalBucket);
-      this.unityBridge.SendLoaded();
+      this.app.notifyLoaded();
     });
   }
 
   public handleBucketGenModeChange(event: Event): void {
     // TODO: Implement handleBucketGenModeChange
-    if (this.devModeBucketGenSelect) {
-      this.bucketGenMode = parseInt(this.devModeBucketGenSelect.value) as BucketGenMode;
-    }
+    this.bucketGenMode = parseInt(this.devModeBucketGenSelect.value) as BucketGenMode;
     this.buildBuckets(this.bucketGenMode).then(() => {
       // Finished building buckets
     });
@@ -219,7 +215,7 @@ export class Assessment extends BaseQuiz {
   public buildBuckets = async (bucketGenMode: BucketGenMode) => {
     // If we don't have the buckets loaded, load them and initialize the current node, which is the starting point
     if (this.buckets === undefined || this.buckets.length === 0) {
-      const res = fetchAssessmentBuckets(this.app?.GetDataURL() ?? this.dataURL).then((result) => {
+      const res = fetchAssessmentBuckets(this.app.GetDataURL()).then((result) => {
         this.buckets = result;
         this.numBuckets = result.length;
         console.log('buckets: ' + this.buckets);
@@ -551,14 +547,14 @@ export class Assessment extends BaseQuiz {
       this.logBucketCompletedEvent(this.currentBucket, passed);
     }
     console.log('new  bucket is ' + newBucket.bucketID);
-    AudioController.PreloadBucket(newBucket, this.app?.GetDataURL() ?? this.dataURL);
+    AudioController.PreloadBucket(newBucket, this.app.GetDataURL());
     this.initBucket(newBucket);
   };
 
   public tryMoveBucketLinearArrayBased = (passed: boolean) => {
     const newBucket = this.buckets[this.currentLinearBucketIndex];
     console.log('New Bucket: ' + newBucket.bucketID);
-    AudioController.PreloadBucket(newBucket, this.app?.GetDataURL() ?? this.dataURL);
+    AudioController.PreloadBucket(newBucket, this.app.GetDataURL());
     this.initBucket(newBucket);
   };
 
@@ -730,17 +726,15 @@ export class Assessment extends BaseQuiz {
       isSynapseUser = true;
       integerRequiredScore = Number(requiredScore);
     }
-    this.analyticsIntegration?.sendDataToThirdParty?.(score, this.commonProperties?.cr_user_id, integerRequiredScore, nextAssessment, this.commonProperties?.app);
-    if (window.parent) {
-      window.parent.postMessage(
-        {
-          type: 'assessment_completed',
-          score: score,
-        },
-        'https://synapse.curiouscontent.org/'
-      );
-    }
-    
+    this.analyticsIntegration?.sendDataToThirdParty?.(
+      score,
+      this.commonProperties?.cr_user_id,
+      integerRequiredScore,
+      nextAssessment,
+      this.commonProperties?.app
+    );
+    this.app.notifyAssessmentCompleted(score);
+
     const maxScore = buckets.length * 100;
     this.analyticsIntegration?.track?.(AnalyticsEventsType.COMPLETED, {
       type: 'completed',

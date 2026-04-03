@@ -1,8 +1,8 @@
 import { App } from './App';
-import { AnalyticsEvents } from './analytics/analyticsEvents';
-import { UIController } from './ui/uiController';
-import { UnityBridge } from './utils/unityBridge';
-// Lightweight in-repo pub/sub used by quizzes to notify app-level listeners.
+import { AnalyticsEvents } from '@analytics/analyticsEvents';
+import { UIController } from '@ui/uiController';
+import { UnityBridge } from '@utils/unityBridge';
+
 class PubSub {
   private listeners: { [key: string]: Array<(payload?: any) => void> } = {};
 
@@ -14,32 +14,18 @@ class PubSub {
   }
 
   publish(event: string, payload?: any): void {
-    const subs = this.listeners[event];
-    if (!subs) {
+    const callbacks = this.listeners[event];
+    if (!callbacks) {
       return;
     }
 
-    const errors: unknown[] = [];
-    for (const callback of subs) {
-      try {
-        callback(payload);
-      } catch (err) {
-        errors.push(err);
-        console.error('PubSub callback error for event', event, err);
-      }
-    }
-
-    const shouldThrowInCurrentEnv =
-      typeof process === 'undefined' || process?.env?.NODE_ENV !== 'production';
-    if (errors.length > 0 && shouldThrowInCurrentEnv) {
-      throw errors[0];
+    for (const callback of callbacks) {
+      callback(payload);
     }
   }
 }
 
 export abstract class BaseQuiz extends PubSub {
-  static readonly TYPE: string = 'base';
-
   protected app: App;
   protected quizEndData: any;
   public id: string;
@@ -60,7 +46,7 @@ export abstract class BaseQuiz extends PubSub {
   public animationSpeedMultiplier: number = 1;
 
   public devModeToggleButtonContainerId: string = 'devModeModalToggleButtonContainer';
-  public devModeToggleButtonContainer: HTMLElement | null;
+  public devModeToggleButtonContainer: HTMLElement;
 
   public devModeToggleButtonId: string = 'devModeModalToggleButton';
   public devModeToggleButton: HTMLButtonElement;
@@ -86,7 +72,7 @@ export abstract class BaseQuiz extends PubSub {
   public devModeAnimationSpeedMultiplierRange: HTMLInputElement;
 
   public devModeAnimationSpeedMultiplierValueId: string = 'devModeAnimationSpeedMultiplierValue';
-  public devModeAnimationSpeedMultiplierValue: HTMLElement | null;
+  public devModeAnimationSpeedMultiplierValue: HTMLElement;
 
   constructor() {
     super();
@@ -161,9 +147,19 @@ export abstract class BaseQuiz extends PubSub {
 
     if (this.devModeAnimationSpeedMultiplierRange) {
       this.devModeAnimationSpeedMultiplierRange.onchange = () => {
-        this.syncAnimationSpeedMultiplier();
+        this.animationSpeedMultiplier = parseFloat(this.devModeAnimationSpeedMultiplierRange.value);
+        if (this.animationSpeedMultiplier < 0.2) {
+          this.animationSpeedMultiplier = 0.2;
+          this.devModeAnimationSpeedMultiplierRange.value = '0.2';
+        }
+
+        if (this.devModeAnimationSpeedMultiplierValue) {
+          this.devModeAnimationSpeedMultiplierValue.innerText = this.animationSpeedMultiplier.toString();
+        }
+        this.handleAnimationSpeedMultiplierChange();
       };
-      this.syncAnimationSpeedMultiplier();
+
+      this.animationSpeedMultiplier = parseFloat(this.devModeAnimationSpeedMultiplierRange.value);
     }
 
     if (this.devModeToggleButtonContainer) {
@@ -179,25 +175,6 @@ export abstract class BaseQuiz extends PubSub {
     if (this.devModeToggleButtonContainer) {
       this.devModeToggleButtonContainer.style.display = 'none';
     }
-  }
-
-  private syncAnimationSpeedMultiplier(): void {
-    if (!this.devModeAnimationSpeedMultiplierRange) {
-      return;
-    }
-
-    const parsedValue = parseFloat(this.devModeAnimationSpeedMultiplierRange.value);
-    this.animationSpeedMultiplier = Number.isFinite(parsedValue) ? parsedValue : 1;
-    if (this.animationSpeedMultiplier < 0.2) {
-      this.animationSpeedMultiplier = 0.2;
-      this.devModeAnimationSpeedMultiplierRange.value = '0.2';
-    }
-
-    if (this.devModeAnimationSpeedMultiplierValue) {
-      this.devModeAnimationSpeedMultiplierValue.innerText = this.animationSpeedMultiplier.toString();
-    }
-
-    this.handleAnimationSpeedMultiplierChange();
   }
 
   public abstract handleBucketGenModeChange(event: Event): void;
@@ -228,7 +205,7 @@ export abstract class BaseQuiz extends PubSub {
   public onEnd(): void {
     // sendFinished();
     UIController.ShowEnd(); // TODO: non-game logic code. Move to App.ts
-    this.app.unityBridge.SendClose(); // TODO: non-game logic code. Move to App.ts
+    this.app.notifyClose();
     this.endTime = Date.now();
     this.publish('ENDED', this);
   }
