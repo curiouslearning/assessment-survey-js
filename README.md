@@ -140,6 +140,26 @@ player?.addEventListener('completed', (event: Event) => {
 });
 ```
 
+### Pass host callbacks directly
+
+```ts
+const player = document.querySelector('assessment-survey-player');
+
+player?.setHostIntegrationCallbacks?.({
+	onComplete: (payload) => {
+		console.log('Assessment complete', payload.score);
+	},
+	onClose: () => {
+		console.log('Assessment closed');
+	},
+	onRewardTrigger: (payload) => {
+		console.log('Trigger host reward flow', payload.score);
+	},
+});
+```
+
+`onComplete` and `onRewardTrigger` fire from the assessment completion path. Existing `completed` events and legacy `onAssessmentCompleted` callbacks remain supported for backward compatibility.
+
 ## Load and cache only one selected language
 
 Use a single language/content key at a time (for example: `zulu-lettersounds`).
@@ -217,7 +237,7 @@ Overridable via `AppStartupConfig`:
 - Asset/runtime: `assetBaseUrl`, `dataBaseUrl`, `waitForWindowLoad`, `skipLoadingScreen`, `skipStartScreen`
 - Integrations: `enableServiceWorker`, `enableUnityBridge`, `enableAndroidSummary`, `enableParentPostMessage`
 - Host callbacks via `hostIntegrationAdapters`:
-	- `onLoaded`, `onClose`, `onSummaryData`, `onAssessmentCompleted`
+	- `onLoaded`, `onClose`, `onSummaryData`, `onComplete`, `onRewardTrigger`, `onAssessmentCompleted`
 
 Not fully overrideable yet:
 

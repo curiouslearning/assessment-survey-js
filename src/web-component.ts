@@ -1,4 +1,4 @@
-import { App, AppStartupConfig, createApp } from './App';
+import { App, AppStartupConfig, AssessmentCompletedPayload, HostIntegrationAdapters, SummaryData, createApp } from './App';
 import { buildAssessmentSurveyFragment, normalizeBaseUrl, normalizeHostTheme } from './ui/dom-template';
 import { UIController } from '@ui/uiController';
 import { AnalyticsConfig } from '@analytics/base-analytics-integration';
@@ -56,10 +56,45 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
   private appInstance: App | null = null;
   private isInitialized = false;
   private analyticsConfig: AnalyticsConfig | null = null;
+  private hostIntegrationCallbacks: HostIntegrationAdapters = {};
 
   // exposed method for host app to inject analytics config
   public setAnalyticsConfig(config: AnalyticsConfig): void {
     this.analyticsConfig = config;
+  }
+
+  public setHostIntegrationCallbacks(callbacks: HostIntegrationAdapters): void {
+    this.hostIntegrationCallbacks = {
+      ...this.hostIntegrationCallbacks,
+      ...callbacks,
+    };
+
+    if (this.appInstance) {
+      this.appInstance.hostIntegrationAdapters = this.buildHostIntegrationAdapters();
+    }
+  }
+
+  private buildHostIntegrationAdapters(): HostIntegrationAdapters {
+    return {
+      onLoaded: () => {
+        this.hostIntegrationCallbacks.onLoaded?.();
+        this.dispatchEvent(new CustomEvent('loaded'));
+      },
+      onClose: () => {
+        this.hostIntegrationCallbacks.onClose?.();
+        this.dispatchEvent(new CustomEvent('closed'));
+      },
+      onSummaryData: (summaryData: SummaryData) => {
+        this.hostIntegrationCallbacks.onSummaryData?.(summaryData);
+        this.dispatchEvent(new CustomEvent('summary', { detail: summaryData }));
+      },
+      onComplete: this.hostIntegrationCallbacks.onComplete,
+      onRewardTrigger: this.hostIntegrationCallbacks.onRewardTrigger,
+      onAssessmentCompleted: (payload: AssessmentCompletedPayload) => {
+        this.hostIntegrationCallbacks.onAssessmentCompleted?.(payload);
+        this.dispatchEvent(new CustomEvent('completed', { detail: payload }));
+      },
+    };
   }
 
   connectedCallback(): void {
@@ -112,12 +147,7 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
       waitForWindowLoad: false,
       uiRoot: this,
       analyticsConfig: this.analyticsConfig ?? undefined,
-      hostIntegrationAdapters: {
-        onLoaded: () => this.dispatchEvent(new CustomEvent('loaded')),
-        onClose: () => this.dispatchEvent(new CustomEvent('closed')),
-        onSummaryData: (summaryData) => this.dispatchEvent(new CustomEvent('summary', { detail: summaryData })),
-        onAssessmentCompleted: (payload) => this.dispatchEvent(new CustomEvent('completed', { detail: payload })),
-      },
+      hostIntegrationAdapters: this.buildHostIntegrationAdapters(),
     };
 
     this.appInstance = createApp(startupConfig);
@@ -129,6 +159,7 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
     this.appInstance = null;
     this.isInitialized = false;
     this.analyticsConfig = null;
+    this.hostIntegrationCallbacks = {};
     UIController.Reset();
   }
 }

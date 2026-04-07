@@ -214,6 +214,35 @@ describe('App Class', () => {
 
     (window as any).location = originalLocation;
   });
+
+  test('should notify completion, reward, and legacy assessment callbacks with the same payload', () => {
+    const onComplete = jest.fn();
+    const onRewardTrigger = jest.fn();
+    const onAssessmentCompleted = jest.fn();
+
+    app.hostIntegrationAdapters = {
+      onComplete,
+      onRewardTrigger,
+      onAssessmentCompleted,
+    };
+
+    app.notifyAssessmentCompleted(300);
+
+    const expectedPayload = { type: 'assessment_completed', score: 300 };
+
+    expect(onComplete).toHaveBeenCalledWith(expectedPayload);
+    expect(onRewardTrigger).toHaveBeenCalledWith(expectedPayload);
+    expect(onAssessmentCompleted).toHaveBeenCalledWith(expectedPayload);
+  });
+
+  test('should notify close callback when configured', () => {
+    const onClose = jest.fn();
+    app.hostIntegrationAdapters = { onClose };
+
+    app.notifyClose();
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });
 
 function handleServiceWorkerMessage(mockEvent: {
