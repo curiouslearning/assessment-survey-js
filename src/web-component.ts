@@ -70,6 +70,7 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
     this.analyticsConfig = config;
   }
 
+  // TODO: consider subscribing to the app events directly in the app itself instead of creating a pubsub here at webcomponent
   public subscribe<T = unknown>(event: string, callback: (payload: T) => void): () => void {
     return this.hostIntegrationPubSub.subscribe(event, callback as (data: any) => void);
   }
