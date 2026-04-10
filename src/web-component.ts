@@ -1,4 +1,5 @@
 import { App, AppStartupConfig, AssessmentCompletedPayload, HostIntegrationAdapters, SummaryData, createApp } from './App';
+import { PubSub } from '@curiouslearning/core';
 import { buildAssessmentSurveyFragment, normalizeBaseUrl, normalizeHostTheme } from './ui/dom-template';
 import { UIController } from '@ui/uiController';
 import { AnalyticsConfig } from '@analytics/base-analytics-integration';
@@ -53,46 +54,42 @@ function getFirstAttributeValue(element: HTMLElement, names: string[]): string |
 }
 
 export class AssessmentSurveyPlayerElement extends HTMLElement {
+  public static readonly ONLOADED = 'loaded';
+  public static readonly ONCLOSE = 'closed';
+  public static readonly ONSUMMARY = 'summary';
+  public static readonly ONCOMPLETE = 'completed';
+  public static readonly ONREWARDTRIGGER = 'reward-trigger';
+
   private appInstance: App | null = null;
   private isInitialized = false;
   private analyticsConfig: AnalyticsConfig | null = null;
-  private hostIntegrationCallbacks: HostIntegrationAdapters = {};
+  private readonly hostIntegrationPubSub = new PubSub();
 
   // exposed method for host app to inject analytics config
   public setAnalyticsConfig(config: AnalyticsConfig): void {
     this.analyticsConfig = config;
   }
 
-  public setHostIntegrationCallbacks(callbacks: HostIntegrationAdapters): void {
-    this.hostIntegrationCallbacks = {
-      ...this.hostIntegrationCallbacks,
-      ...callbacks,
-    };
-
-    if (this.appInstance) {
-      this.appInstance.hostIntegrationAdapters = this.buildHostIntegrationAdapters();
-    }
+  public subscribe<T = unknown>(event: string, callback: (payload: T) => void): () => void {
+    return this.hostIntegrationPubSub.subscribe(event, callback as (data: any) => void);
   }
 
   private buildHostIntegrationAdapters(): HostIntegrationAdapters {
     return {
       onLoaded: () => {
-        this.hostIntegrationCallbacks.onLoaded?.();
-        this.dispatchEvent(new CustomEvent('loaded'));
+        this.hostIntegrationPubSub.publish(AssessmentSurveyPlayerElement.ONLOADED, undefined);
       },
       onClose: () => {
-        this.hostIntegrationCallbacks.onClose?.();
-        this.dispatchEvent(new CustomEvent('closed'));
+        this.hostIntegrationPubSub.publish(AssessmentSurveyPlayerElement.ONCLOSE, undefined);
       },
       onSummaryData: (summaryData: SummaryData) => {
-        this.hostIntegrationCallbacks.onSummaryData?.(summaryData);
-        this.dispatchEvent(new CustomEvent('summary', { detail: summaryData }));
+        this.hostIntegrationPubSub.publish(AssessmentSurveyPlayerElement.ONSUMMARY, summaryData);
       },
-      onComplete: this.hostIntegrationCallbacks.onComplete,
-      onRewardTrigger: this.hostIntegrationCallbacks.onRewardTrigger,
-      onAssessmentCompleted: (payload: AssessmentCompletedPayload) => {
-        this.hostIntegrationCallbacks.onAssessmentCompleted?.(payload);
-        this.dispatchEvent(new CustomEvent('completed', { detail: payload }));
+      onComplete: (payload: AssessmentCompletedPayload) => {
+        this.hostIntegrationPubSub.publish(AssessmentSurveyPlayerElement.ONCOMPLETE, payload);
+      },
+      onRewardTrigger: (payload: AssessmentCompletedPayload) => {
+        this.hostIntegrationPubSub.publish(AssessmentSurveyPlayerElement.ONREWARDTRIGGER, payload);
       },
     };
   }
@@ -159,7 +156,6 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
     this.appInstance = null;
     this.isInitialized = false;
     this.analyticsConfig = null;
-    this.hostIntegrationCallbacks = {};
     UIController.Reset();
   }
 }

@@ -140,25 +140,27 @@ player?.addEventListener('completed', (event: Event) => {
 });
 ```
 
-### Pass host callbacks directly
+### Subscribe with the element PubSub
 
 ```ts
-const player = document.querySelector('assessment-survey-player');
+import { AssessmentSurveyPlayerElement } from '@curiouslearning/assessment-survey';
 
-player?.setHostIntegrationCallbacks?.({
-	onComplete: (payload) => {
-		console.log('Assessment complete', payload.score);
-	},
-	onClose: () => {
-		console.log('Assessment closed');
-	},
-	onRewardTrigger: (payload) => {
-		console.log('Trigger host reward flow', payload.score);
-	},
+const player = document.querySelector('assessment-survey-player') as AssessmentSurveyPlayerElement;
+
+player?.subscribe(AssessmentSurveyPlayerElement.ONCOMPLETE, (payload) => {
+	console.log('Assessment complete', payload.score);
+});
+
+player?.subscribe(AssessmentSurveyPlayerElement.ONCLOSE, () => {
+	console.log('Assessment closed');
+});
+
+player?.subscribe(AssessmentSurveyPlayerElement.ONREWARDTRIGGER, (payload) => {
+	console.log('Trigger host reward flow', payload.score);
 });
 ```
 
-`onComplete` and `onRewardTrigger` fire from the assessment completion path. Existing `completed` events and legacy `onAssessmentCompleted` callbacks remain supported for backward compatibility.
+`AssessmentSurveyPlayerElement.ONCOMPLETE` and `AssessmentSurveyPlayerElement.ONREWARDTRIGGER` fire from the assessment completion path through the element's internal `@curiouslearning/core` `PubSub`. The exported constants keep the host event names stable: `loaded`, `closed`, `summary`, `completed`, and `reward-trigger`.
 
 ## Load and cache only one selected language
 
