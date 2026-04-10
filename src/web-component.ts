@@ -1,4 +1,5 @@
-import { App, AppStartupConfig, createApp } from './App';
+import { App, AppStartupConfig, AssessmentCompletedPayload, HostIntegrationAdapters, SummaryData, createApp } from './App';
+import { PubSub } from '@curiouslearning/core';
 import { buildAssessmentSurveyFragment, normalizeBaseUrl, normalizeHostTheme } from './ui/dom-template';
 import { UIController } from '@ui/uiController';
 import { AnalyticsConfig } from '@analytics/base-analytics-integration';
@@ -53,13 +54,45 @@ function getFirstAttributeValue(element: HTMLElement, names: string[]): string |
 }
 
 export class AssessmentSurveyPlayerElement extends HTMLElement {
+  public static readonly ONLOADED = 'loaded';
+  public static readonly ONCLOSE = 'closed';
+  public static readonly ONSUMMARY = 'summary';
+  public static readonly ONCOMPLETE = 'completed';
+  public static readonly ONREWARDTRIGGER = 'reward-trigger';
+
   private appInstance: App | null = null;
   private isInitialized = false;
   private analyticsConfig: AnalyticsConfig | null = null;
+  private readonly hostIntegrationPubSub = new PubSub();
 
   // exposed method for host app to inject analytics config
   public setAnalyticsConfig(config: AnalyticsConfig): void {
     this.analyticsConfig = config;
+  }
+
+  // TODO: consider subscribing to the app events directly in the app itself instead of creating a pubsub here at webcomponent
+  public subscribe<T = unknown>(event: string, callback: (payload: T) => void): () => void {
+    return this.hostIntegrationPubSub.subscribe(event, callback as (data: any) => void);
+  }
+
+  private buildHostIntegrationAdapters(): HostIntegrationAdapters {
+    return {
+      onLoaded: () => {
+        this.hostIntegrationPubSub.publish(AssessmentSurveyPlayerElement.ONLOADED, undefined);
+      },
+      onClose: () => {
+        this.hostIntegrationPubSub.publish(AssessmentSurveyPlayerElement.ONCLOSE, undefined);
+      },
+      onSummaryData: (summaryData: SummaryData) => {
+        this.hostIntegrationPubSub.publish(AssessmentSurveyPlayerElement.ONSUMMARY, summaryData);
+      },
+      onComplete: (payload: AssessmentCompletedPayload) => {
+        this.hostIntegrationPubSub.publish(AssessmentSurveyPlayerElement.ONCOMPLETE, payload);
+      },
+      onRewardTrigger: (payload: AssessmentCompletedPayload) => {
+        this.hostIntegrationPubSub.publish(AssessmentSurveyPlayerElement.ONREWARDTRIGGER, payload);
+      },
+    };
   }
 
   connectedCallback(): void {
@@ -112,12 +145,7 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
       waitForWindowLoad: false,
       uiRoot: this,
       analyticsConfig: this.analyticsConfig ?? undefined,
-      hostIntegrationAdapters: {
-        onLoaded: () => this.dispatchEvent(new CustomEvent('loaded')),
-        onClose: () => this.dispatchEvent(new CustomEvent('closed')),
-        onSummaryData: (summaryData) => this.dispatchEvent(new CustomEvent('summary', { detail: summaryData })),
-        onAssessmentCompleted: (payload) => this.dispatchEvent(new CustomEvent('completed', { detail: payload })),
-      },
+      hostIntegrationAdapters: this.buildHostIntegrationAdapters(),
     };
 
     this.appInstance = createApp(startupConfig);
