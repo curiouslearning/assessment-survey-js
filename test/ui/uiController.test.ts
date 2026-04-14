@@ -14,8 +14,13 @@ describe('UIController', () => {
   let playButtonImg: HTMLImageElement;
   let buttons: any = [];
 
+  function setWindowSize(width: number, height: number): void {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: height });
+  }
 
   beforeEach(() => {
+    setWindowSize(1024, 768);
     setupDom();
     feedbackContainer = document.getElementById('feedbackWrap') as HTMLElement;
     UIController.instance = null;
@@ -54,6 +59,7 @@ describe('UIController', () => {
     uiController.startPressCallback = jest.fn();
     jest.spyOn(AudioController, 'PlayAudio').mockImplementation(jest.fn());
     jest.spyOn(AudioController, 'PlayCorrect').mockImplementation(jest.fn());
+    jest.spyOn(AudioController, 'PlayDing').mockImplementation(jest.fn());
     jest.spyOn(AudioController, 'GetImage').mockImplementation((imageName: string) => {
       const image = document.createElement('img');
       image.src = imageName;
@@ -94,6 +100,38 @@ describe('UIController', () => {
     const instance1 = UIController.getInstance();
     const instance2 = UIController.getInstance();
     expect(instance1).toBe(instance2);
+  });
+
+  it('should return 380 for wide short screens', () => {
+    setWindowSize(1200, 640);
+
+    expect(UIController.getResponsiveCanvasWidth()).toBe(380);
+  });
+
+  it('should return 500 for wide screens that are not short', () => {
+    setWindowSize(1200, 700);
+
+    expect(UIController.getResponsiveCanvasWidth()).toBe(500);
+  });
+
+  it('should return the window width for screens up to 1080px wide', () => {
+    setWindowSize(900, 700);
+
+    expect(UIController.getResponsiveCanvasWidth()).toBe(900);
+  });
+
+  it('should apply the responsive canvas width to the body wrapper on resize', () => {
+    const bodyWrapper = document.querySelector<HTMLElement>('.bodyWrapper')!;
+
+    setWindowSize(1200, 700);
+    window.dispatchEvent(new Event('resize'));
+    expect(bodyWrapper.style.width).toBe('500px');
+    expect(bodyWrapper.style.maxWidth).toBe('500px');
+
+    setWindowSize(1200, 640);
+    window.dispatchEvent(new Event('resize'));
+    expect(bodyWrapper.style.width).toBe('380px');
+    expect(bodyWrapper.style.maxWidth).toBe('380px');
   });
 
   it('should initialize the instance only once', () => {
@@ -169,6 +207,18 @@ describe('UIController', () => {
     instance.buttonPressCallback(); // Simulate button press
 
     expect(mockCallback).toHaveBeenCalled();
+  });
+
+  it('should not play feedback audio immediately on answer button press', () => {
+    const mockCallback = jest.fn();
+    UIController.SetButtonPressAction(mockCallback);
+    uiController.buttonsActive = true;
+    uiController.qStart = Date.now();
+
+    uiController.answerButtonPress(1);
+
+    expect(AudioController.PlayDing).not.toHaveBeenCalled();
+    expect(mockCallback).toHaveBeenCalledWith(1, expect.any(Number));
   });
   it('should set contentLoaded to true on the singleton instance', () => {
     UIController.SetContentLoaded(true);

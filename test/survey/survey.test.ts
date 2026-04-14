@@ -173,6 +173,23 @@ describe('Survey', () => {
     expect(mockUnityBridge.SendLoaded).toHaveBeenCalled();
   });
 
+  it('should mark survey feedback as incorrect when selected answer does not match correct answer', async () => {
+    await survey.Run(mockApp);
+
+    survey.handleAnswerButtonPress(2, 1000);
+
+    expect(UIController.SetFeedbackVisibile).toHaveBeenCalledWith(true, false);
+  });
+
+  it('should preserve positive feedback for survey questions without a correct answer', async () => {
+    await survey.Run(mockApp);
+    delete survey.questionsData[0].correct;
+
+    survey.handleAnswerButtonPress(2, 1000);
+
+    expect(UIController.SetFeedbackVisibile).toHaveBeenCalledWith(true, true);
+  });
+
   it('should go to the next question after a question ends', async () => {
     await survey.Run(mockApp);
 
