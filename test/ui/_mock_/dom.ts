@@ -1,5 +1,6 @@
 export function setupDom() {
   document.body.innerHTML = `
+    <div class="bodyWrapper">
     <div id="landWrap"></div>
     <div id="gameWrap"></div>
     <div id="endWrap"></div>
@@ -24,5 +25,6 @@ export function setupDom() {
 
     <button id="pbutton" style="visibility: visible;"></button>
     <img id="chestImage" />
+    </div>
   `;
 }

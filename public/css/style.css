@@ -45,7 +45,6 @@ body.assessment-survey-standalone {
   flex-direction: column;
   min-height: 100vh;
   overflow: hidden;
-  padding-top: 8vh;
 }
 
 .chestWrapper {
@@ -126,8 +125,8 @@ body.assessment-survey-standalone {
   margin: 0 auto;
   font-family: BalooBhai2, Kalam, sans-serif;
   text-align: center;
-  width: 100%;
-  max-width: 540px;
+  width: 100vw;
+  max-width: none;
   min-height: 100vh;
   height: 100%;
   overflow: hidden;
@@ -139,6 +138,20 @@ body.assessment-survey-standalone {
   background-size: 100% 100%;
   bottom: 0;
   position: relative;
+}
+
+@media (min-width: 1081px) and (max-height: 649px) {
+  .bodyWrapper {
+    width: 380px;
+    max-width: 380px;
+  }
+}
+
+@media (min-width: 1081px) and (min-height: 650px) {
+  .bodyWrapper {
+    width: 500px;
+    max-width: 500px;
+  }
 }
 
 .bodyWrapper.as-host-theme-ftm-dim {
@@ -170,7 +183,7 @@ body.assessment-survey-standalone {
   font-size: 200%;
   font-weight: bold;
   position: relative;
-  top: -100px;
+  top: -120px;
   z-index: 5;
   justify-content: center;
   align-items: center;
