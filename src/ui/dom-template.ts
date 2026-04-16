@@ -11,6 +11,7 @@ import {
   DevModeSettingsModalSection,
   LandingPageWrapperSection,
   QuestionViewWrapperSection,
+  DragableQuestionViewWrapperSection
 } from './dom-template/sections';
 import type {
   AssessmentSurveyTemplateConfig,
@@ -20,6 +21,7 @@ import type {
   TemplateTextOverrides,
 } from './dom-template/assessment-template-contracts';
 import { normalizeBaseUrl, normalizeHostTheme } from './dom-template/assessment-template-resolvers';
+import QuestionInteractionEvents from './dom-events/drag-interaction';
 
 export type {
   AssessmentSurveyTemplateConfig,
@@ -143,6 +145,8 @@ class DevModeToggleButtonSection extends TemplateSection<HTMLDivElement> {
   }
 }
 
+//Temporary
+
 /**
  * Composes all top-level gameplay sections into the body wrapper.
  */
@@ -155,14 +159,23 @@ class BodyWrapperSection extends TemplateSection<HTMLDivElement> {
           : this.context.classNames.bodyWrapper,
     });
 
+    //const questionViewWrapper = new QuestionViewWrapperSection(this.context).render();
+    const questionViewWrapper = new DragableQuestionViewWrapperSection(this.context).render();
+
     appendChildren(bodyWrapper, [
       new LandingPageWrapperSection(this.context).render(),
-      new QuestionViewWrapperSection(this.context).render(),
+      questionViewWrapper,
       this.context.sections.endingScreen ? new EndingPageWrapperSection(this.context).render() : null,
       new DevModeBucketInfoSection(this.context).render(),
       new DevModeToggleButtonSection(this.context).render(),
       new DevModeSettingsModalSection(this.context).render(),
     ]);
+
+    const interactionRoot = questionViewWrapper.querySelector('.questionInteractionWrapper-drag');
+    if (interactionRoot instanceof HTMLElement) {
+      console.log('adding events')
+      new QuestionInteractionEvents(interactionRoot).attach();
+    }
 
     return bodyWrapper;
   }
@@ -172,7 +185,7 @@ class BodyWrapperSection extends TemplateSection<HTMLDivElement> {
  * Orchestrates full template assembly into a document fragment.
  */
 class AssessmentSurveyTemplateBuilder {
-  constructor(private readonly context: TemplateContext) {}
+  constructor(private readonly context: TemplateContext) { }
 
   /**
    * Builds the complete renderer output as a document fragment.
