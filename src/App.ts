@@ -16,6 +16,10 @@ import { AnalyticsConfig } from '@analytics/base-analytics-integration';
 import { AndroidInterface } from '@curiouslearning/core';
 import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from '@utils/AnalyticsUtils';
 import { ASSET_PATHS } from '@configs/assetsPaths';
+import { AssessmentUI } from '@ui/assessment-ui';
+import { LegacyAssessmentUIAdapter } from '@ui/legacy-assessment-ui-adapter';
+
+export type AssessmentUIMode = 'legacy' | 'new-ui';
 
 const appVersion: string = 'v1.1.3';
 
@@ -47,6 +51,7 @@ export interface AppStartupConfig {
   organization?: string;
   hostIntegrationAdapters?: HostIntegrationAdapters;
   analyticsConfig?: AnalyticsConfig;
+  assessmentUIMode?: AssessmentUIMode;
 }
 
 export interface SummaryData {
@@ -83,12 +88,14 @@ export class App {
   public enableAndroidSummary: boolean;
   public enableParentPostMessage: boolean;
   public hostIntegrationAdapters: HostIntegrationAdapters;
+  public assessmentUIMode: AssessmentUIMode;
 
   lang: string = 'english';
 
   constructor(config: AppStartupConfig = {}) {
     this.applyRuntimeConfig(config);
     this.applyHostIntegrationConfig(config);
+    this.assessmentUIMode = config.assessmentUIMode ?? 'legacy';
 
     if (config.uiRoot) {
       UIController.ConfigureRoot?.(config.uiRoot);
@@ -237,7 +244,8 @@ export class App {
 
         this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.feedbackAudio(this.dataURL)));
 
-        this.game = new Assessment(this.dataURL, this.unityBridge);
+        const assessmentUI = this.createAssessmentUI();
+        this.game = new Assessment(this.dataURL, this.unityBridge, assessmentUI);
       }
 
       this.game.unityBridge = this.unityBridge;
@@ -398,6 +406,14 @@ export class App {
 
   public GetDataURL(): string {
     return this.dataURL;
+  }
+
+  public createAssessmentUI(): AssessmentUI {
+    if (this.assessmentUIMode === 'new-ui') {
+      // Phase 2: return new UI implementation here
+      console.warn('new-ui mode is not yet implemented, falling back to legacy');
+    }
+    return new LegacyAssessmentUIAdapter();
   }
 
   public notifyLoaded(): void {

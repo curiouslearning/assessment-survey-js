@@ -1,4 +1,4 @@
-import { App, AppStartupConfig, AssessmentCompletedPayload, HostIntegrationAdapters, SummaryData, createApp } from './App';
+import { App, AppStartupConfig, AssessmentCompletedPayload, AssessmentUIMode, HostIntegrationAdapters, SummaryData, createApp } from './App';
 import { PubSub } from '@curiouslearning/core';
 import { buildAssessmentSurveyFragment, normalizeBaseUrl, normalizeHostTheme } from './ui/dom-template';
 import { UIController } from '@ui/uiController';
@@ -146,6 +146,7 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
       uiRoot: this,
       analyticsConfig: this.analyticsConfig ?? undefined,
       hostIntegrationAdapters: this.buildHostIntegrationAdapters(),
+      assessmentUIMode: (this.getAttribute('assessment-ui-mode') as AssessmentUIMode) ?? undefined,
     };
 
     this.appInstance = createApp(startupConfig);
