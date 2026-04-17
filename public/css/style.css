@@ -82,7 +82,7 @@ body.assessment-survey-standalone {
 }
 
 .chestdiv img {
-  width: 65%;
+  width: 60%;
   /* float: left; */
 }
 
@@ -206,8 +206,11 @@ body.assessment-survey-standalone {
 .answerContainer {
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 200px));
+  justify-content: center;
+  justify-items: stretch;
   grid-column-gap: 4%;
+  grid-row-gap: 16px;
   /* grid-row-gap: 2%; */
   width: 85%;
   height: auto;
