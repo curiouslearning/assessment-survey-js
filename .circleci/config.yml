@@ -114,7 +114,6 @@ workflows:
             branches:
               only:
                 - develop
-                - bugfix/FM-889
           requires:
             - node/test
       - s3-deploy-prod:
