@@ -63,7 +63,6 @@ jobs:
             cp public/manifest.json deploy/manifest.json
       - aws-s3/sync:
           arguments: |
-            --delete \
             --acl public-read \
             --cache-control "max-age=86400"
           aws-access-key-id: AWS_ACCESS_KEY
@@ -96,7 +95,6 @@ jobs:
             cp public/manifest.json deploy/manifest.json
       - aws-s3/sync:
           arguments: |
-            --delete \
             --acl public-read \
             --cache-control "max-age=86400"
           aws-access-key-id: AWS_ACCESS_KEY
