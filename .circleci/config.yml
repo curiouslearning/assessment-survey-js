@@ -48,19 +48,6 @@ jobs:
       - node/install-packages:
           cache-path: ~/project/node_modules
       - run: npm run build
-      - run:
-          name: Stage standalone deploy artifacts
-          command: |
-            rm -rf deploy
-            mkdir -p deploy
-            cp index.html deploy/
-            cp sw.js deploy/
-            if [ -f favicon.ico ]; then cp favicon.ico deploy/; fi
-            cp -R dist deploy/dist
-            cp -R public/assets deploy/assets
-            cp -R public/css deploy/css
-            cp -R public/data deploy/data
-            cp public/manifest.json deploy/manifest.json
       - aws-s3/sync:
           arguments: |
             --acl public-read \
@@ -68,7 +55,7 @@ jobs:
           aws-access-key-id: AWS_ACCESS_KEY
           aws-region: AWS_DEFAULT_REGION
           aws-secret-access-key: AWS_SECRET_ACCESS_KEY
-          from: ./deploy
+          from: ./build
           to: 's3://assessment-and-survey-development'
 
   s3-deploy-prod:
@@ -80,19 +67,6 @@ jobs:
       - node/install-packages:
           cache-path: ~/project/node_modules
       - run: npm run build
-      - run:
-          name: Stage standalone deploy artifacts
-          command: |
-            rm -rf deploy
-            mkdir -p deploy
-            cp index.html deploy/
-            cp sw.js deploy/
-            if [ -f favicon.ico ]; then cp favicon.ico deploy/; fi
-            cp -R dist deploy/dist
-            cp -R public/assets deploy/assets
-            cp -R public/css deploy/css
-            cp -R public/data deploy/data
-            cp public/manifest.json deploy/manifest.json
       - aws-s3/sync:
           arguments: |
             --acl public-read \
@@ -100,7 +74,7 @@ jobs:
           aws-access-key-id: AWS_ACCESS_KEY
           aws-region: AWS_PROD_REGION
           aws-secret-access-key: AWS_SECRET_ACCESS_KEY
-          from: ./deploy
+          from: ./build
           to: 's3://assessment-and-survey-production'
 
 workflows:

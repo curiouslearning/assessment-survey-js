@@ -215,6 +215,22 @@ export class App {
       const assessmentType = data['assessmentType'];
 
       if (appType == 'survey') {
+        const questions = data['questions'] ?? [];
+
+        for (const question of questions) {
+          if (question.promptAudio) {
+            this.cacheModel.addItemToAudioVisualResources(
+              resolveAssetPath(
+                ASSET_PATHS.AUDIO.itemAudio(this.dataURL, question.promptAudio.toLowerCase().trim())
+              )
+            );
+          }
+        }
+
+        this.cacheModel.addItemToAudioVisualResources(
+          resolveAssetPath(ASSET_PATHS.AUDIO.feedbackAudio(this.dataURL))
+        );
+
         this.game = new Survey(this.dataURL, this.unityBridge);
       } else if (appType == 'assessment') {
         let buckets = data['buckets'];

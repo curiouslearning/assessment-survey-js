@@ -1,6 +1,9 @@
 const path = require('path');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+
 const nodeEnv = process.env.NODE_ENV || 'development';
 const isDev = nodeEnv !== 'production';
+const buildPath = path.resolve(__dirname, 'build');
 const curiousLearningPackagesPath = path.resolve(__dirname, 'node_modules', '@curiouslearning');
 const babelOptions = {
   presets: [
@@ -26,19 +29,16 @@ module.exports = {
   target: ['web', 'es5'],
   devtool: isDev ? 'inline-source-map' : false,
   devServer: {
-    static: [
-      {
-        directory: path.join(__dirname, 'public'),
-      },
-       {
-        directory: path.join(__dirname), // serve sw.js from root
-        publicPath: '/',
-      },
-  ],
+    static: {
+      directory: buildPath,
+    },
     client: {
       overlay: true,
     },
     compress: false,
+    devMiddleware: {
+      writeToDisk: true,
+    },
     port: 8081,
     hot: true,
   },
@@ -78,8 +78,44 @@ module.exports = {
     },
     extensions: ['.tsx', '.ts', '.js'],
   },
+  plugins: [
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: path.resolve(__dirname, 'index.html'),
+          to: 'index.html',
+        },
+        {
+          from: path.resolve(__dirname, 'favicon.ico'),
+          to: 'favicon.ico',
+          noErrorOnMissing: true,
+        },
+        {
+          from: path.resolve(__dirname, 'public', 'assets'),
+          to: 'assets',
+          noErrorOnMissing: true,
+        },
+        {
+          from: path.resolve(__dirname, 'public', 'css'),
+          to: 'css',
+          noErrorOnMissing: true,
+        },
+        {
+          from: path.resolve(__dirname, 'public', 'data'),
+          to: 'data',
+          noErrorOnMissing: true,
+        },
+        {
+          from: path.resolve(__dirname, 'public', 'manifest.json'),
+          to: 'manifest.json',
+          noErrorOnMissing: true,
+        },
+      ],
+    }),
+  ],
   output: {
-    filename: 'dist/bundle.js',
-    path: path.resolve(__dirname),
-  }
+    clean: true,
+    filename: 'bundle.js',
+    path: buildPath,
+  },
 };
