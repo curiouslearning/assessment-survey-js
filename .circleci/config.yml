@@ -40,33 +40,69 @@ jobs:
       - run: npx semantic-release@25.0.3 --dry-run --branches "$CIRCLE_BRANCH"
 
   s3-deploy:
-    docker:
-      - image: 'cimg/python:3.6'
+    executor:
+      name: node/default
+      tag: '24.10'
     steps:
       - checkout
+      - node/install-packages:
+          cache-path: ~/project/node_modules
+      - run: npm run build
+      - run:
+          name: Stage standalone deploy artifacts
+          command: |
+            rm -rf deploy
+            mkdir -p deploy
+            cp index.html deploy/
+            cp sw.js deploy/
+            if [ -f favicon.ico ]; then cp favicon.ico deploy/; fi
+            cp -R dist deploy/dist
+            cp -R public/assets deploy/assets
+            cp -R public/css deploy/css
+            cp -R public/data deploy/data
+            cp public/manifest.json deploy/manifest.json
       - aws-s3/sync:
           arguments: |
+            --delete \
             --acl public-read \
             --cache-control "max-age=86400"
           aws-access-key-id: AWS_ACCESS_KEY
           aws-region: AWS_DEFAULT_REGION
           aws-secret-access-key: AWS_SECRET_ACCESS_KEY
-          from: ./
+          from: ./deploy
           to: 's3://assessment-and-survey-development'
 
   s3-deploy-prod:
-    docker:
-      - image: 'cimg/python:3.6'
+    executor:
+      name: node/default
+      tag: '24.10'
     steps:
       - checkout
+      - node/install-packages:
+          cache-path: ~/project/node_modules
+      - run: npm run build
+      - run:
+          name: Stage standalone deploy artifacts
+          command: |
+            rm -rf deploy
+            mkdir -p deploy
+            cp index.html deploy/
+            cp sw.js deploy/
+            if [ -f favicon.ico ]; then cp favicon.ico deploy/; fi
+            cp -R dist deploy/dist
+            cp -R public/assets deploy/assets
+            cp -R public/css deploy/css
+            cp -R public/data deploy/data
+            cp public/manifest.json deploy/manifest.json
       - aws-s3/sync:
           arguments: |
+            --delete \
             --acl public-read \
             --cache-control "max-age=86400"
           aws-access-key-id: AWS_ACCESS_KEY
           aws-region: AWS_PROD_REGION
           aws-secret-access-key: AWS_SECRET_ACCESS_KEY
-          from: ./
+          from: ./deploy
           to: 's3://assessment-and-survey-production'
 
 workflows:
@@ -78,6 +114,7 @@ workflows:
             branches:
               only:
                 - develop
+                - bugfix/FM-889
           requires:
             - node/test
       - s3-deploy-prod:
