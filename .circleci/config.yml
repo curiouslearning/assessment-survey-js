@@ -37,7 +37,7 @@ jobs:
       - run: npm run build:package
       - run: mkdir -p ~/.ssh
       - run: ssh-keyscan github.com >> ~/.ssh/known_hosts
-      - run: npx semantic-release@25.0.3 --dry-run --branches "$CIRCLE_BRANCH"
+      - run: npx semantic-release@25.0.3 --dry-run
 
   s3-deploy:
     executor:
