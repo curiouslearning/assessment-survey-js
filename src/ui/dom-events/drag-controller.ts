@@ -23,7 +23,7 @@ export default class DragEventController {
         return !answerButton ? null : answerButton;
     }
 
-    private getDropTarget(): HTMLElement | null {
+    private getDropTarget(): iDropAreaHTMLElement | null {
         return this.root.querySelector('.chestdiv');
     }
 
@@ -70,7 +70,8 @@ export default class DragEventController {
                 buttonRect.bottom > dropAreaRect.top;
 
             if (isOverlapping) {
-                this.targetDropElement?.onHover(event);
+                console.log({ answerButton })
+                this.targetDropElement?.onHover(answerButton);
             }
         };
     };

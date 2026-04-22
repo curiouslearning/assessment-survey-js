@@ -158,7 +158,7 @@ class BodyWrapperSection extends TemplateSection<HTMLDivElement> {
           ? joinClassNames(this.context.classNames.bodyWrapper, this.context.classNames.hostThemeFtmDim)
           : this.context.classNames.bodyWrapper,
     });
-
+    console.log({ isEmbed })
     const questionViewWrapper = isEmbed
       ? new DragableQuestionViewWrapperSection(this.context).render()
       : new QuestionViewWrapperSection(this.context).render();
@@ -174,7 +174,6 @@ class BodyWrapperSection extends TemplateSection<HTMLDivElement> {
 
     const interactionRoot = questionViewWrapper;
     if (isEmbed && interactionRoot instanceof HTMLElement) {
-      console.log('adding events')
       new DragEventController(interactionRoot).attach();
     }
 
@@ -198,7 +197,7 @@ class AssessmentSurveyTemplateBuilder {
       fragment.appendChild(new StylesheetLinkSection(this.context).render());
     }
 
-    fragment.appendChild(new BodyWrapperSection(this.context).render());
+    fragment.appendChild(new BodyWrapperSection(this.context).render(true));
 
     return fragment;
   }

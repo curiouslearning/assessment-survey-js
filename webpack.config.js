@@ -1,3 +1,4 @@
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
@@ -66,16 +67,11 @@ module.exports = {
     ],
   },
   resolve: {
-    alias: {
-      '@analytics': path.resolve(__dirname, 'src/analytics/'),
-      '@assessment': path.resolve(__dirname, 'src/assessment/'),
-      '@components': path.resolve(__dirname, 'src/components/'),
-      '@configs': path.resolve(__dirname, 'src/config/'),
-      '@survey': path.resolve(__dirname, 'src/survey/'),
-      '@ui': path.resolve(__dirname, 'src/ui/'),
-      '@utils': path.resolve(__dirname, 'src/utils/'),
-
-    },
+    plugins: [
+      new TsconfigPathsPlugin({
+        configFile: './tsconfig.json', // default, can omit
+      }),
+    ],
     extensions: ['.tsx', '.ts', '.js'],
   },
   plugins: [

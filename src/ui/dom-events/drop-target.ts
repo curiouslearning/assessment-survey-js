@@ -1,5 +1,8 @@
+import appEventBus from '@services/app-event-bus';
+import { iDraggableHTMLElement } from './draggable-button';
+
 export interface iDropAreaHTMLElement extends HTMLElement {
-    onHover?: (event: PointerEvent) => void;
+    onHover?: (selectedElement: iDraggableHTMLElement) => void;
 };
 
 export class DropAreaTarget {
@@ -10,7 +13,8 @@ export class DropAreaTarget {
         this.element.onHover = this.handleOnHovering.bind(this);
     }
 
-    private handleOnHovering(event: PointerEvent): void {
-        console.log('DropTargetCallbacks hovering on the chest')
+    private handleOnHovering(selectedElement: iDraggableHTMLElement): void {
+        //Publish the selected element passed in drop area.
+        appEventBus.publish(appEventBus.EVENTS.DROP_ELEMENT_INTERACTION, { selectedElement })
     }
 }

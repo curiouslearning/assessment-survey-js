@@ -21,6 +21,7 @@
       "@survey/*": ["src/survey/*"],
       "@ui/*": ["src/ui/*"],
       "@utils/*": ["src/utils/*"],
+      "@services/*": ["src/services/*"]
     }
   },
   "include": [
