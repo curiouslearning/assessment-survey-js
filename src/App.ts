@@ -64,6 +64,8 @@ export interface HostIntegrationAdapters {
   onLoaded?: () => void;
   onClose?: () => void;
   onSummaryData?: (summary: SummaryData) => void;
+  onComplete?: (payload: AssessmentCompletedPayload) => void;
+  onRewardTrigger?: (payload: AssessmentCompletedPayload) => void;
   onAssessmentCompleted?: (payload: AssessmentCompletedPayload) => void;
 }
 
@@ -213,6 +215,22 @@ export class App {
       const assessmentType = data['assessmentType'];
 
       if (appType == 'survey') {
+        const questions = data['questions'] ?? [];
+
+        for (const question of questions) {
+          if (question.promptAudio) {
+            this.cacheModel.addItemToAudioVisualResources(
+              resolveAssetPath(
+                ASSET_PATHS.AUDIO.itemAudio(this.dataURL, question.promptAudio.toLowerCase().trim())
+              )
+            );
+          }
+        }
+
+        this.cacheModel.addItemToAudioVisualResources(
+          resolveAssetPath(ASSET_PATHS.AUDIO.feedbackAudio(this.dataURL))
+        );
+
         this.game = new Survey(this.dataURL, this.unityBridge);
       } else if (appType == 'assessment') {
         let buckets = data['buckets'];
@@ -429,16 +447,30 @@ export class App {
     this.hostIntegrationAdapters?.onSummaryData?.(summaryData);
   }
 
-  public notifyAssessmentCompleted(score: number): void {
-    const payload: AssessmentCompletedPayload = {
+  public createAssessmentCompletedPayload(score: number): AssessmentCompletedPayload {
+    return {
       type: 'assessment_completed',
       score,
     };
+  }
+
+  public notifyComplete(payload: AssessmentCompletedPayload): void {
+    this.hostIntegrationAdapters?.onComplete?.(payload);
+  }
+
+  public notifyRewardTrigger(payload: AssessmentCompletedPayload): void {
+    this.hostIntegrationAdapters?.onRewardTrigger?.(payload);
+  }
+
+  public notifyAssessmentCompleted(score: number): void {
+    const payload = this.createAssessmentCompletedPayload(score);
 
     if (this.enableParentPostMessage && window.parent) {
       window.parent.postMessage(payload, 'https://synapse.curiouscontent.org/');
     }
 
+    this.notifyComplete(payload);
+    this.notifyRewardTrigger(payload);
     this.hostIntegrationAdapters?.onAssessmentCompleted?.(payload);
   }
 }

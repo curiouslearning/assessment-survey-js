@@ -79,13 +79,22 @@ export class Survey extends BaseQuiz {
   };
 
   public handleAnswerButtonPress = (answer: number, elapsed: number) => {
-    AnalyticsEvents.sendAnswered(this.questionsData[this.currentQuestionIndex], answer, elapsed);
-    UIController.SetFeedbackVisibile(true, true);
+    const currentQuestion = this.questionsData[this.currentQuestionIndex];
+    AnalyticsEvents.sendAnswered(currentQuestion, answer, elapsed);
+    UIController.SetFeedbackVisibile(true, this.isAnswerCorrect(currentQuestion, answer));
     UIController.AddStar();
     setTimeout(() => {
       this.onQuestionEnd();
     }, 2000);
   };
+
+  private isAnswerCorrect(question: qData, answer: number): boolean {
+    if (question.correct == null) {
+      return true;
+    }
+
+    return question.answers[answer - 1]?.answerName === question.correct;
+  }
 
   public buildQuestionList = (): Promise<qData[]> | qData[] => {
     if (typeof fetchSurveyQuestions !== 'function') {

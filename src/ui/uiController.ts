@@ -10,6 +10,9 @@ export class UIController {
   private static configuredRoot: Document | ShadowRoot | HTMLElement = document;
   private root: Document | ShadowRoot | HTMLElement = UIController.configuredRoot;
 
+  private bodyWrapperSelector = '.bodyWrapper';
+  private bodyWrapper: HTMLElement | null;
+
   private landingContainerId = 'landWrap';
   public landingContainer: HTMLElement;
 
@@ -89,6 +92,10 @@ export class UIController {
 
   public externalBucketControlsGenerationHandler: (container: HTMLElement, clickCallback: () => void) => void;
 
+  private readonly handleWindowResize = (): void => {
+    this.applyResponsiveCanvasWidth();
+  };
+
   private createFallbackElement(id: string): HTMLElement {
     const fallback = document.createElement('div');
     fallback.setAttribute('data-ui-fallback-id', id);
@@ -121,6 +128,10 @@ export class UIController {
     return element;
   }
 
+  private getOptionalElement<T extends HTMLElement = HTMLElement>(selector: string): T | null {
+    return this.root.querySelector<T>(selector);
+  }
+
   private getElementByIdOrSelector<T extends HTMLElement = HTMLElement>(id: string, selector: string): T {
     const element = this.root.querySelector<T>(`#${id}`) ?? this.root.querySelector<T>(selector);
     if (!element) {
@@ -142,14 +153,35 @@ export class UIController {
   }
 
   public static Reset(): void {
+    if (UIController.instance !== null) {
+      window.removeEventListener('resize', UIController.instance.handleWindowResize);
+    }
     UIController.instance = null;
     UIController.configuredRoot = document;
+  }
+
+  public static getResponsiveCanvasWidth(): number {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    return width > 1080 && height < 650 ? 380 : width > 1080 ? 500 : width;
+  }
+
+  private applyResponsiveCanvasWidth(): void {
+    if (!this.bodyWrapper) {
+      return;
+    }
+
+    const canvasWidth = UIController.getResponsiveCanvasWidth();
+    this.bodyWrapper.style.width = `${canvasWidth}px`;
+    this.bodyWrapper.style.maxWidth = `${canvasWidth}px`;
   }
 
   public init(): void {
     this.root = UIController.configuredRoot;
     this.resetRuntimeState();
     // Initialize required containers
+    this.bodyWrapper = this.getOptionalElement(this.bodyWrapperSelector);
     this.landingContainer = this.getElementById(this.landingContainerId);
     this.gameContainer = this.getElementById(this.gameContainerId);
     this.endContainer = this.getElementById(this.endContainerId);
@@ -174,6 +206,9 @@ export class UIController {
     this.initializeStars();
 
     this.initEventListeners();
+    this.applyResponsiveCanvasWidth();
+    window.removeEventListener('resize', this.handleWindowResize);
+    window.addEventListener('resize', this.handleWindowResize);
   }
 
   public initializeStars(): void {
@@ -590,7 +625,6 @@ export class UIController {
     const allButtonsVisible = this.buttons.every((button) => button.style.visibility === 'visible');
     console.log(this.buttonsActive, allButtonsVisible);
     if (this.buttonsActive === true) {
-      AudioController.PlayDing();
       const nPressed = Date.now();
       const dTime = nPressed - this.qStart;
       console.log('answered in ' + dTime);

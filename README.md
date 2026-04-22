@@ -35,7 +35,7 @@ This repository now supports two build targets:
 - Package build (for npm distribution):
   - `npm run build:package`
 
-The package build emits ESM JS + type declarations into `lib/`.
+The package build emits ESM JS + type declarations into `dist/`.
 
 ## Working locally with this package
 
@@ -56,7 +56,7 @@ In your host app repo:
 npm link @curiouslearning/assessment-survey
 ```
 
-After making changes here, rebuild to refresh `lib/`:
+After making changes here, rebuild to refresh `dist/`:
 
 ```bash
 npm run build:package
@@ -140,6 +140,28 @@ player?.addEventListener('completed', (event: Event) => {
 });
 ```
 
+### Subscribe with the element PubSub
+
+```ts
+import { AssessmentSurveyPlayerElement } from '@curiouslearning/assessment-survey';
+
+const player = document.querySelector('assessment-survey-player') as AssessmentSurveyPlayerElement;
+
+player?.subscribe(AssessmentSurveyPlayerElement.ONCOMPLETE, (payload) => {
+	console.log('Assessment complete', payload.score);
+});
+
+player?.subscribe(AssessmentSurveyPlayerElement.ONCLOSE, () => {
+	console.log('Assessment closed');
+});
+
+player?.subscribe(AssessmentSurveyPlayerElement.ONREWARDTRIGGER, (payload) => {
+	console.log('Trigger host reward flow', payload.score);
+});
+```
+
+`AssessmentSurveyPlayerElement.ONCOMPLETE` and `AssessmentSurveyPlayerElement.ONREWARDTRIGGER` fire from the assessment completion path through the element's internal `@curiouslearning/core` `PubSub`. The exported constants keep the host event names stable: `loaded`, `closed`, `summary`, `completed`, and `reward-trigger`.
+
 ## Load and cache only one selected language
 
 Use a single language/content key at a time (for example: `zulu-lettersounds`).
@@ -217,7 +239,7 @@ Overridable via `AppStartupConfig`:
 - Asset/runtime: `assetBaseUrl`, `dataBaseUrl`, `waitForWindowLoad`, `skipLoadingScreen`, `skipStartScreen`
 - Integrations: `enableServiceWorker`, `enableUnityBridge`, `enableAndroidSummary`, `enableParentPostMessage`
 - Host callbacks via `hostIntegrationAdapters`:
-	- `onLoaded`, `onClose`, `onSummaryData`, `onAssessmentCompleted`
+	- `onLoaded`, `onClose`, `onSummaryData`, `onComplete`, `onRewardTrigger`, `onAssessmentCompleted`
 
 Not fully overrideable yet:
 
