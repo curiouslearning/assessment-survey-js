@@ -158,7 +158,7 @@ class BodyWrapperSection extends TemplateSection<HTMLDivElement> {
           ? joinClassNames(this.context.classNames.bodyWrapper, this.context.classNames.hostThemeFtmDim)
           : this.context.classNames.bodyWrapper,
     });
-    console.log({ isEmbed })
+
     const questionViewWrapper = isEmbed
       ? new DragableQuestionViewWrapperSection(this.context).render()
       : new QuestionViewWrapperSection(this.context).render();
@@ -197,7 +197,7 @@ class AssessmentSurveyTemplateBuilder {
       fragment.appendChild(new StylesheetLinkSection(this.context).render());
     }
 
-    fragment.appendChild(new BodyWrapperSection(this.context).render(true));
+    fragment.appendChild(new BodyWrapperSection(this.context).render());
 
     return fragment;
   }
