@@ -4,10 +4,11 @@ import {
     joinClassNames,
     TemplateSection,
 } from '../assessment-template-engine';
-import { attachDraggable } from '@ui/draggable';
+import { DraggableButton, DropAreaTarget } from '@ui/dom-events';
 
 export class DragableQuestionViewWrapperSection extends TemplateSection<HTMLDivElement> {
     public render(): HTMLDivElement {
+        console.log('test ', this.context.classNames)
         const questionViewWrapper = createElement('div', {
             id: 'gameWrap',
             className: this.context.classNames.questionViewWrapper,
@@ -25,6 +26,8 @@ export class DragableQuestionViewWrapperSection extends TemplateSection<HTMLDivE
         const chestDiv = createElement('div', {
             className: this.context.classNames.chestDiv,
         });
+
+        //Add the treasure chest element to treasure chest container.
         chestDiv.appendChild(
             createElement('img', {
                 id: 'chestImage',
@@ -33,6 +36,10 @@ export class DragableQuestionViewWrapperSection extends TemplateSection<HTMLDivE
                 },
             })
         );
+
+        //Add drop tartget event to treasure chest container.
+        new DropAreaTarget(chestDiv);
+
         chestWrapper.appendChild(chestDiv);
 
         const questionContainer = createElement('div', {
@@ -46,12 +53,17 @@ export class DragableQuestionViewWrapperSection extends TemplateSection<HTMLDivE
         });
 
         for (let index = 1; index <= 6; index += 1) {
-            answerContainer.appendChild(createElement('div', {
+            const button = createElement('div', {
                 id: `answerButton${index}`,
                 className: this.context.classNames.answerButton,
                 text: String(index),
                 style: index > 4 ? 'display: none' : undefined,
-            }));
+            });
+
+            //Add drag callbacks to button element.
+            new DraggableButton(button);
+
+            answerContainer.appendChild(button);
         }
 
         const controlsContainer = createElement('div');
@@ -68,7 +80,13 @@ export class DragableQuestionViewWrapperSection extends TemplateSection<HTMLDivE
 
         appendChildren(controlsContainer, [nextQuestionInput, feedbackContainer]);
 
-        appendChildren(questionViewWrapper, [starWrapper, chestWrapper, questionContainer, answerContainer, controlsContainer]);
+        appendChildren(questionViewWrapper, [
+            starWrapper,
+            chestWrapper,
+            questionContainer,
+            answerContainer,
+            controlsContainer
+        ]);
 
         return questionViewWrapper;
     }
