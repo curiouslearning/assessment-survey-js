@@ -121,6 +121,7 @@ workflows:
             branches:
               only:
                 - main
+                - rc
       - build_and_publish:
           context:
             - github-context
@@ -131,3 +132,4 @@ workflows:
             branches:
               only:
                 - main
+                - rc

@@ -41,6 +41,9 @@
     "type": "git",
     "url": "https://github.com/curiouslearning/assessment-survey-js.git"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "author": "curious learning",
   "license": "MIT",
   "bugs": {
