@@ -36,6 +36,10 @@ export class DraggableButton {
         this.element.onStart = this.enableDrag.bind(this);
         this.element.onMove = this.handleDragging.bind(this);
         this.element.onEnd = this.disableDrag.bind(this);
+        this.applyDefaultStyles();
+    }
+
+    private applyDefaultStyles(): void {
         this.element.style.cursor = 'grab';
         this.element.style.touchAction = 'none';
         this.element.style.userSelect = 'none';
@@ -121,9 +125,7 @@ export class DraggableButton {
         this.x = 0;
         this.y = 0;
 
-        this.element.style.zIndex = '0';
-
         //Revert back the element back to it's original place.
-        this.updateTransformPosition(0, 0);
+        this.applyDefaultStyles();
     }
 }
