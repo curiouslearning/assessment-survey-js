@@ -3,6 +3,7 @@ import { iDropAreaHTMLElement } from './drop-target';
 
 export default class DragEventController {
     private targetDropElement: iDropAreaHTMLElement | null = null;
+    private foundDragElement: iDraggableHTMLElement | null = null;
 
     constructor(private root: HTMLElement) {
         //Get the target drop area.
@@ -27,61 +28,72 @@ export default class DragEventController {
         return this.root.querySelector('.chestdiv');
     }
 
-    private isOverlapping(a: HTMLElement, b: HTMLElement): boolean {
-        const rectA = a.getBoundingClientRect();
-        const rectB = b.getBoundingClientRect();
+    private getActiveDropContext(): {
+        dragElement: iDraggableHTMLElement;
+        dropElement: iDropAreaHTMLElement;
+    } | null {
+        const dragElement = this.foundDragElement;
+        const dropElement = this.targetDropElement;
 
-        return (
-            rectA.left < rectB.right &&
-            rectA.right > rectB.left &&
-            rectA.top < rectB.bottom &&
-            rectA.bottom > rectB.top
-        );
+        if (!dragElement || !dropElement) {
+            return null;
+        }
+
+        if (!this.isWithinTargetArea(dragElement, dropElement)) {
+            return null;
+        }
+
+        return { dragElement, dropElement };
     }
 
     private handlePointerDown = (event: PointerEvent) => {
-        const answerButton: iDraggableHTMLElement = this.locateBtnElement(event);
+        this.foundDragElement = this.locateBtnElement(event);
 
-        if (answerButton) {
-            answerButton?.onStart(event);
+        if (this.foundDragElement) {
+            this.foundDragElement?.onStart(event);
         }
 
     };
 
-    private handlePointerDragMove = (event: PointerEvent) => {
-        //Check if within a button element.
-        const answerButton: iDraggableHTMLElement = this.locateBtnElement(event);
+    private isWithinTargetArea(
+        dragElement: iDraggableHTMLElement,
+        dropElement: iDropAreaHTMLElement,
+    ): boolean {
+        const buttonRect = dragElement.getBoundingClientRect();
+        const dropAreaRect = dropElement.getBoundingClientRect();
 
+        //Check if the button element is within the box area of drop area element.
+        const isOverlapping = buttonRect.left < dropAreaRect.right &&
+            buttonRect.right > dropAreaRect.left &&
+            buttonRect.top < dropAreaRect.bottom &&
+            buttonRect.bottom > dropAreaRect.top;
+
+        return isOverlapping;
+    }
+
+    private handlePointerDragMove = (event: PointerEvent) => {
         //Returns none if there are no answer button element.
-        if (!answerButton) return;
+        if (!this.foundDragElement) return;
 
         //Trigger the on move to move the button element.
-        answerButton?.onMove(event);
+        this.foundDragElement.onMove(event);
 
-        if (answerButton && this.targetDropElement) {
-            //Get the element's current box in screen/dom tree.
-            const buttonRect = answerButton.getBoundingClientRect();
-            const dropAreaRect = this.targetDropElement.getBoundingClientRect();
-
-            //Check if the button element is within the box area of drop area element.
-            const isOverlapping = buttonRect.left < dropAreaRect.right &&
-                buttonRect.right > dropAreaRect.left &&
-                buttonRect.top < dropAreaRect.bottom &&
-                buttonRect.bottom > dropAreaRect.top;
-
-            if (isOverlapping) {
-                console.log({ answerButton })
-                this.targetDropElement?.onHover(answerButton);
-            }
-        };
+        const dropContext = this.getActiveDropContext();
+        if (dropContext) {
+            dropContext.dropElement.onHover();
+        }
     };
 
-    private handlePointerUp = (event: PointerEvent) => {
-        const answerButton: iDraggableHTMLElement = this.locateBtnElement(event);
+    private handlePointerUp = (_event: PointerEvent) => {
+        const dropContext = this.getActiveDropContext();
+        if (dropContext) {
+            dropContext.dropElement.onDrop(dropContext.dragElement);
+        }
+
+
         // temporary drop/end logic here
-        console.log(' handlePointerUp ')
-        if (answerButton) {
-            answerButton?.onEnd();
+        if (this.foundDragElement) {
+            this.foundDragElement?.onEnd();
         }
     };
 }

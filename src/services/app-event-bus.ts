@@ -1,4 +1,4 @@
-import { PubSub } from './pubsub';
+import { PubSub } from '@curiouslearning/core';
 
 class AppEventBus extends PubSub {
     public EVENTS: {
