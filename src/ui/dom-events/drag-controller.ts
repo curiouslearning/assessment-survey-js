@@ -14,6 +14,8 @@ export default class DragEventController {
         this.root.addEventListener('pointerdown', this.handlePointerDown);
         this.root.addEventListener('pointermove', this.handlePointerDragMove);
         this.root.addEventListener('pointerup', this.handlePointerUp);
+        this.root.addEventListener('pointercancel', this.handlePointerCancel);
+        this.root.addEventListener('visibilitychange', this.handlePointerCancel);
     }
 
     private locateBtnElement(event: PointerEvent): iDraggableHTMLElement | null {
@@ -76,24 +78,33 @@ export default class DragEventController {
         if (!this.foundDragElement) return;
 
         //Trigger the on move to move the button element.
-        this.foundDragElement.onMove(event);
+        this.foundDragElement?.onMove(event);
 
         const dropContext = this.getActiveDropContext();
         if (dropContext) {
-            dropContext.dropElement.onHover();
+            dropContext.dropElement?.onHover();
         }
     };
 
     private handlePointerUp = (_event: PointerEvent) => {
         const dropContext = this.getActiveDropContext();
         if (dropContext) {
-            dropContext.dropElement.onDrop(dropContext.dragElement);
+            dropContext.dropElement?.onDrop(dropContext.dragElement);
         }
 
+        this.endDrag();
+    };
 
-        // temporary drop/end logic here
-        if (this.foundDragElement) {
-            this.foundDragElement?.onEnd();
+    private handlePointerCancel = (_event: PointerEvent) => {
+        this.endDrag();
+    };
+
+    private endDrag(): void {
+        if (!this.foundDragElement) {
+            return;
         }
+
+        this.foundDragElement?.onEnd?.();
+        this.foundDragElement = null;
     };
 }

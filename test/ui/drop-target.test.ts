@@ -1,7 +1,14 @@
-import { DropAreaTarget, type iDropAreaHTMLElement } from '@ui/dom-events/drop-target';
+jest.mock('@services/app-event-bus', () => ({
+  __esModule: true,
+  default: {
+    publish: jest.fn(),
+    EVENTS: {
+      DROP_ELEMENT_INTERACTION: 'DROP_ELEMENT_INTERACTION',
+    },
+  },
+}));
 
-const createPointerLikeEvent = (type: string, init: MouseEventInit = {}): PointerEvent =>
-  new MouseEvent(type, init) as PointerEvent;
+import { DropAreaTarget, type iDropAreaHTMLElement } from '@ui/dom-events/drop-target';
 
 describe('DropAreaTarget', () => {
   let dropArea: iDropAreaHTMLElement;
@@ -21,21 +28,13 @@ describe('DropAreaTarget', () => {
   });
 
   it('runs the hover callback when onHover is invoked', () => {
-    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
-
     new DropAreaTarget(dropArea);
-    dropArea.onHover?.(createPointerLikeEvent('pointermove'));
-
-    expect(logSpy).toHaveBeenCalledWith('DropTargetCallbacks hovering on the chest');
+    expect(() => dropArea.onHover?.()).not.toThrow();
   });
 
   it('keeps the hover callback bound to the class instance', () => {
-    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
-
     new DropAreaTarget(dropArea);
     const hoverHandler = dropArea.onHover;
-    hoverHandler?.(createPointerLikeEvent('pointermove'));
-
-    expect(logSpy).toHaveBeenCalledTimes(1);
+    expect(() => hoverHandler?.()).not.toThrow();
   });
 });

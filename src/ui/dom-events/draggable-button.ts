@@ -124,6 +124,6 @@ export class DraggableButton {
         this.element.style.zIndex = '0';
 
         //Revert back the element back to it's original place.
-        this.updateTransformPosition(this.x, this.y);
+        this.updateTransformPosition(0, 0);
     }
 }

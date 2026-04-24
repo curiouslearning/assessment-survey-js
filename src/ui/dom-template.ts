@@ -11,7 +11,7 @@ import {
   DevModeSettingsModalSection,
   LandingPageWrapperSection,
   QuestionViewWrapperSection,
-  DragableQuestionViewWrapperSection
+  DraggableQuestionViewWrapperSection
 } from './dom-template/sections';
 import type {
   AssessmentSurveyTemplateConfig,
@@ -159,8 +159,9 @@ class BodyWrapperSection extends TemplateSection<HTMLDivElement> {
           : this.context.classNames.bodyWrapper,
     });
 
+    //Add the flag switch hook here to switch between default survey or the drag and drop survey.
     const questionViewWrapper = isEmbed
-      ? new DragableQuestionViewWrapperSection(this.context).render()
+      ? new DraggableQuestionViewWrapperSection(this.context).render()
       : new QuestionViewWrapperSection(this.context).render();
 
     appendChildren(bodyWrapper, [

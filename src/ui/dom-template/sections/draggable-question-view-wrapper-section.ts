@@ -6,9 +6,8 @@ import {
 } from '../assessment-template-engine';
 import { DraggableButton, DropAreaTarget } from '@ui/dom-events';
 
-export class DragableQuestionViewWrapperSection extends TemplateSection<HTMLDivElement> {
+export class DraggableQuestionViewWrapperSection extends TemplateSection<HTMLDivElement> {
     public render(): HTMLDivElement {
-        console.log('test ', this.context.classNames)
         const questionViewWrapper = createElement('div', {
             id: 'gameWrap',
             className: this.context.classNames.questionViewWrapper,
