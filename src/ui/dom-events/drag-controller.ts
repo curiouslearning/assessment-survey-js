@@ -15,7 +15,6 @@ export default class DragEventController {
         this.root.addEventListener('pointermove', this.handlePointerDragMove);
         this.root.addEventListener('pointerup', this.handlePointerUp);
         this.root.addEventListener('pointercancel', this.handlePointerCancel);
-        this.root.addEventListener('visibilitychange', this.handlePointerCancel);
     }
 
     private locateBtnElement(event: PointerEvent): iDraggableHTMLElement | null {
