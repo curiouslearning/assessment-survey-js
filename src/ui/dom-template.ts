@@ -145,8 +145,6 @@ class DevModeToggleButtonSection extends TemplateSection<HTMLDivElement> {
   }
 }
 
-//Temporary
-
 /**
  * Composes all top-level gameplay sections into the body wrapper.
  */
@@ -198,7 +196,7 @@ class AssessmentSurveyTemplateBuilder {
       fragment.appendChild(new StylesheetLinkSection(this.context).render());
     }
 
-    fragment.appendChild(new BodyWrapperSection(this.context).render());
+    fragment.appendChild(new BodyWrapperSection(this.context).render(true));
 
     return fragment;
   }

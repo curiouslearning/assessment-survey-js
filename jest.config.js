@@ -6,10 +6,13 @@ const { compilerOptions } = require('./tsconfig.json');
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
-  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {
-    prefix: '<rootDir>/',
-  }),
-
+   moduleNameMapper: {
+    '^@curiouslearning/analytics$': '<rootDir>/node_modules/@curiouslearning/analytics/dist/index.js',
+    '^@curiouslearning/core$': '<rootDir>/test/_mocks/curiouslearning-core.js',
+    ...pathsToModuleNameMapper(compilerOptions.paths, {
+      prefix: '<rootDir>/',
+    }),
+  },
   transform: {
     '^.+\\.tsx?$': 'ts-jest',
   },
