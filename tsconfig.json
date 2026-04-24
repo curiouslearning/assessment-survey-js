@@ -13,7 +13,7 @@
     "sourceMap": true,
     "strict": false,
     "removeComments": true,
-    "paths":{
+    "paths": {
       "@analytics/*": ["src/analytics/*"],
       "@assessment/*": ["src/assessment/*"],
       "@components/*": ["src/components/*"],
@@ -25,9 +25,9 @@
     }
   },
   "include": [
-    "src",
+    "src"
   ],
   "exclude": [
-    "node_modules",
-  ],
+    "node_modules"
+  ]
 }
