@@ -237,16 +237,9 @@ export class App {
 
         for (let i = 0; i < buckets.length; i++) {
           for (let j = 0; j < buckets[i].items.length; j++) {
-            let audioItemURL;
-            if (
-              data['quizName'].includes('Luganda') ||
-              data['quizName'].toLowerCase().includes('west african english')
-            ) {
-              audioItemURL = resolveAssetPath(ASSET_PATHS.AUDIO.itemAudio(this.dataURL, buckets[i].items[j].itemName.toLowerCase().trim()));
-            } else {
-              audioItemURL = resolveAssetPath(ASSET_PATHS.AUDIO.itemAudio(this.dataURL, buckets[i].items[j].itemName.trim()));
-            }
-
+            const audioItemURL = resolveAssetPath(
+              ASSET_PATHS.AUDIO.itemAudio(this.dataURL, buckets[i].items[j].itemName.toLowerCase().trim() + '.mp3')
+            );
             this.cacheModel.addItemToAudioVisualResources(audioItemURL);
           }
         }
