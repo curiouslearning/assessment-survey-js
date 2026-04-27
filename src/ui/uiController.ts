@@ -617,7 +617,15 @@ export class UIController {
   }
 
   public static ChangeStarImageAfterAnimation(): void {
-    var starToShow = document.getElementById('star' + UIController.getInstance().qAnsNum) as HTMLImageElement;
+    const currentStarIndex = UIController.getInstance().qAnsNum - 1;
+    if (currentStarIndex < 0) {
+      return;
+    }
+
+    var starToShow = document.getElementById('star' + currentStarIndex) as HTMLImageElement;
+    if (!starToShow) {
+      return;
+    }
     starToShow.src = resolveAssetPath(ASSET_PATHS.STAR_AFTER_ANIMATION);
   }
 
