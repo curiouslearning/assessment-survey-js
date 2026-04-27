@@ -425,8 +425,10 @@ export class UIController {
       if (isCorrect) {
         UIController.getInstance().feedbackContainer.style.color = 'rgb(109, 204, 122)';
         AudioController.PlayCorrect();
+        AudioController.PlayDing();
       } else {
         UIController.getInstance().feedbackContainer.style.color = 'red';
+        AudioController.PlayDing();
       }
     } else {
       UIController.getInstance().feedbackContainer.classList.remove('visible');
