@@ -18,6 +18,7 @@ import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEven
 import { ASSET_PATHS } from '@configs/assetsPaths';
 import { AssessmentUI } from '@ui/assessment-ui';
 import { LegacyAssessmentUIAdapter } from '@ui/legacy-assessment-ui-adapter';
+import { DragDropAssessmentUI } from '@ui/dragdrop-ui';
 
 export type AssessmentUIMode = 'legacy' | 'new-ui';
 
@@ -89,17 +90,22 @@ export class App {
   public enableParentPostMessage: boolean;
   public hostIntegrationAdapters: HostIntegrationAdapters;
   public assessmentUIMode: AssessmentUIMode;
+  private assessmentUI: AssessmentUI;
+  private uiRoot: Document | ShadowRoot | HTMLElement = document;
 
   lang: string = 'english';
 
   constructor(config: AppStartupConfig = {}) {
     this.applyRuntimeConfig(config);
     this.applyHostIntegrationConfig(config);
-    this.assessmentUIMode = config.assessmentUIMode ?? 'legacy';
 
     if (config.uiRoot) {
+      this.uiRoot = config.uiRoot;
       UIController.ConfigureRoot?.(config.uiRoot);
     }
+
+    this.assessmentUIMode = config.assessmentUIMode ?? 'legacy';
+    this.assessmentUI = this.createAssessmentUI();
 
     this.unityBridge = this.enableUnityBridge ? new UnityBridge() : App.createNoopUnityBridge();
 
@@ -119,11 +125,12 @@ export class App {
     const skipStartScreen = config.skipStartScreen ?? false;
     this.enableServiceWorker = config.enableServiceWorker ?? this.enableServiceWorker;
 
-    UIController.SetGameReady?.(false);
-    UIController.SetSkipStartScreen?.(skipStartScreen);
+    this.assessmentUI = this.createAssessmentUI();
+    this.assessmentUI.setGameReady(false);
+    this.assessmentUI.setSkipStartScreen(skipStartScreen);
 
     if (skipLoadingScreen) {
-      UIController.SetLoadingVisible?.(false);
+      this.assessmentUI.setLoadingVisible(false);
     }
 
     if (config.analyticsConfig) {
@@ -140,17 +147,17 @@ export class App {
       await this.initializeGame();
       if (skipLoadingScreen) {
         localStorage.setItem(this.cacheModel.appName, 'true');
-        UIController.SetLoadingProgress?.(100);
-        UIController.SetLoadingVisible?.(false);
-        UIController.SetContentLoaded?.(true);
+        this.assessmentUI.setLoadingProgress(100);
+        this.assessmentUI.setLoadingVisible(false);
+        this.assessmentUI.setContentLoaded(true);
       }
 
       if (this.enableServiceWorker) {
         await this.registerServiceWorker(this.game, this.dataURL, skipLoadingScreen);
       } else {
         localStorage.setItem(this.cacheModel.appName, 'true');
-        UIController.SetLoadingVisible?.(false);
-        UIController.SetContentLoaded?.(true);
+        this.assessmentUI.setLoadingVisible(false);
+        this.assessmentUI.setContentLoaded(true);
       }
     };
 
@@ -244,7 +251,7 @@ export class App {
 
         this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.feedbackAudio(this.dataURL)));
 
-        const assessmentUI = this.createAssessmentUI();
+        const assessmentUI = this.assessmentUI;
         this.game = new Assessment(this.dataURL, this.unityBridge, assessmentUI);
       }
 
@@ -361,7 +368,7 @@ export class App {
       if (localStorage.getItem(this.cacheModel.appName) == null) {
         console.log('Caching!' + this.cacheModel.appName);
         if (!skipLoadingScreen) {
-          UIController.SetLoadingVisible?.(true);
+          this.assessmentUI.setLoadingVisible(true);
         }
         broadcastChannel.postMessage({
           command: 'Cache',
@@ -370,10 +377,10 @@ export class App {
           },
         });
       } else {
-        UIController.SetLoadingProgress?.(100);
+        this.assessmentUI.setLoadingProgress(100);
         setTimeout(() => {
-          UIController.SetLoadingVisible?.(false);
-          UIController.SetContentLoaded?.(true);
+          this.assessmentUI.setLoadingVisible(false);
+          this.assessmentUI.setContentLoaded(true);
         }, skipLoadingScreen ? 0 : 1500);
       }
 
@@ -410,8 +417,7 @@ export class App {
 
   public createAssessmentUI(): AssessmentUI {
     if (this.assessmentUIMode === 'new-ui') {
-      // Phase 2: return new UI implementation here
-      console.warn('new-ui mode is not yet implemented, falling back to legacy');
+      return new DragDropAssessmentUI(this.uiRoot);
     }
     return new LegacyAssessmentUIAdapter();
   }
