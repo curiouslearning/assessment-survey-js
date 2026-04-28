@@ -12,5 +12,6 @@ export const ASSET_PATHS = {
     AUDIO: {
         itemAudio: (dataURL: string, itemName: string) => `audio/${dataURL}/${itemName}`,
         feedbackAudio: (dataURL: string) => `audio/${dataURL}/answer_feedback.mp3`,
+        dingSfx: 'audio/Correct.wav',
     }
 } as const;

@@ -7,6 +7,7 @@ html {
   height: 100%;
   overflow: hidden;
 }
+
 @font-face {
   font-family: Kalam;
   src: url(Kalam-Bold.ttf);
@@ -89,10 +90,7 @@ body {
 
 .starWrapper {
   width: 100%;
-  /* margin-bottom: 40px; */
-  /* padding-top: 20px; */
-  padding-bottom: 20px;
-  margin-bottom: 20px;
+  margin-top: 60px;
   position: relative;
 }
 
@@ -127,11 +125,9 @@ body {
   max-width: none;
   min-height: 100vh;
   height: 100%;
-  background: linear-gradient(
-    180deg,
-    rgba(80, 90, 220, 1) 0%,
-    rgba(247, 247, 161, 1) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(80, 90, 220, 1) 0%,
+      rgba(247, 247, 161, 1) 100%);
   background-size: 100% 100%;
   bottom: 0;
   position: relative;
@@ -291,11 +287,13 @@ button {
     max-width: 420px;
   }
 }
+
 #loading-gif {
   display: flex;
   height: 100%;
   width: 100%;
-  position: absolute; /* Position it within #loading-screen */
+  position: absolute;
+  /* Position it within #loading-screen */
 }
 
 #progressBarContainer {
@@ -321,6 +319,7 @@ button {
     transform: scale(0);
     opacity: 0;
   }
+
   to {
     transform: scale(1);
     opacity: 1;
@@ -436,7 +435,8 @@ input[type='checkbox'] {
 }
 
 input[type='range'] {
-  -webkit-appearance: none; /* Remove default WebKit styles */
+  -webkit-appearance: none;
+  /* Remove default WebKit styles */
   width: 100%;
   height: 14px;
   background: #ddd;
@@ -460,7 +460,8 @@ input[type='range']::-webkit-slider-thumb {
   background: rgb(102, 255, 99);
   border-radius: 50%;
   cursor: pointer;
-  margin-top: -6px; /* Adjust to align with the track */
+  margin-top: -6px;
+  /* Adjust to align with the track */
 }
 
 /* Track styling for Firefox */
@@ -479,7 +480,8 @@ input[type='range']::-moz-range-thumb {
   background: rgb(102, 255, 99);
   border-radius: 50%;
   cursor: pointer;
-  margin-top: -6px; /* Adjust to align with the track */
+  margin-top: -6px;
+  /* Adjust to align with the track */
 }
 
 /* Track styling for IE */
@@ -498,7 +500,8 @@ input[type='range']::-ms-thumb {
   background: rgb(102, 255, 99);
   border-radius: 50%;
   cursor: pointer;
-  margin-top: -6px; /* Adjust to align with the track */
+  margin-top: -6px;
+  /* Adjust to align with the track */
 }
 
 /* Additional styles for IE to hide the tick marks */
