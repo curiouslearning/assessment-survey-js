@@ -87,11 +87,6 @@ module.exports = {
           noErrorOnMissing: true,
         },
         {
-          from: path.resolve(__dirname, 'public', 'assets'),
-          to: 'assets',
-          noErrorOnMissing: true,
-        },
-        {
           from: path.resolve(__dirname, 'public', 'css'),
           to: 'css',
           noErrorOnMissing: true,
@@ -104,6 +99,21 @@ module.exports = {
         {
           from: path.resolve(__dirname, 'public', 'manifest.json'),
           to: 'manifest.json',
+          noErrorOnMissing: true,
+        },
+        {
+          from: path.resolve(__dirname, 'public', 'assets', 'animation'),
+          to: path.join('assets', 'animation'),
+          noErrorOnMissing: true,
+        },
+        {
+          from: path.resolve(__dirname, 'public', 'assets', 'audio'),
+          to: path.join('assets', 'audio'),
+          noErrorOnMissing: true,
+        },
+        {
+          from: path.resolve(__dirname, 'public', 'assets', 'img'),
+          to: path.join('assets', 'img'),
           noErrorOnMissing: true,
         },
       ],

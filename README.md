@@ -119,7 +119,7 @@ import '@curiouslearning/assessment-survey/register';
 
 You can still set any of those attributes explicitly when a host needs a different value. Explicit attribute values always override the `embed-mode` preset.
 
-`data-base-url` is optional. If omitted, the component uses `asset-base-url` for `data-key` JSON loading.
+`data-base-url` is optional. If omitted, the component loads `data-key` JSON from `/data`.
 
 `skip-loading-screen` remains recommended in host integration mode when the host app preloads and caches the selected language pack before mounting the component.
 
