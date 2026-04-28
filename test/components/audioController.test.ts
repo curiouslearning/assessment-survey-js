@@ -104,9 +104,9 @@ describe('AudioController', () => {
     expect(instance.allAudios['bucket-audio.mp3']).toBeInstanceOf(HTMLAudioElement);
   });
 
-  test('PlayDing should play the feedback audio', () => {
+  test('PlayDing should play the ding audio', () => {
     const instance = AudioController.getInstance();
-    const playSpy = jest.spyOn(instance['feedbackAudio'], 'play').mockImplementation();
+    const playSpy = jest.spyOn(instance['dingAudio'], 'play').mockImplementation();
 
     AudioController.PlayDing();
 

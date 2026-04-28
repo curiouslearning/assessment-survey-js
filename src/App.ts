@@ -249,6 +249,8 @@ export class App {
         this.game = new Assessment(this.dataURL, this.unityBridge);
       }
 
+      this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.dingSfx));
+
       this.game.unityBridge = this.unityBridge;
 
       contentVersion = data['contentVersion'];
