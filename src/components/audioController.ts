@@ -18,10 +18,13 @@ export class AudioController {
 
   private feedbackAudio: any = null;
   private correctAudio: any = null;
+  private dingAudio: any = null;
 
   private init(): void {
     this.feedbackAudio = new Audio();
     this.correctAudio = new Audio();
+    this.dingAudio = new Audio();
+    this.dingAudio.src = resolveAssetPath(ASSET_PATHS.AUDIO.dingSfx);
   }
 
   public static PrepareAudioAndImagesForSurvey(questionsData: qData[], dataURL: string): void {
@@ -153,15 +156,7 @@ export class AudioController {
   }
 
   public static PlayDing(): void {
-    const instance = AudioController.getInstance();
-    if (instance.feedbackAudio) {
-      AudioController.safePlay(instance.feedbackAudio, 'Ding');
-      return;
-    }
-
-    if (instance.correctAudio) {
-      AudioController.safePlay(instance.correctAudio, 'Ding fallback');
-    }
+    AudioController.safePlay(AudioController.getInstance().dingAudio, 'Ding');
   }
 
   public static PlayCorrect(): void {
