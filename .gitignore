@@ -15,19 +15,6 @@ dist
 lib
 /lib
 
-# Prevent compiled JS artifacts from being committed into public/assets/
-# Only animation/, audio/, and img/ belong there.
-public/assets/**/*.js
-public/assets/**/*.js.map
-public/assets/analytics/
-public/assets/assessment/
-public/assets/components/
-public/assets/survey/
-public/assets/ui/
-public/assets/utils/
-public/assets/css/
-public/assets/data/
-
 # Common ignores
 .DS_Store
 /.idea
