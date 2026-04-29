@@ -558,10 +558,6 @@ export class UIController {
   }
 
   public static AddStar(): void {
-
-    //Add new star to animate and display.
-    UIController.getInstance().qAnsNum = UIController.getInstance().shownStarsCount;
-
     var starToShow = document.getElementById('star' + UIController.getInstance().qAnsNum) as HTMLImageElement;
     if (!starToShow) {
       throw new Error('Star element not found');
@@ -618,6 +614,8 @@ export class UIController {
     }, 1000 * animationSpeedMultiplier);
 
     UIController.instance.starPositions.push({ x: randomX, y: randomY });
+
+    UIController.getInstance().qAnsNum += 1;
 
     //Updated star count.
     UIController.getInstance().shownStarsCount += 1;
