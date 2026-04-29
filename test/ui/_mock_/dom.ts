@@ -5,6 +5,7 @@ export function setupDom() {
     <div id="gameWrap"></div>
     <div id="endWrap"></div>
     <div id="starWrapper">
+      <img id="star0" />
       <img id="star1" />
       <img id="star2" />
       <img id="star3" />

@@ -449,7 +449,7 @@ describe('UIController', () => {
   });
   it('should set the correct image source and classes on the star element', () => {
     uiController.qAnsNum = 0;
-    const star = document.getElementById('star1') as HTMLImageElement;
+    const star = document.getElementById('star0') as HTMLImageElement;
 
     UIController.AddStar();
 
@@ -459,11 +459,11 @@ describe('UIController', () => {
     expect(star.style.position).toBe('absolute');
   });
 
-  it('should increment qAnsNum and shownStarsCount', () => {
+  it('should update qAnsNum and increment shownStarsCount', () => {
     uiController.qAnsNum = 0;
     UIController.AddStar();
 
-    expect(uiController.qAnsNum).toBe(1);
+    expect(uiController.qAnsNum).toBe(0);
     expect(uiController.shownStarsCount).toBe(1);
   });
 
@@ -479,7 +479,7 @@ describe('UIController', () => {
 
   it('should apply transition and transform styles', () => {
     uiController.qAnsNum = 0;
-    const star = document.getElementById('star1') as HTMLImageElement;
+    const star = document.getElementById('star0') as HTMLImageElement;
 
     UIController.AddStar();
 
@@ -664,7 +664,7 @@ describe('UIController', () => {
 
     UIController.AddStar();
 
-    const star = document.getElementById('star1') as HTMLImageElement;
+    const star = document.getElementById('star0') as HTMLImageElement;
     expect(star.src).toContain('Star.gif');
     expect(star.classList.contains('topstarv')).toBe(true);
     expect(star.style.position).toBe('absolute');
