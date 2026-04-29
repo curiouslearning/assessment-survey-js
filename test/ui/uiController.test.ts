@@ -498,7 +498,7 @@ describe('UIController', () => {
   });
 
   it('should throw if the star element does not exist (edge case)', () => {
-    uiController.qAnsNum = 99;
+    uiController.shownStarsCount = 99;
 
     expect(() => {
       UIController.AddStar();
