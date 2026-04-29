@@ -29,14 +29,6 @@ export function normalizeBaseUrl(baseUrl: string): string {
  * Falls back to either root-relative or document-relative paths.
  */
 export function withBase(baseUrl: string, path: string, rootRelativeAssetPaths: boolean = true): string {
-  if (!path) {
-    return path;
-  }
-
-  if (/^(https?:)?\/\//.test(path) || path.startsWith('data:') || path.startsWith('/')) {
-    return path;
-  }
-
   const normalizedBase = normalizeBaseUrl(baseUrl);
   const normalizedPath = path.replace(/^\/+/, '');
 

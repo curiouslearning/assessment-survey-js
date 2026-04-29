@@ -110,7 +110,7 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
     const dataBaseUrl = normalizeBaseUrl(
       configuredDataBaseUrl && configuredDataBaseUrl.trim() !== ''
         ? configuredDataBaseUrl
-        : '/data'
+        : assetBaseUrl
     );
     const hostTheme = normalizeHostTheme(this.getAttribute('host-theme'));
     const embedMode = toBooleanAttribute(this.getAttribute('embed-mode'), true);
@@ -120,7 +120,6 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
         assetBaseUrl,
         hostTheme,
         includeStylesheetLink: true,
-        stylesheetPath: '/css/style.css',
         rootRelativeAssetPaths: true,
       })
     );
