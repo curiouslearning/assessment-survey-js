@@ -459,11 +459,11 @@ describe('UIController', () => {
     expect(star.style.position).toBe('absolute');
   });
 
-  it('should increment qAnsNum and shownStarsCount', () => {
+  it('should update qAnsNum and increment shownStarsCount', () => {
     uiController.qAnsNum = 0;
     UIController.AddStar();
 
-    expect(uiController.qAnsNum).toBe(1);
+    expect(uiController.qAnsNum).toBe(0);
     expect(uiController.shownStarsCount).toBe(1);
   });
 
@@ -498,7 +498,7 @@ describe('UIController', () => {
   });
 
   it('should throw if the star element does not exist (edge case)', () => {
-    uiController.qAnsNum = 99;
+    uiController.shownStarsCount = 99;
 
     expect(() => {
       UIController.AddStar();

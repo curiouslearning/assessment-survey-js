@@ -196,7 +196,9 @@ class AssessmentSurveyTemplateBuilder {
       fragment.appendChild(new StylesheetLinkSection(this.context).render());
     }
 
-    fragment.appendChild(new BodyWrapperSection(this.context).render(true));
+    //To Do: Hook up flag control here pass true in render to use drag and drop feature.
+    // Otherwise pass False or blank for the default select and click survey
+    fragment.appendChild(new BodyWrapperSection(this.context).render());
 
     return fragment;
   }

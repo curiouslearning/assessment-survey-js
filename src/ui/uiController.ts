@@ -251,6 +251,7 @@ export class UIController {
     y: number,
     minDistance: number
   ): boolean {
+
     if (starPositions.length < 1) return false;
 
     for (let i = 0; i < starPositions.length; i++) {
@@ -557,6 +558,10 @@ export class UIController {
   }
 
   public static AddStar(): void {
+
+    //Add new star to animate and display.
+    UIController.getInstance().qAnsNum = UIController.getInstance().shownStarsCount;
+
     var starToShow = document.getElementById('star' + UIController.getInstance().qAnsNum) as HTMLImageElement;
     if (!starToShow) {
       throw new Error('Star element not found');
@@ -589,6 +594,7 @@ export class UIController {
     starToShow.style.top = window.innerHeight / 2 + 'px';
     starToShow.style.left = UIController.instance.gameContainer.offsetWidth / 2 - starToShow.offsetWidth / 2 + 'px';
 
+
     setTimeout(() => {
       starToShow.style.transition = `top ${2 * animationSpeedMultiplier}s ease, left ${2 * animationSpeedMultiplier}s ease, transform ${2 * animationSpeedMultiplier}s ease`;
       if (randomX < containerWidth / 2 - 30) {
@@ -613,8 +619,7 @@ export class UIController {
 
     UIController.instance.starPositions.push({ x: randomX, y: randomY });
 
-    UIController.getInstance().qAnsNum += 1;
-
+    //Updated star count.
     UIController.getInstance().shownStarsCount += 1;
   }
 
