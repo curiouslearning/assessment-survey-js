@@ -13,6 +13,7 @@
     "sourceMap": true,
     "strict": false,
     "removeComments": true,
+    "skipLibCheck": true,
     "paths": {
       "@analytics/*": ["src/analytics/*"],
       "@assessment/*": ["src/assessment/*"],
