@@ -75,7 +75,7 @@ async function main() {
         firebaseName: 'AssessmentSurveyStandalone',
     });
 
-    startStandaloneApp({ assetBaseUrl });
+    startStandaloneApp({ assetBaseUrl, dataBaseUrl: assetBaseUrl });
 }
 
 main();

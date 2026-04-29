@@ -93,12 +93,12 @@ module.exports = {
         },
         {
           from: path.resolve(__dirname, 'public', 'css'),
-          to: 'css',
+          to: 'assets/css',
           noErrorOnMissing: true,
         },
         {
           from: path.resolve(__dirname, 'public', 'data'),
-          to: 'data',
+          to: 'assets/data',
           noErrorOnMissing: true,
         },
         {
