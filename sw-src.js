@@ -4,7 +4,7 @@ importScripts(
 
 workbox.precaching.precacheAndRoute(self.__WB_MANIFEST, {
   ignoreURLParametersMatching: [/^data/, /^cr_user_id/],
-  exclude: [/^lang\//],
+  exclude: [/^lang\//, /coverage\//, /node_modules\//, /test\//, /public\//],
 });
 
 const channel = new BroadcastChannel('as-message-channel');
