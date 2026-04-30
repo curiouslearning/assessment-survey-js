@@ -22,23 +22,40 @@ export class TreeNode {
 export function sortedArrayToIDsBST(start, end, usedIndices) {
   if (start > end) return null;
 
-  // Randomize middle point within unused indices
-  let mid;
+  // Find a middle index that isn't used yet.
+  const middle = Math.floor((start + end) / 2);
+  let mid = middle;
 
-  if ((start + end) % 2 === 0 && usedIndices.size !== 1) {
-    mid = Math.floor((start + end) / 2); // Use the exact middle point
-    if (mid === 0) return null;
-  } else {
-    do {
-      mid = Math.floor((start + end) / 2);
-      mid += Math.floor(Math.random() * 2); // Randomly add 0 or 1 to mid
-    } while (mid > end || usedIndices.has(mid));
+  if (usedIndices.has(mid)) {
+    let left = mid - 1;
+    let right = mid + 1;
+    let found = false;
+
+    while (left >= start || right <= end) {
+      if (right <= end && !usedIndices.has(right)) {
+        mid = right;
+        found = true;
+        break;
+      }
+      if (left >= start && !usedIndices.has(left)) {
+        mid = left;
+        found = true;
+        break;
+      }
+      right++;
+      left--;
+    }
+
+    if (!found) {
+      return null;
+    }
   }
+
+  if (mid === 0) return null;
 
   usedIndices.add(mid);
 
-  let node = new TreeNode(mid);
-
+  const node = new TreeNode(mid);
   node.left = sortedArrayToIDsBST(start, mid - 1, usedIndices);
   node.right = sortedArrayToIDsBST(mid + 1, end, usedIndices);
 

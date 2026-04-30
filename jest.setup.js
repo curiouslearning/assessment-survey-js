@@ -34,3 +34,5 @@ global.UnityBridge = class {
     this._message = null;
   }
 };
+
+global.fetch = global.fetch || (() => Promise.resolve({ json: () => Promise.resolve({}) }));

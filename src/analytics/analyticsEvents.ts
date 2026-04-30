@@ -1,26 +1,26 @@
 // this is where we can have the classes and functions for building the events
 // to send to an analytics recorder (firebase? lrs?)
 
-import { qData, answerData } from '../components/questionData';
+import { qData, answerData } from '@components/questionData';
 import { logEvent } from 'firebase/analytics';
-import { bucket } from '../assessment/bucketData';
-import { getNextAssessment, getRequiredScore } from '../utils/urlUtils';
+import { bucket } from '@assessment/bucketData';
+import { getNextAssessment, getRequiredScore, getEndpoint, getOrganization } from '@utils/urlUtils';
 
 // Create a singleton class for the analytics events
 export class AnalyticsEvents {
-  protected static uuid: string;
-  protected static userSource: string;
-  protected static clat;
-  protected static clon;
-  protected static gana;
-  protected static latlong;
+  public static uuid: string;
+  public static userSource: string;
+  public static clat;
+  public static clon;
+  public static gana;
+  public static latlong;
   // var city, region, country;
-  protected static dataURL;
+  public static dataURL;
 
-  protected static appVersion;
-  protected static contentVersion;
+  public static appVersion;
+  public static contentVersion;
 
-  protected static assessmentType: string;
+  public static assessmentType: string;
 
   static instance: AnalyticsEvents;
 
@@ -101,6 +101,9 @@ export class AnalyticsEvents {
     // Check if app type is not empty and split the string by the hyphen then return the first element
     if (appType && appType !== '' && appType.includes('-')) {
       let language: string = appType.split('-').slice(0, -1).join('-');
+      if (language === '') {
+        return 'en';
+      }
       if (language.includes('west-african')) {
         return 'west-african-english';
       } else {
@@ -291,7 +294,11 @@ export class AnalyticsEvents {
       isSynapseUser = true;
       integerRequiredScore = Number(requiredScore);
     }
-    AnalyticsEvents.sendDataToThirdParty(score, AnalyticsEvents.uuid, integerRequiredScore, nextAssessment);
+    if (isSynapseUser) {
+      AnalyticsEvents.sendDataToThirdParty(score, AnalyticsEvents.uuid, integerRequiredScore, nextAssessment);
+    } else {
+      AnalyticsEvents.sendDataToThirdParty(score, AnalyticsEvents.uuid);
+    }
     // Attempt to send the score to the parent curious frame if it exists
     if (window.parent) {
       window.parent.postMessage(
@@ -331,14 +338,12 @@ export class AnalyticsEvents {
 
   }
 
-  static sendDataToThirdParty(score: number, uuid: string, requiredScore: Number, nextAssessment: string): void {
+  static sendDataToThirdParty(score: number, uuid: string, requiredScore?: Number, nextAssessment?: string): void {
     // Send data to the third party
     console.log('Attempting to send score to a third party! Score: ', score);
 
-    // Read the URL from utm parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const targetPartyURL = urlParams.get('endpoint');
-    const organization = urlParams.get('organization');
+    const targetPartyURL = getEndpoint();
+    const organization = getOrganization();
     const xhr = new XMLHttpRequest();
 
     if (!targetPartyURL) {
