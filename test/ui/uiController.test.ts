@@ -647,16 +647,19 @@ describe('UIController', () => {
     UIController.SetFeedbackVisibile(false, true);
     expect(AudioController.PlayCorrect).not.toHaveBeenCalled();
   });
-  test('should change star image to star_after_animation.gif', () => {
-    const star = document.getElementById('star1') as HTMLImageElement;
-    star.src = 'initial.gif';
+  test('should change the most recently added star image to star_after_animation.gif', () => {
+    const currentStar = document.getElementById('star0') as HTMLImageElement;
+    const nextStar = document.getElementById('star1') as HTMLImageElement;
+    currentStar.src = 'initial.gif';
+    nextStar.src = 'next.gif';
 
     UIController.getInstance().qAnsNum = 1;
     UIController.getInstance().stars = [1, 2, 3, 4, 5];
 
     UIController.ChangeStarImageAfterAnimation();
 
-    expect(star.src).toContain('star_after_animation.gif');
+    expect(currentStar.src).toContain('star_after_animation.gif');
+    expect(nextStar.src).toContain('next.gif');
   });
   test('should add a star with gif and correct style changes', () => {
     const ui = UIController.getInstance();

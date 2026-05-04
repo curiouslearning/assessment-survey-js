@@ -37,13 +37,17 @@ jobs:
       - run: npm run build:package
       - run: mkdir -p ~/.ssh
       - run: ssh-keyscan github.com >> ~/.ssh/known_hosts
-      - run: npx semantic-release@25.0.3 --dry-run --branches "$CIRCLE_BRANCH"
+      - run: npx semantic-release@25.0.3 --dry-run
 
   s3-deploy:
-    docker:
-      - image: 'cimg/python:3.6'
+    executor:
+      name: node/default
+      tag: '24.10'
     steps:
       - checkout
+      - node/install-packages:
+          cache-path: ~/project/node_modules
+      - run: npm run build
       - aws-s3/sync:
           arguments: |
             --acl public-read \
@@ -51,14 +55,18 @@ jobs:
           aws-access-key-id: AWS_ACCESS_KEY
           aws-region: AWS_DEFAULT_REGION
           aws-secret-access-key: AWS_SECRET_ACCESS_KEY
-          from: ./
+          from: ./build
           to: 's3://assessment-and-survey-development'
 
   s3-deploy-prod:
-    docker:
-      - image: 'cimg/python:3.6'
+    executor:
+      name: node/default
+      tag: '24.10'
     steps:
       - checkout
+      - node/install-packages:
+          cache-path: ~/project/node_modules
+      - run: npm run build
       - aws-s3/sync:
           arguments: |
             --acl public-read \
@@ -66,7 +74,7 @@ jobs:
           aws-access-key-id: AWS_ACCESS_KEY
           aws-region: AWS_PROD_REGION
           aws-secret-access-key: AWS_SECRET_ACCESS_KEY
-          from: ./
+          from: ./build
           to: 's3://assessment-and-survey-production'
 
 workflows:
@@ -113,6 +121,7 @@ workflows:
             branches:
               only:
                 - main
+                - rc
       - build_and_publish:
           context:
             - github-context
@@ -123,3 +132,4 @@ workflows:
             branches:
               only:
                 - main
+                - rc

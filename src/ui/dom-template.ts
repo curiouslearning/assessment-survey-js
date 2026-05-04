@@ -11,6 +11,7 @@ import {
   DevModeSettingsModalSection,
   LandingPageWrapperSection,
   QuestionViewWrapperSection,
+  DraggableQuestionViewWrapperSection
 } from './dom-template/sections';
 import type {
   AssessmentSurveyTemplateConfig,
@@ -20,6 +21,7 @@ import type {
   TemplateTextOverrides,
 } from './dom-template/assessment-template-contracts';
 import { normalizeBaseUrl, normalizeHostTheme } from './dom-template/assessment-template-resolvers';
+import { DragEventController } from './dom-events/';
 
 export type {
   AssessmentSurveyTemplateConfig,
@@ -147,7 +149,7 @@ class DevModeToggleButtonSection extends TemplateSection<HTMLDivElement> {
  * Composes all top-level gameplay sections into the body wrapper.
  */
 class BodyWrapperSection extends TemplateSection<HTMLDivElement> {
-  public render(): HTMLDivElement {
+  public render(isEmbed: boolean = false): HTMLDivElement {
     const bodyWrapper = createElement('div', {
       className:
         this.context.hostTheme === 'ftm-dim'
@@ -155,14 +157,24 @@ class BodyWrapperSection extends TemplateSection<HTMLDivElement> {
           : this.context.classNames.bodyWrapper,
     });
 
+    //Add the flag switch hook here to switch between default survey or the drag and drop survey.
+    const questionViewWrapper = isEmbed
+      ? new DraggableQuestionViewWrapperSection(this.context).render()
+      : new QuestionViewWrapperSection(this.context).render();
+
     appendChildren(bodyWrapper, [
       new LandingPageWrapperSection(this.context).render(),
-      new QuestionViewWrapperSection(this.context).render(),
+      questionViewWrapper,
       this.context.sections.endingScreen ? new EndingPageWrapperSection(this.context).render() : null,
       new DevModeBucketInfoSection(this.context).render(),
       new DevModeToggleButtonSection(this.context).render(),
       new DevModeSettingsModalSection(this.context).render(),
     ]);
+
+    const interactionRoot = questionViewWrapper;
+    if (isEmbed && interactionRoot instanceof HTMLElement) {
+      new DragEventController(interactionRoot).attach();
+    }
 
     return bodyWrapper;
   }
@@ -172,7 +184,7 @@ class BodyWrapperSection extends TemplateSection<HTMLDivElement> {
  * Orchestrates full template assembly into a document fragment.
  */
 class AssessmentSurveyTemplateBuilder {
-  constructor(private readonly context: TemplateContext) {}
+  constructor(private readonly context: TemplateContext) { }
 
   /**
    * Builds the complete renderer output as a document fragment.
@@ -184,6 +196,8 @@ class AssessmentSurveyTemplateBuilder {
       fragment.appendChild(new StylesheetLinkSection(this.context).render());
     }
 
+    //To Do: Hook up flag control here pass true in render to use drag and drop feature.
+    // Otherwise pass False or blank for the default select and click survey
     fragment.appendChild(new BodyWrapperSection(this.context).render());
 
     return fragment;

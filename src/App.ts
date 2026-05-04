@@ -229,22 +229,31 @@ export class App {
       const assessmentType = data['assessmentType'];
 
       if (appType == 'survey') {
+        const questions = data['questions'] ?? [];
+
+        for (const question of questions) {
+          if (question.promptAudio) {
+            this.cacheModel.addItemToAudioVisualResources(
+              resolveAssetPath(
+                ASSET_PATHS.AUDIO.itemAudio(this.dataURL, question.promptAudio.toLowerCase().trim())
+              )
+            );
+          }
+        }
+
+        this.cacheModel.addItemToAudioVisualResources(
+          resolveAssetPath(ASSET_PATHS.AUDIO.feedbackAudio(this.dataURL))
+        );
+
         this.game = new Survey(this.dataURL, this.unityBridge);
       } else if (appType == 'assessment') {
         let buckets = data['buckets'];
 
         for (let i = 0; i < buckets.length; i++) {
           for (let j = 0; j < buckets[i].items.length; j++) {
-            let audioItemURL;
-            if (
-              data['quizName'].includes('Luganda') ||
-              data['quizName'].toLowerCase().includes('west african english')
-            ) {
-              audioItemURL = resolveAssetPath(ASSET_PATHS.AUDIO.itemAudio(this.dataURL, buckets[i].items[j].itemName.toLowerCase().trim()));
-            } else {
-              audioItemURL = resolveAssetPath(ASSET_PATHS.AUDIO.itemAudio(this.dataURL, buckets[i].items[j].itemName.trim()));
-            }
-
+            const audioItemURL = resolveAssetPath(
+              ASSET_PATHS.AUDIO.itemAudio(this.dataURL, buckets[i].items[j].itemName.toLowerCase().trim() + '.mp3')
+            );
             this.cacheModel.addItemToAudioVisualResources(audioItemURL);
           }
         }
@@ -254,6 +263,8 @@ export class App {
         const assessmentUI = this.assessmentUI;
         this.game = new Assessment(this.dataURL, this.unityBridge, assessmentUI);
       }
+
+      this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.dingSfx));
 
       this.game.unityBridge = this.unityBridge;
 

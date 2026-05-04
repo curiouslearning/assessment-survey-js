@@ -13,7 +13,7 @@
     "sourceMap": true,
     "strict": false,
     "removeComments": true,
-    "paths":{
+    "paths": {
       "@analytics/*": ["src/analytics/*"],
       "@assessment/*": ["src/assessment/*"],
       "@components/*": ["src/components/*"],
@@ -21,12 +21,13 @@
       "@survey/*": ["src/survey/*"],
       "@ui/*": ["src/ui/*"],
       "@utils/*": ["src/utils/*"],
+      "@services/*": ["src/services/*"]
     }
   },
   "include": [
-    "src",
+    "src"
   ],
   "exclude": [
-    "node_modules",
-  ],
+    "node_modules"
+  ]
 }

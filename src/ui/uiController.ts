@@ -251,6 +251,7 @@ export class UIController {
     y: number,
     minDistance: number
   ): boolean {
+
     if (starPositions.length < 1) return false;
 
     for (let i = 0; i < starPositions.length; i++) {
@@ -425,8 +426,10 @@ export class UIController {
       if (isCorrect) {
         UIController.getInstance().feedbackContainer.style.color = 'rgb(109, 204, 122)';
         AudioController.PlayCorrect();
+        AudioController.PlayDing();
       } else {
         UIController.getInstance().feedbackContainer.style.color = 'red';
+        AudioController.PlayDing();
       }
     } else {
       UIController.getInstance().feedbackContainer.classList.remove('visible');
@@ -587,6 +590,7 @@ export class UIController {
     starToShow.style.top = window.innerHeight / 2 + 'px';
     starToShow.style.left = UIController.instance.gameContainer.offsetWidth / 2 - starToShow.offsetWidth / 2 + 'px';
 
+
     setTimeout(() => {
       starToShow.style.transition = `top ${2 * animationSpeedMultiplier}s ease, left ${2 * animationSpeedMultiplier}s ease, transform ${2 * animationSpeedMultiplier}s ease`;
       if (randomX < containerWidth / 2 - 30) {
@@ -613,11 +617,20 @@ export class UIController {
 
     UIController.getInstance().qAnsNum += 1;
 
+    //Updated star count.
     UIController.getInstance().shownStarsCount += 1;
   }
 
   public static ChangeStarImageAfterAnimation(): void {
-    var starToShow = document.getElementById('star' + UIController.getInstance().qAnsNum) as HTMLImageElement;
+    const currentStarIndex = UIController.getInstance().qAnsNum - 1;
+    if (currentStarIndex < 0) {
+      return;
+    }
+
+    var starToShow = document.getElementById('star' + currentStarIndex) as HTMLImageElement;
+    if (!starToShow) {
+      return;
+    }
     starToShow.src = resolveAssetPath(ASSET_PATHS.STAR_AFTER_ANIMATION);
   }
 

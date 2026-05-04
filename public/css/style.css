@@ -7,6 +7,7 @@ body.assessment-survey-standalone {
   height: 100%;
   overflow: hidden;
 }
+
 @font-face {
   font-family: Kalam;
   src: url(Kalam-Bold.ttf);
@@ -82,16 +83,13 @@ body.assessment-survey-standalone {
 }
 
 .chestdiv img {
-  width: 65%;
+  width: 60%;
   /* float: left; */
 }
 
 .starWrapper {
   width: 100%;
-  /* margin-bottom: 40px; */
-  /* padding-top: 20px; */
-  padding-bottom: 20px;
-  margin-bottom: 20px;
+  margin-top: 60px;
   position: relative;
 }
 
@@ -130,11 +128,9 @@ body.assessment-survey-standalone {
   min-height: 100vh;
   height: 100%;
   overflow: hidden;
-  background: linear-gradient(
-    180deg,
-    rgba(80, 90, 220, 1) 0%,
-    rgba(247, 247, 161, 1) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(80, 90, 220, 1) 0%,
+      rgba(247, 247, 161, 1) 100%);
   background-size: 100% 100%;
   bottom: 0;
   position: relative;
@@ -155,7 +151,7 @@ body.assessment-survey-standalone {
 }
 
 .bodyWrapper.as-host-theme-ftm-dim {
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.70);
 }
 
 .questionContainer img {
@@ -206,8 +202,11 @@ body.assessment-survey-standalone {
 .answerContainer {
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 200px));
+  justify-content: center;
+  justify-items: stretch;
   grid-column-gap: 4%;
+  grid-row-gap: 16px;
   /* grid-row-gap: 2%; */
   width: 85%;
   height: auto;
@@ -298,11 +297,13 @@ button {
     max-width: 420px;
   }
 }
+
 #loading-gif {
   display: flex;
   height: 100%;
   width: 100%;
-  position: absolute; /* Position it within #loading-screen */
+  position: absolute;
+  /* Position it within #loading-screen */
 }
 
 #progressBarContainer {
@@ -328,6 +329,7 @@ button {
     transform: scale(0);
     opacity: 0;
   }
+
   to {
     transform: scale(1);
     opacity: 1;
@@ -443,7 +445,8 @@ input[type='checkbox'] {
 }
 
 input[type='range'] {
-  -webkit-appearance: none; /* Remove default WebKit styles */
+  -webkit-appearance: none;
+  /* Remove default WebKit styles */
   width: 100%;
   height: 14px;
   background: #ddd;
@@ -467,7 +470,8 @@ input[type='range']::-webkit-slider-thumb {
   background: rgb(102, 255, 99);
   border-radius: 50%;
   cursor: pointer;
-  margin-top: -6px; /* Adjust to align with the track */
+  margin-top: -6px;
+  /* Adjust to align with the track */
 }
 
 /* Track styling for Firefox */
@@ -486,7 +490,8 @@ input[type='range']::-moz-range-thumb {
   background: rgb(102, 255, 99);
   border-radius: 50%;
   cursor: pointer;
-  margin-top: -6px; /* Adjust to align with the track */
+  margin-top: -6px;
+  /* Adjust to align with the track */
 }
 
 /* Track styling for IE */
@@ -505,7 +510,8 @@ input[type='range']::-ms-thumb {
   background: rgb(102, 255, 99);
   border-radius: 50%;
   cursor: pointer;
-  margin-top: -6px; /* Adjust to align with the track */
+  margin-top: -6px;
+  /* Adjust to align with the track */
 }
 
 /* Additional styles for IE to hide the tick marks */

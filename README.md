@@ -35,7 +35,7 @@ This repository now supports two build targets:
 - Package build (for npm distribution):
   - `npm run build:package`
 
-The package build emits ESM JS + type declarations into `lib/`.
+The package build emits ESM JS + type declarations into `dist/`.
 
 ## Working locally with this package
 
@@ -56,7 +56,7 @@ In your host app repo:
 npm link @curiouslearning/assessment-survey
 ```
 
-After making changes here, rebuild to refresh `lib/`:
+After making changes here, rebuild to refresh `dist/`:
 
 ```bash
 npm run build:package
