@@ -4,6 +4,8 @@ import { shuffleArray } from '@utils/mathUtils';
 import { resolveAssetPath } from '@utils/assetUtils';
 import { ASSET_PATHS } from '@configs/assetsPaths';
 import { AssessmentUI, AssessmentUICallbacks } from './assessment-ui';
+import { DragEventController, DraggableButton, DropAreaTarget, iDraggableHTMLElement } from '@ui/dom-events';
+import appEventBus from '@services/app-event-bus';
 
 /**
  * Drag-and-drop assessment UI.
@@ -53,6 +55,8 @@ export class DragDropAssessmentUI implements AssessmentUI {
     | null = null;
 
   private callbacks: AssessmentUICallbacks | null = null;
+  private dragController: DragEventController | null = null;
+  private dropUnsubscribe: (() => void) | null = null;
 
   constructor(root: Document | ShadowRoot | HTMLElement = document) {
     this.root = root;
@@ -117,18 +121,32 @@ export class DragDropAssessmentUI implements AssessmentUI {
   configure(callbacks: AssessmentUICallbacks): void {
     this.callbacks = callbacks;
 
-    // TODO: replace click listeners with drag-and-drop setup.
-    // Each answerButton will become a drop target; the prompt (image/audio)
-    // will be the draggable. Wire pointer/touch drag events here.
-    //
-    // Click fallback during development:
-    this.answerButtons.forEach((button, index) => {
-      button.addEventListener('click', () => {
+    // Apply drag behaviour to each answer button (class 'answerButton' required by DragEventController).
+    this.answerButtons.forEach((button) => new DraggableButton(button));
+
+    // Apply drop behaviour to the chest div (class 'chestdiv' required by DragEventController).
+    const chestDiv = this.root.querySelector<HTMLElement>('.chestdiv');
+    if (chestDiv) {
+      new DropAreaTarget(chestDiv);
+    }
+
+    // Attach pointer-event listeners to the game container so DragEventController
+    // can locate both the draggable buttons and the chest drop zone.
+    this.dragController = new DragEventController(this.gameContainer);
+    this.dragController.attach();
+
+    // Map dropped element → 0-based answerIndex → onAnswer callback.
+    this.dropUnsubscribe = appEventBus.subscribe(
+      appEventBus.EVENTS.DROP_ELEMENT_INTERACTION,
+      ({ selectedAnswer }: { selectedAnswer: iDraggableHTMLElement }) => {
         if (!this.buttonsActive || !this.callbacks) return;
+        // Button IDs are 'answerButton1'…'answerButton6' (1-based); convert to 0-based.
+        const buttonNum = parseInt(selectedAnswer.id.replace('answerButton', ''), 10);
+        if (isNaN(buttonNum)) return;
         const elapsedMs = Date.now() - this.qStart;
-        this.callbacks.onAnswer({ answerIndex: index, elapsedMs });
-      });
-    });
+        this.callbacks.onAnswer({ answerIndex: buttonNum - 1, elapsedMs });
+      }
+    );
 
     this.landingContainer.addEventListener('click', () => {
       if (this.contentLoaded && this.gameReady) {
@@ -249,14 +267,26 @@ export class DragDropAssessmentUI implements AssessmentUI {
 
     this.questionsContainer.innerHTML += question.promptText + '<BR>';
     this.answerButtons.forEach((b) => (b.style.visibility = 'hidden'));
+
+    // Replace the play button handler so subsequent clicks only replay audio
+    // without re-hiding the answer buttons (matches UIController.ShowQuestion behavior).
+    if (!this.devModeBucketControlsEnabled) {
+      this.playButton.innerHTML = `<button id='nextqButton'><img class="audio-button" width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE)}' type='image/svg+xml'></img></button>`;
+      const replayBtn = this.playButton.querySelector('#nextqButton') as HTMLElement;
+      replayBtn?.addEventListener('click', () => {
+        AudioController.PlayAudio(
+          question.promptAudio,
+          undefined,
+          (playing: boolean) => this.updateAudioButtonImage(playing)
+        );
+      });
+    }
   }
 
   /**
    * Shows the answer options after audio finishes playing.
-   *
-   * TODO: replace with drag-and-drop target setup.
-   * Currently mirrors UIController.showOptions() so the same visual experience
-   * works while drag-and-drop code is integrated from the other branch.
+   * Buttons are made visible as draggable items — the drop onto the chest
+   * is handled by DragEventController + appEventBus.
    */
   private showAnswerTargets(): void {
     if (this.shown) return;
@@ -304,6 +334,9 @@ export class DragDropAssessmentUI implements AssessmentUI {
           }
 
           button.addEventListener('animationend', () => {
+            // Clear the animation so CSS fill-mode no longer overrides the
+            // JS transform set by DraggableButton during drag.
+            button.style.animation = '';
             const allVisible = question.answers.every((_, idx) => {
               const b = this.answerButtons[idx];
               return !b || b.style.visibility === 'visible';

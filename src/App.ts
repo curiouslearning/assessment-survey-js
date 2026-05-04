@@ -19,8 +19,12 @@ import { ASSET_PATHS } from '@configs/assetsPaths';
 import { AssessmentUI } from '@ui/assessment-ui';
 import { LegacyAssessmentUIAdapter } from '@ui/legacy-assessment-ui-adapter';
 import { DragDropAssessmentUI } from '@ui/dragdrop-ui';
+import { featureFlagsService } from '@curiouslearning/features';
 
 export type AssessmentUIMode = 'legacy' | 'new-ui';
+
+/** Feature flag key that enables the drag-and-drop assessment UI at runtime. */
+export const FEATURE_DRAG_DROP_UI = 'drag-drop-assessment-ui';
 
 const appVersion: string = 'v1.1.3';
 
@@ -53,6 +57,7 @@ export interface AppStartupConfig {
   hostIntegrationAdapters?: HostIntegrationAdapters;
   analyticsConfig?: AnalyticsConfig;
   assessmentUIMode?: AssessmentUIMode;
+  platform?: string;
 }
 
 export interface SummaryData {
@@ -105,7 +110,12 @@ export class App {
     }
 
     this.assessmentUIMode = config.assessmentUIMode ?? 'legacy';
-    this.assessmentUI = this.createAssessmentUI();
+    // Do not call createAssessmentUI() here — featureFlagsService is not yet
+    // initialized at construction time. spinUp() recreates this after the flag
+    // service is ready. This is just a safe placeholder.
+    this.assessmentUI = this.assessmentUIMode === 'new-ui'
+      ? new DragDropAssessmentUI(this.uiRoot)
+      : new LegacyAssessmentUIAdapter();
 
     this.unityBridge = this.enableUnityBridge ? new UnityBridge() : App.createNoopUnityBridge();
 
@@ -125,14 +135,6 @@ export class App {
     const skipStartScreen = config.skipStartScreen ?? false;
     this.enableServiceWorker = config.enableServiceWorker ?? this.enableServiceWorker;
 
-    this.assessmentUI = this.createAssessmentUI();
-    this.assessmentUI.setGameReady(false);
-    this.assessmentUI.setSkipStartScreen(skipStartScreen);
-
-    if (skipLoadingScreen) {
-      this.assessmentUI.setLoadingVisible(false);
-    }
-
     if (config.analyticsConfig) {
       try {
         await AnalyticsIntegration.initializeAnalytics(config.analyticsConfig);
@@ -140,6 +142,27 @@ export class App {
       } catch (error) {
         console.warn('Analytics initialization failed. Continuing without analytics.', error);
       }
+    }
+
+    try {
+      console.log('Initializing feature flags... With user:', {
+        userID: config.userId ?? getUUID(),
+        platform: config.platform ?? 'standalone',
+      });
+      featureFlagsService.init({ user: { userID: config.userId ?? getUUID(), custom: { platform: config.platform ?? 'standalone' } } });
+      await featureFlagsService.initialize();
+    } catch (error) {
+      console.warn('Feature flags initialization failed. Continuing with defaults.', error);
+    }
+
+    // Re-create UI after feature flags are available so the flag check in
+    // createAssessmentUI() reflects the resolved remote values.
+    this.assessmentUI = this.createAssessmentUI();
+    this.assessmentUI.setGameReady(false);
+    this.assessmentUI.setSkipStartScreen(skipStartScreen);
+
+    if (skipLoadingScreen) {
+      this.assessmentUI.setLoadingVisible(false);
     }
 
     const initialize = async () => {
@@ -427,14 +450,15 @@ export class App {
   }
 
   public createAssessmentUI(): AssessmentUI {
-    if (this.assessmentUIMode === 'new-ui') {
+    console.log(featureFlagsService.isFeatureEnabled(FEATURE_DRAG_DROP_UI));
+    if (this.assessmentUIMode === 'new-ui' || featureFlagsService.isFeatureEnabled(FEATURE_DRAG_DROP_UI)) {
       return new DragDropAssessmentUI(this.uiRoot);
     }
     return new LegacyAssessmentUIAdapter();
   }
 
   public notifyLoaded(): void {
-    UIController.SetGameReady?.(true);
+    this.assessmentUI.setGameReady(true);
 
     if (this.enableUnityBridge) {
       this.unityBridge.SendLoaded();
@@ -544,7 +568,8 @@ export function createApp(config: AppStartupConfig = {}): App {
 
 export function startStandaloneApp(config: AppStartupConfig = {}): App {
   console.log(config);
-  const app = new App(config);
-  app.spinUp(config);
+  const resolvedConfig: AppStartupConfig = { platform: 'standalone', ...config };
+  const app = new App(resolvedConfig);
+  app.spinUp(resolvedConfig);
   return app;
 }

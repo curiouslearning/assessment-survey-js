@@ -147,6 +147,7 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
       analyticsConfig: this.analyticsConfig ?? undefined,
       hostIntegrationAdapters: this.buildHostIntegrationAdapters(),
       assessmentUIMode: (this.getAttribute('assessment-ui-mode') as AssessmentUIMode) ?? undefined,
+      platform: this.getAttribute('platform') ?? 'ftm',
     };
 
     this.appInstance = createApp(startupConfig);
