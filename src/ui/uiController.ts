@@ -1,10 +1,17 @@
-import { qData, answerData } from '../components/questionData';
-import { AudioController } from '../components/audioController';
-import { randFrom, shuffleArray } from '../utils/mathUtils';
-import { getDataFile } from '../utils/urlUtils';
+import { qData, answerData } from '@components/questionData';
+import { AudioController } from '@components/audioController';
+import { randFrom, shuffleArray } from '@utils/mathUtils';
+import { getDataFile } from '@utils/urlUtils';
+import { resolveAssetPath } from '@utils/assetUtils';
+import { ASSET_PATHS } from '@configs/assetsPaths';
 
 export class UIController {
-  private static instance: UIController | null = null;
+  public static instance: UIController | null = null;
+  private static configuredRoot: Document | ShadowRoot | HTMLElement = document;
+  private root: Document | ShadowRoot | HTMLElement = UIController.configuredRoot;
+
+  private bodyWrapperSelector = '.bodyWrapper';
+  private bodyWrapper: HTMLElement | null;
 
   private landingContainerId = 'landWrap';
   public landingContainer: HTMLElement;
@@ -31,27 +38,32 @@ export class UIController {
   public answersContainer: HTMLElement;
 
   private answerButton1Id = 'answerButton1';
-  private answerButton1: HTMLElement;
+  public answerButton1: HTMLElement;
   private answerButton2Id = 'answerButton2';
-  private answerButton2: HTMLElement;
+  public answerButton2: HTMLElement;
   private answerButton3Id = 'answerButton3';
-  private answerButton3: HTMLElement;
+  public answerButton3: HTMLElement;
   private answerButton4Id = 'answerButton4';
-  private answerButton4: HTMLElement;
+  public answerButton4: HTMLElement;
   private answerButton5Id = 'answerButton5';
-  private answerButton5: HTMLElement;
+  public answerButton5: HTMLElement;
   private answerButton6Id = 'answerButton6';
-  private answerButton6: HTMLElement;
+  public answerButton6: HTMLElement;
 
   private playButtonId = 'pbutton';
-  private playButton: HTMLElement;
+  public playButton: HTMLElement;
+
+  private loadingScreenId = 'loadingScreen';
+  private progressBarId = 'progressBar';
 
   private chestImgId = 'chestImage';
-  private chestImg: HTMLElement;
+  public chestImg: HTMLElement;
 
   public nextQuestion = null;
 
   public contentLoaded: boolean = false;
+  private gameReady: boolean = true;
+  private skipStartScreen: boolean = false;
 
   public qStart;
   public shown = false;
@@ -68,63 +80,151 @@ export class UIController {
 
   public buttons = [];
 
-  private buttonPressCallback: Function;
-  private startPressCallback: Function;
+  public buttonPressCallback: Function;
+  public startPressCallback: Function;
 
   public buttonsActive: boolean = false;
 
-  private devModeCorrectLabelVisibility: boolean = false;
-  private devModeBucketControlsEnabled: boolean = false;
+  public devModeCorrectLabelVisibility: boolean = false;
+  public devModeBucketControlsEnabled: boolean = false;
 
   public animationSpeedMultiplier: number = 1;
 
   public externalBucketControlsGenerationHandler: (container: HTMLElement, clickCallback: () => void) => void;
 
-  private init(): void {
+  private readonly handleWindowResize = (): void => {
+    this.applyResponsiveCanvasWidth();
+  };
+
+  private createFallbackElement(id: string): HTMLElement {
+    const fallback = document.createElement('div');
+    fallback.setAttribute('data-ui-fallback-id', id);
+    fallback.style.display = 'none';
+    return fallback;
+  }
+
+  private resetRuntimeState(): void {
+    this.nextQuestion = null;
+    this.contentLoaded = false;
+    this.gameReady = true;
+    this.skipStartScreen = false;
+    this.qStart = undefined;
+    this.shown = false;
+    this.stars = [];
+    this.shownStarsCount = 0;
+    this.starPositions = [];
+    this.qAnsNum = 0;
+    this.allStart = null;
+    this.buttons = [];
+    this.buttonsActive = false;
+  }
+
+  private getElementById<T extends HTMLElement = HTMLElement>(id: string): T {
+    const element = this.root.querySelector<T>(`#${id}`);
+    if (!element) {
+      console.warn(`UIController could not find required element with id '${id}' in configured root. Using fallback element.`);
+      return this.createFallbackElement(id) as T;
+    }
+    return element;
+  }
+
+  private getOptionalElement<T extends HTMLElement = HTMLElement>(selector: string): T | null {
+    return this.root.querySelector<T>(selector);
+  }
+
+  private getElementByIdOrSelector<T extends HTMLElement = HTMLElement>(id: string, selector: string): T {
+    const element = this.root.querySelector<T>(`#${id}`) ?? this.root.querySelector<T>(selector);
+    if (!element) {
+      console.warn(`UIController could not find required element with id '${id}' or selector '${selector}' in configured root. Using fallback element.`);
+      return this.createFallbackElement(id) as T;
+    }
+    return element;
+  }
+
+  public static ConfigureRoot(root: Document | ShadowRoot | HTMLElement): void {
+    const rootChanged = UIController.configuredRoot !== root;
+    UIController.configuredRoot = root;
+    if (UIController.instance !== null) {
+      UIController.instance.root = root;
+      if (rootChanged) {
+        UIController.instance.init();
+      }
+    }
+  }
+
+  public static Reset(): void {
+    if (UIController.instance !== null) {
+      window.removeEventListener('resize', UIController.instance.handleWindowResize);
+    }
+    UIController.instance = null;
+    UIController.configuredRoot = document;
+  }
+
+  public static getResponsiveCanvasWidth(): number {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    return width > 1080 && height < 650 ? 380 : width > 1080 ? 500 : width;
+  }
+
+  private applyResponsiveCanvasWidth(): void {
+    if (!this.bodyWrapper) {
+      return;
+    }
+
+    const canvasWidth = UIController.getResponsiveCanvasWidth();
+    this.bodyWrapper.style.width = `${canvasWidth}px`;
+    this.bodyWrapper.style.maxWidth = `${canvasWidth}px`;
+  }
+
+  public init(): void {
+    this.root = UIController.configuredRoot;
+    this.resetRuntimeState();
     // Initialize required containers
-    this.landingContainer = document.getElementById(this.landingContainerId);
-    this.gameContainer = document.getElementById(this.gameContainerId);
-    this.endContainer = document.getElementById(this.endContainerId);
-    this.starContainer = document.getElementById(this.starContainerId);
-    this.chestContainer = document.getElementById(this.chestContainerId);
-    this.questionsContainer = document.getElementById(this.questionsContainerId);
-    this.feedbackContainer = document.getElementById(this.feedbackContainerId);
-    this.answersContainer = document.getElementById(this.answersContainerId);
+    this.bodyWrapper = this.getOptionalElement(this.bodyWrapperSelector);
+    this.landingContainer = this.getElementById(this.landingContainerId);
+    this.gameContainer = this.getElementById(this.gameContainerId);
+    this.endContainer = this.getElementById(this.endContainerId);
+    this.starContainer = this.getElementById(this.starContainerId);
+    this.chestContainer = this.getElementByIdOrSelector(this.chestContainerId, '.chestWrapper');
+    this.questionsContainer = this.getElementById(this.questionsContainerId);
+    this.feedbackContainer = this.getElementById(this.feedbackContainerId);
+    this.answersContainer = this.getElementById(this.answersContainerId);
 
     // Initialize required buttons
-    this.answerButton1 = document.getElementById(this.answerButton1Id);
-    this.answerButton2 = document.getElementById(this.answerButton2Id);
-    this.answerButton3 = document.getElementById(this.answerButton3Id);
-    this.answerButton4 = document.getElementById(this.answerButton4Id);
-    this.answerButton5 = document.getElementById(this.answerButton5Id);
-    this.answerButton6 = document.getElementById(this.answerButton6Id);
+    this.answerButton1 = this.getElementById(this.answerButton1Id);
+    this.answerButton2 = this.getElementById(this.answerButton2Id);
+    this.answerButton3 = this.getElementById(this.answerButton3Id);
+    this.answerButton4 = this.getElementById(this.answerButton4Id);
+    this.answerButton5 = this.getElementById(this.answerButton5Id);
+    this.answerButton6 = this.getElementById(this.answerButton6Id);
 
-    this.playButton = document.getElementById(this.playButtonId);
+    this.playButton = this.getElementById(this.playButtonId);
 
-    this.chestImg = document.getElementById(this.chestImgId);
+    this.chestImg = this.getElementById(this.chestImgId);
 
     this.initializeStars();
 
     this.initEventListeners();
+    this.applyResponsiveCanvasWidth();
+    window.removeEventListener('resize', this.handleWindowResize);
+    window.addEventListener('resize', this.handleWindowResize);
   }
 
-  private initializeStars(): void {
+  public initializeStars(): void {
+    this.stars = [];
+    this.starPositions = [];
+    this.starContainer.innerHTML = '';
+
     for (let i = 0; i < 20; i++) {
       const newStar = document.createElement('img');
-
-      // newStar.src = "img/star.png";
       newStar.id = 'star' + i;
-
       newStar.classList.add('topstarv');
-
       this.starContainer.appendChild(newStar);
-
-      this.starContainer.innerHTML += '';
-
       if (i == 9) {
-        this.starContainer.innerHTML += '<br>';
+        this.starContainer.appendChild(document.createElement('br'));
       }
-
+      this.stars.push(i);
       this.stars.push(i);
     }
 
@@ -151,6 +251,7 @@ export class UIController {
     y: number,
     minDistance: number
   ): boolean {
+
     if (starPositions.length < 1) return false;
 
     for (let i = 0; i < starPositions.length; i++) {
@@ -164,7 +265,7 @@ export class UIController {
     return false;
   }
 
-  private initEventListeners(): void {
+  public initEventListeners(): void {
     // TODO: refactor this
     this.answerButton1.addEventListener('click', () => {
       this.answerButtonPress(1);
@@ -203,10 +304,20 @@ export class UIController {
     this.buttons.push(this.answerButton6);
 
     this.landingContainer.addEventListener('click', () => {
-      if (localStorage.getItem(getDataFile()) && UIController.getInstance().contentLoaded) {
+      if (this.canShowGameFromLanding()) {
         this.showGame();
       }
     });
+  }
+
+  private canShowGameFromLanding(): boolean {
+    return this.contentLoaded && this.gameReady;
+  }
+
+  private maybeAutoStartGame(): void {
+    if (this.skipStartScreen && this.canShowGameFromLanding()) {
+      this.showGame();
+    }
   }
 
   public showOptions(): void {
@@ -271,7 +382,7 @@ export class UIController {
     }
   }
 
-  private enableAnswerButton(): void {
+  public enableAnswerButton(): void {
     UIController.getInstance().buttonsActive = true;
   }
 
@@ -281,7 +392,7 @@ export class UIController {
   }
 
   //functions to show/hide the different containers
-  private showLanding(): void {
+  public showLanding(): void {
     this.landingContainer.style.display = 'flex';
     this.gameContainer.style.display = 'none';
     this.endContainer.style.display = 'none';
@@ -293,12 +404,18 @@ export class UIController {
     UIController.getInstance().endContainer.style.display = 'flex';
   }
 
-  private showGame(): void {
+  public showGame(): void {
+    if (this.gameContainer.style.display === 'grid') {
+      return;
+    }
+
     this.landingContainer.style.display = 'none';
     this.gameContainer.style.display = 'grid';
     this.endContainer.style.display = 'none';
     this.allStart = Date.now();
-    this.startPressCallback();
+    if (typeof this.startPressCallback === 'function') {
+      this.startPressCallback();
+    }
   }
 
   public static SetFeedbackVisibile(visible: boolean, isCorrect: boolean) {
@@ -309,8 +426,10 @@ export class UIController {
       if (isCorrect) {
         UIController.getInstance().feedbackContainer.style.color = 'rgb(109, 204, 122)';
         AudioController.PlayCorrect();
+        AudioController.PlayDing();
       } else {
         UIController.getInstance().feedbackContainer.style.color = 'red';
+        AudioController.PlayDing();
       }
     } else {
       UIController.getInstance().feedbackContainer.classList.remove('visible');
@@ -353,8 +472,8 @@ export class UIController {
       });
     } else {
       UIController.getInstance().playButton.innerHTML =
-        "<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='/img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>";
-      var nextQuestionButton = document.getElementById('nextqButton');
+        `<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE)}' type='image/svg+xml'> </img></button>`;
+      var nextQuestionButton = UIController.getInstance().playButton.querySelector('#nextqButton') as HTMLElement;
       nextQuestionButton.addEventListener('click', function () {
         UIController.ShowQuestion();
         //playquestionaudio
@@ -369,11 +488,15 @@ export class UIController {
 
   public static ShowAudioAnimation(playing: boolean = false) {
     if (!UIController.getInstance().devModeBucketControlsEnabled) {
-      const playButtonImg = UIController.getInstance().playButton.querySelector('img');
+      let playButtonImg = UIController.getInstance().playButton.querySelector('img') as HTMLImageElement;
+      if (!playButtonImg) {
+        playButtonImg = document.createElement('img');
+        UIController.getInstance().playButton.appendChild(playButtonImg);
+      }
       if (playing) {
-        playButtonImg.src = 'animation/SoundButton.gif';
+        playButtonImg.src = resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_ANIMATION);
       } else {
-        playButtonImg.src = '/img/SoundButton_Idle.png';
+        playButtonImg.src = resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE);
       }
     }
   }
@@ -395,14 +518,14 @@ export class UIController {
       });
     } else {
       UIController.getInstance().playButton.innerHTML =
-        "<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='/img/SoundButton_Idle.png' type='image/svg+xml'> </img></button>";
+        `<button id='nextqButton'><img class=audio-button width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE)}' type='image/svg+xml'> </img></button>`;
 
-      var nextQuestionButton = document.getElementById('nextqButton');
+      var nextQuestionButton = UIController.getInstance().playButton.querySelector('#nextqButton') as HTMLElement;
       nextQuestionButton.addEventListener('click', function () {
         console.log('next question button pressed');
         console.log(newQuestion.promptAudio);
 
-        if ('promptAudio' in newQuestion) {
+        if (newQuestion && newQuestion.promptAudio) {
           AudioController.PlayAudio(newQuestion.promptAudio, undefined, UIController.ShowAudioAnimation);
         }
       });
@@ -435,10 +558,11 @@ export class UIController {
   }
 
   public static AddStar(): void {
-    var starToShow = document.getElementById(
-      'star' + UIController.getInstance().stars[UIController.getInstance().qAnsNum]
-    ) as HTMLImageElement;
-    starToShow.src = '../animation/Star.gif';
+    var starToShow = document.getElementById('star' + UIController.getInstance().qAnsNum) as HTMLImageElement;
+    if (!starToShow) {
+      throw new Error('Star element not found');
+    }
+    starToShow.src = resolveAssetPath(ASSET_PATHS.STAR_ANIMATION);
     starToShow.classList.add('topstarv');
     starToShow.classList.remove('topstarh');
 
@@ -466,6 +590,7 @@ export class UIController {
     starToShow.style.top = window.innerHeight / 2 + 'px';
     starToShow.style.left = UIController.instance.gameContainer.offsetWidth / 2 - starToShow.offsetWidth / 2 + 'px';
 
+
     setTimeout(() => {
       starToShow.style.transition = `top ${2 * animationSpeedMultiplier}s ease, left ${2 * animationSpeedMultiplier}s ease, transform ${2 * animationSpeedMultiplier}s ease`;
       if (randomX < containerWidth / 2 - 30) {
@@ -492,21 +617,27 @@ export class UIController {
 
     UIController.getInstance().qAnsNum += 1;
 
+    //Updated star count.
     UIController.getInstance().shownStarsCount += 1;
   }
 
   public static ChangeStarImageAfterAnimation(): void {
-    var starToShow = document.getElementById(
-      'star' + UIController.getInstance().stars[UIController.getInstance().qAnsNum - 1]
-    ) as HTMLImageElement;
-    starToShow.src = '../img/star_after_animation.gif';
+    const currentStarIndex = UIController.getInstance().qAnsNum - 1;
+    if (currentStarIndex < 0) {
+      return;
+    }
+
+    var starToShow = document.getElementById('star' + currentStarIndex) as HTMLImageElement;
+    if (!starToShow) {
+      return;
+    }
+    starToShow.src = resolveAssetPath(ASSET_PATHS.STAR_AFTER_ANIMATION);
   }
 
-  private answerButtonPress(buttonNum: number): void {
+  public answerButtonPress(buttonNum: number): void {
     const allButtonsVisible = this.buttons.every((button) => button.style.visibility === 'visible');
     console.log(this.buttonsActive, allButtonsVisible);
     if (this.buttonsActive === true) {
-      AudioController.PlayDing();
       const nPressed = Date.now();
       const dTime = nPressed - this.qStart;
       console.log('answered in ' + dTime);
@@ -515,19 +646,59 @@ export class UIController {
   }
 
   public static ProgressChest() {
-    const chestImage = document.getElementById('chestImage') as HTMLImageElement;
+    const chestImage = UIController.getInstance().getElementById<HTMLImageElement>('chestImage');
     let currentImgSrc = chestImage.src;
     console.log('Chest Progression-->', chestImage);
     console.log('Chest Progression-->', chestImage.src);
     const currentImageNumber = parseInt(currentImgSrc.slice(-6, -4), 10);
     console.log('Chest Progression number-->', currentImageNumber);
     const nextImageNumber = (currentImageNumber % 4) + 1;
-    const nextImageSrc = `img/chestprogression/TreasureChestOpen0${nextImageNumber}.svg`;
+    const nextImageSrc = Number.isNaN(nextImageNumber)
+      ? resolveAssetPath(`img/chestprogression/TreasureChestOpen0${String(nextImageNumber)}.svg`)
+      : resolveAssetPath(ASSET_PATHS.CHEST_PROGRESSION[nextImageNumber]);
     chestImage.src = nextImageSrc;
   }
 
   public static SetContentLoaded(value: boolean): void {
-    UIController.getInstance().contentLoaded = value;
+    const instance = UIController.getInstance();
+    instance.contentLoaded = value;
+
+    if (value) {
+      instance.maybeAutoStartGame();
+    }
+  }
+
+  public static SetSkipStartScreen(value: boolean): void {
+    const instance = UIController.getInstance();
+    instance.skipStartScreen = value;
+    instance.maybeAutoStartGame();
+  }
+
+  public static SetGameReady(value: boolean): void {
+    const instance = UIController.getInstance();
+    instance.gameReady = value;
+
+    if (value) {
+      instance.maybeAutoStartGame();
+    }
+  }
+
+  public static SetLoadingVisible(visible: boolean): void {
+    const loadingScreen = UIController.getInstance().root.querySelector<HTMLElement>(`#${UIController.getInstance().loadingScreenId}`);
+    if (!loadingScreen) {
+      return;
+    }
+
+    loadingScreen.style.display = visible ? 'flex' : 'none';
+  }
+
+  public static SetLoadingProgress(progress: number): void {
+    const progressBar = UIController.getInstance().root.querySelector<HTMLElement>(`#${UIController.getInstance().progressBarId}`);
+    if (!progressBar) {
+      return;
+    }
+
+    progressBar.style.width = `${progress}%`;
   }
 
   public static SetButtonPressAction(callback: Function): void {

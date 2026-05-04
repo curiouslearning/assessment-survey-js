@@ -1,6 +1,8 @@
-import { getCommonAnalyticsEventsProperties } from "../utils/AnalyticsUtils";
+import { getCommonAnalyticsEventsProperties } from "@utils/AnalyticsUtils";
+import { getEndpoint, getOrganization } from "@utils/urlUtils";
 import { Answered, BucketCompleted, CommonEventProperties, Completed, Initialized, Opened, UserLocation } from "./analytics-event-interface";
-import { BaseAnalyticsIntegration } from "./base-analytics-integration";
+import { AnalyticsConfig, BaseAnalyticsIntegration } from "./base-analytics-integration";
+import { firebaseConfig } from "./analytics-config";
 
 export const enum AnalyticsEventsType {
     INITIALIZE = 'initialized',
@@ -9,8 +11,8 @@ export const enum AnalyticsEventsType {
     BUCKET_COMPLETED = 'bucketCompleted',
     ANSWERED = 'answered',
     COMPLETED = 'completed'
-
 }
+
 type EventDataMap = {
     [AnalyticsEventsType.INITIALIZE]: Initialized;
     [AnalyticsEventsType.OPENED]: Opened;
@@ -40,14 +42,13 @@ export class AnalyticsIntegration extends BaseAnalyticsIntegration {
         };
     }
 
-
-    public static async initializeAnalytics(): Promise<void> {
+    public static async initializeAnalytics(config: AnalyticsConfig = firebaseConfig): Promise<void> {
         if (!this.instance) {
             this.instance = new AnalyticsIntegration();
         }
 
         if (!this.instance.isAnalyticsReady()) {
-            await this.instance.initialize();
+            await this.instance.initialize(config);
         }
     }
 
@@ -63,10 +64,8 @@ export class AnalyticsIntegration extends BaseAnalyticsIntegration {
         // Send data to the third party
         console.log('Attempting to send score to a third party! Score: ', score);
 
-        // Read the URL from utm parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const targetPartyURL = urlParams.get('endpoint');
-        const organization = urlParams.get('organization');
+        const targetPartyURL = getEndpoint();
+        const organization = getOrganization();
         const xhr = new XMLHttpRequest();
 
         if (!targetPartyURL) {
@@ -112,9 +111,10 @@ export class AnalyticsIntegration extends BaseAnalyticsIntegration {
         }
     }
 
-    public async initialize(): Promise<void> {
-        await super.initialize();
+    public async initialize(config: AnalyticsConfig): Promise<void> {
+        await super.initialize(config);
     }
+
     public track<T extends AnalyticsEventsType>(
         eventType: T,
         eventData: Partial<CommonEventProperties> & Omit<EventDataMap[T], keyof CommonEventProperties>

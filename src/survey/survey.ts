@@ -1,17 +1,18 @@
 //this is where the code will go for linearly iterating through the
 //questions in a data.json file that identifies itself as a survey
 
-import { UIController } from '../ui/uiController';
-import { AudioController } from '../components/audioController';
-import { qData, answerData } from '../components/questionData';
-import { AnalyticsEvents } from '../analytics/analyticsEvents';
+import { UIController } from '@ui/uiController';
+import { AudioController } from '@components/audioController';
+import { qData, answerData } from '@components/questionData';
+import { AnalyticsEvents } from '@analytics/analyticsEvents';
 import { App } from '../App';
 import { BaseQuiz } from '../baseQuiz';
-import { fetchSurveyQuestions } from '../utils/jsonUtils';
-import { UnityBridge } from '../utils/unityBridge';
+import { fetchSurveyQuestions } from '@utils/jsonUtils';
+import { UnityBridge } from '@utils/unityBridge';
 
 export class Survey extends BaseQuiz {
   static readonly TYPE = 'survey';
+
   public questionsData: qData[];
   public currentQuestionIndex: number;
 
@@ -22,6 +23,7 @@ export class Survey extends BaseQuiz {
     this.dataURL = dataURL;
     this.unityBridge = unityBridge;
     this.currentQuestionIndex = 0;
+    this.questionsData = [];
     UIController.SetButtonPressAction(this.handleAnswerButtonPress);
     UIController.SetStartAction(this.startSurvey);
   }
@@ -48,10 +50,11 @@ export class Survey extends BaseQuiz {
 
   public async Run(app: App) {
     this.app = app;
-    this.buildQuestionList().then((result) => {
+    Promise.resolve(this.buildQuestionList()).then((result) => {
       this.questionsData = result;
       AudioController.PrepareAudioAndImagesForSurvey(this.questionsData, this.app.GetDataURL());
-      this.unityBridge.SendLoaded();
+      this.app.notifyLoaded();
+      this.unityBridge?.SendLoaded?.();
     });
   }
 
@@ -76,15 +79,27 @@ export class Survey extends BaseQuiz {
   };
 
   public handleAnswerButtonPress = (answer: number, elapsed: number) => {
-    AnalyticsEvents.sendAnswered(this.questionsData[this.currentQuestionIndex], answer, elapsed);
-    UIController.SetFeedbackVisibile(true, true);
+    const currentQuestion = this.questionsData[this.currentQuestionIndex];
+    AnalyticsEvents.sendAnswered(currentQuestion, answer, elapsed);
+    UIController.SetFeedbackVisibile(true, this.isAnswerCorrect(currentQuestion, answer));
     UIController.AddStar();
     setTimeout(() => {
       this.onQuestionEnd();
     }, 2000);
   };
 
-  public buildQuestionList = () => {
+  private isAnswerCorrect(question: qData, answer: number): boolean {
+    if (question.correct == null) {
+      return true;
+    }
+
+    return question.answers[answer - 1]?.answerName === question.correct;
+  }
+
+  public buildQuestionList = (): Promise<qData[]> | qData[] => {
+    if (typeof fetchSurveyQuestions !== 'function') {
+      return [];
+    }
     const surveyQuestions = fetchSurveyQuestions(this.app.dataURL);
     return surveyQuestions;
   };

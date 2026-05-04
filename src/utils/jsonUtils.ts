@@ -1,6 +1,17 @@
 /** Json Utils */
+let dataBaseUrl = '';
 
-// import { setFeedbackText } from './uiController';
+function normalizeBaseUrl(baseUrl: string): string {
+  if (!baseUrl) {
+    return '';
+  }
+
+  return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+}
+
+export function setDataBaseUrl(baseUrl: string = ''): void {
+  dataBaseUrl = normalizeBaseUrl(baseUrl);
+}
 
 export async function fetchAppData(url: string) {
   return loadData(url).then((data) => {
@@ -34,7 +45,13 @@ export async function fetchAssessmentBuckets(url: string) {
 }
 
 export function getDataURL(url: string) {
-  return '/data/' + url + '.json';
+  const relativePath = `data/${url}.json`;
+
+  if (!dataBaseUrl) {
+    return `/${relativePath}`;
+  }
+
+  return `${dataBaseUrl}/${relativePath}`;
 }
 
 export function getCaseIndependentLangList() {
@@ -43,6 +60,6 @@ export function getCaseIndependentLangList() {
 
 async function loadData(url: string) {
   var furl = getDataURL(url);
-  // console.log(furl);
+  //console.log({ furl });
   return fetch(furl).then((response) => response.json());
 }

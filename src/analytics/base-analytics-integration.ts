@@ -1,5 +1,16 @@
 import { AnalyticsService, FirebaseStrategy, StatsigStrategy } from '@curiouslearning/analytics';
-import { firebaseConfig } from "./analytics-config";
+
+export interface AnalyticsConfig {
+    firebaseName: string;
+    apiKey: string;
+    authDomain: string;
+    databaseURL: string;
+    projectId: string;
+    storageBucket: string;
+    messagingSenderId: string;
+    appId: string;
+    measurementId: string;
+}
 
 /**
  * Base class for integrating analytics providers.
@@ -33,25 +44,27 @@ export class BaseAnalyticsIntegration {
      *
      * Ensures initialization only happens once.
      *
+     * @param {AnalyticsConfig} config - The Firebase analytics configuration object.
      * @returns {Promise<void>} A promise that resolves when analytics have been initialized.
      * @throws {Error} If initialization fails.
      */
-    public async initialize(): Promise<void> {
+    public async initialize(config: AnalyticsConfig): Promise<void> {
         if (this.isInitialized) {
             return;
         }
 
         try {
             this.firebaseStrategy = new FirebaseStrategy({
+                firebaseName: config.firebaseName,
                 firebaseOptions: {
-                    apiKey: firebaseConfig.apiKey,
-                    authDomain: firebaseConfig.authDomain,
-                    databaseURL: firebaseConfig.databaseURL,
-                    projectId: firebaseConfig.projectId,
-                    storageBucket: firebaseConfig.storageBucket,
-                    messagingSenderId: firebaseConfig.messagingSenderId,
-                    appId: firebaseConfig.appId,
-                    measurementId: firebaseConfig.measurementId,
+                    apiKey: config.apiKey,
+                    authDomain: config.authDomain,
+                    databaseURL: config.databaseURL,
+                    projectId: config.projectId,
+                    storageBucket: config.storageBucket,
+                    messagingSenderId: config.messagingSenderId,
+                    appId: config.appId,
+                    measurementId: config.measurementId,
                 },
                 userProperties: {}
             });
@@ -109,7 +122,7 @@ export class BaseAnalyticsIntegration {
      *
      * @returns {any | undefined} The Firebase app instance, or undefined if not initialized.
      */
-    get firebaseApp() {
+    get firebaseApp(): any {
         return this.firebaseStrategy?.firebaseApp;
     }
 
