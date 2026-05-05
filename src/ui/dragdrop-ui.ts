@@ -327,7 +327,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
 
         setTimeout(() => {
           button.style.visibility = 'visible';
-          button.style.boxShadow = '0px 6px 8px #606060';
+          // button.style.boxShadow = '0px 6px 8px #606060';
           button.style.animation = `zoomIn ${animDuration * this.animationSpeedMultiplier}ms ease forwards`;
 
           if ('answerImg' in answer) {
@@ -413,7 +413,10 @@ export class DragDropAssessmentUI implements AssessmentUI {
     starToShow.style.transform = 'scale(10)';
     starToShow.style.transition = `top ${1 * mult}s ease, left ${1 * mult}s ease, transform ${0.5 * mult}s ease`;
     starToShow.style.zIndex = '500';
-    starToShow.style.top = window.innerHeight / 2 + 'px';
+    // Offset from viewport center into container-relative coordinates so the
+    // star starts at the visual screen center before animating into starWrapper.
+    const containerRect = this.starContainer.getBoundingClientRect();
+    starToShow.style.top = (window.innerHeight / 2 - containerRect.top) + 'px';
     starToShow.style.left =
       this.gameContainer.offsetWidth / 2 - starToShow.offsetWidth / 2 + 'px';
 

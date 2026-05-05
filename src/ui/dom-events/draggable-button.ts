@@ -83,6 +83,7 @@ export class DraggableButton {
 
         //Ensures the element being drag will be on top of everything.
         this.element.style.zIndex = '1000';
+        this.element.classList.add('dragging');
     }
 
     private handleDragging(event: PointerEvent): void {
@@ -126,6 +127,7 @@ export class DraggableButton {
         this.y = 0;
 
         //Revert back the element back to it's original place.
+        this.element.classList.remove('dragging');
         this.applyDefaultStyles();
     }
 }

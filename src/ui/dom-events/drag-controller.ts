@@ -56,11 +56,18 @@ export default class DragEventController {
         return { dragElement, dropElement };
     }
 
+    private setChestImage(variant: 'TreasureChestOpen01' | 'TreasureChestOpen04'): void {
+        const chestImage = this.root.querySelector('#chestImage') as HTMLImageElement | null;
+        if (!chestImage) return;
+        chestImage.src = chestImage.src.replace(/TreasureChestOpen\d+\.svg/, `${variant}.svg`);
+    }
+
     private handlePointerDown = (event: PointerEvent) => {
         this.foundDragElement = this.locateBtnElement(event);
 
         if (this.foundDragElement) {
             this.foundDragElement?.onStart(event);
+            this.setChestImage('TreasureChestOpen04');
         }
 
     };
@@ -114,5 +121,6 @@ export default class DragEventController {
 
         this.foundDragElement?.onEnd?.();
         this.foundDragElement = null;
+        this.setChestImage('TreasureChestOpen01');
     };
 }

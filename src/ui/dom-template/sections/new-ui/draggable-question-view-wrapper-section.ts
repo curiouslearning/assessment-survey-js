@@ -44,6 +44,7 @@ export class DraggableQuestionViewWrapperSection extends TemplateSection<HTMLDiv
         const answerContainer = createElement('div', {
             id: 'aWrap',
             className: this.context.classNames.answerContainer,
+            style: 'grid-template-columns: repeat(4, minmax(0, 1fr)); min-height: unset; margin-top: 0;',
         });
 
         for (let index = 1; index <= 6; index += 1) {
@@ -71,12 +72,13 @@ export class DraggableQuestionViewWrapperSection extends TemplateSection<HTMLDiv
 
         appendChildren(controlsContainer, [nextQuestionInput, feedbackContainer]);
 
+        // Layout order: audio button → question → options (single row) → treasure chest
         appendChildren(questionViewWrapper, [
             starWrapper,
-            chestWrapper,
+            controlsContainer,
             questionContainer,
             answerContainer,
-            controlsContainer
+            chestWrapper,
         ]);
 
         return questionViewWrapper;
