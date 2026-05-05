@@ -18,6 +18,7 @@ export type ResolvedTemplateConfig = {
   sections: TemplateSections;
   text: TemplateTextOverrides;
   classNames: TemplateClassNames;
+  assessmentUIMode: string;
 };
 
 /**
@@ -154,6 +155,13 @@ export class TemplateContext {
    */
   public get classNames(): TemplateClassNames {
     return this.config.classNames;
+  }
+
+  /**
+   * The assessment UI mode controlling which question template is rendered.
+   */
+  public get assessmentUIMode(): string {
+    return this.config.assessmentUIMode;
   }
 
   /**

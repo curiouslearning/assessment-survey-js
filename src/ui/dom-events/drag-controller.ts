@@ -17,6 +17,15 @@ export default class DragEventController {
         this.root.addEventListener('pointercancel', this.handlePointerCancel);
     }
 
+    public detach(): void {
+        this.root.removeEventListener('pointerdown', this.handlePointerDown);
+        this.root.removeEventListener('pointermove', this.handlePointerDragMove);
+        this.root.removeEventListener('pointerup', this.handlePointerUp);
+        this.root.removeEventListener('pointercancel', this.handlePointerCancel);
+        this.foundDragElement = null;
+        this.targetDropElement = null;
+    }
+
     private locateBtnElement(event: PointerEvent): iDraggableHTMLElement | null {
         const target = event.target as HTMLElement | null;
         //recent lastest element within reach.

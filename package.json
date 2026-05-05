@@ -79,6 +79,7 @@
     "@curiouslearning/analytics": "^1.3.1",
     "@curiouslearning/assessment-survey": "file:",
     "@curiouslearning/core": "^1.10.0",
+    "@curiouslearning/features": "^1.3.1",
     "firebase": "^9.12.1",
     "jest-environment-jsdom": "^29.7.0",
     "workbox-core": "^7.0.0",

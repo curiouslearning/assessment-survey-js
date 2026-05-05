@@ -1,6 +1,6 @@
 import { startStandaloneApp } from './App';
 import { AnalyticsIntegration } from '@analytics/analytics-integration';
-import { mountAssessmentSurveyFragment, normalizeBaseUrl, normalizeHostTheme } from '@ui/dom-template';
+import { normalizeBaseUrl, normalizeHostTheme } from '@ui/dom-template';
 import { firebaseConfig } from '@analytics/analytics-config';
 
 const STANDALONE_ROOT_ID = 'assessment-survey-root';
@@ -38,29 +38,8 @@ function getStandaloneAssetBaseUrl(root: HTMLElement): string {
     return normalizeBaseUrl(configuredAssetBaseUrl);
 }
 
-function mountStandaloneTemplate(root: HTMLElement, assetBaseUrl: string): void {
-    mountAssessmentSurveyFragment(root, {
-        assetBaseUrl,
-        hostTheme: normalizeHostTheme(root.getAttribute('data-host-theme')),
-        includeStylesheetLink: false,
-        rootRelativeAssetPaths: false,
-        sections: {
-            loadingScreen: toBooleanAttribute(root.getAttribute('data-show-loading-screen'), true),
-            endingScreen: toBooleanAttribute(root.getAttribute('data-show-ending-screen'), true),
-            devModeBucketInfo: toBooleanAttribute(root.getAttribute('data-show-devmode-bucket-info'), true),
-            devModeToggleButton: toBooleanAttribute(root.getAttribute('data-show-devmode-toggle-button'), true),
-            devModeSettingsModal: toBooleanAttribute(root.getAttribute('data-show-devmode-settings'), true),
-        },
-        text: {
-            feedbackText: root.getAttribute('data-feedback-text') ?? undefined,
-            endingScreenText: root.getAttribute('data-ending-text') ?? undefined,
-        },
-    });
-}
-
 const standaloneRoot = getOrCreateStandaloneRoot();
 const assetBaseUrl = getStandaloneAssetBaseUrl(standaloneRoot);
-mountStandaloneTemplate(standaloneRoot, assetBaseUrl);
 
 async function main() {
     await AnalyticsIntegration.initializeAnalytics({
@@ -75,7 +54,29 @@ async function main() {
         firebaseName: 'AssessmentSurveyStandalone',
     });
 
-    startStandaloneApp({ assetBaseUrl, dataBaseUrl: assetBaseUrl });
+    startStandaloneApp({
+        assetBaseUrl,
+        dataBaseUrl: assetBaseUrl,
+        uiRoot: standaloneRoot,
+        assessmentUIMode: standaloneRoot.getAttribute('data-assessment-ui-mode') as 'new-ui' | 'legacy' ?? undefined,
+        templateConfig: {
+            assetBaseUrl,
+            hostTheme: normalizeHostTheme(standaloneRoot.getAttribute('data-host-theme')),
+            includeStylesheetLink: false,
+            rootRelativeAssetPaths: false,
+            sections: {
+                loadingScreen: toBooleanAttribute(standaloneRoot.getAttribute('data-show-loading-screen'), true),
+                endingScreen: toBooleanAttribute(standaloneRoot.getAttribute('data-show-ending-screen'), true),
+                devModeBucketInfo: toBooleanAttribute(standaloneRoot.getAttribute('data-show-devmode-bucket-info'), true),
+                devModeToggleButton: toBooleanAttribute(standaloneRoot.getAttribute('data-show-devmode-toggle-button'), true),
+                devModeSettingsModal: toBooleanAttribute(standaloneRoot.getAttribute('data-show-devmode-settings'), true),
+            },
+            text: {
+                feedbackText: standaloneRoot.getAttribute('data-feedback-text') ?? undefined,
+                endingScreenText: standaloneRoot.getAttribute('data-ending-text') ?? undefined,
+            },
+        },
+    });
 }
 
 main();

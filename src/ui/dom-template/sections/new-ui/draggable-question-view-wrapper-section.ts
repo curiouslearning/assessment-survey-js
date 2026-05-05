@@ -3,8 +3,7 @@ import {
     createElement,
     joinClassNames,
     TemplateSection,
-} from '../assessment-template-engine';
-import { DraggableButton, DropAreaTarget } from '@ui/dom-events';
+} from '../../assessment-template-engine';
 
 export class DraggableQuestionViewWrapperSection extends TemplateSection<HTMLDivElement> {
     public render(): HTMLDivElement {
@@ -26,7 +25,6 @@ export class DraggableQuestionViewWrapperSection extends TemplateSection<HTMLDiv
             className: this.context.classNames.chestDiv,
         });
 
-        //Add the treasure chest element to treasure chest container.
         chestDiv.appendChild(
             createElement('img', {
                 id: 'chestImage',
@@ -35,9 +33,6 @@ export class DraggableQuestionViewWrapperSection extends TemplateSection<HTMLDiv
                 },
             })
         );
-
-        //Add drop tartget event to treasure chest container.
-        new DropAreaTarget(chestDiv);
 
         chestWrapper.appendChild(chestDiv);
 
@@ -52,17 +47,14 @@ export class DraggableQuestionViewWrapperSection extends TemplateSection<HTMLDiv
         });
 
         for (let index = 1; index <= 6; index += 1) {
-            const button = createElement('div', {
-                id: `answerButton${index}`,
-                className: this.context.classNames.answerButton,
-                text: String(index),
-                style: index > 4 ? 'display: none' : undefined,
-            });
-
-            //Add drag callbacks to button element.
-            new DraggableButton(button);
-
-            answerContainer.appendChild(button);
+            answerContainer.appendChild(
+                createElement('div', {
+                    id: `answerButton${index}`,
+                    className: this.context.classNames.answerButton,
+                    text: String(index),
+                    style: index > 4 ? 'display: none' : undefined,
+                })
+            );
         }
 
         const controlsContainer = createElement('div');

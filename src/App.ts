@@ -16,6 +16,17 @@ import { AnalyticsConfig } from '@analytics/base-analytics-integration';
 import { AndroidInterface } from '@curiouslearning/core';
 import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from '@utils/AnalyticsUtils';
 import { ASSET_PATHS } from '@configs/assetsPaths';
+import { AssessmentUI } from '@ui/assessment-ui';
+import { LegacyAssessmentUIAdapter } from '@ui/legacy-assessment-ui-adapter';
+import { DragDropAssessmentUI } from '@ui/dragdrop-ui';
+import { featureFlagsService } from '@curiouslearning/features';
+import { mountAssessmentSurveyFragment } from '@ui/dom-template';
+import type { AssessmentSurveyTemplateConfig } from '@ui/dom-template';
+
+export type AssessmentUIMode = 'legacy' | 'new-ui';
+
+/** Feature flag key that enables the drag-and-drop assessment UI at runtime. */
+export const FEATURE_DRAG_DROP_UI = 'drag-drop-assessment-ui';
 
 const appVersion: string = 'v1.1.3';
 
@@ -47,6 +58,9 @@ export interface AppStartupConfig {
   organization?: string;
   hostIntegrationAdapters?: HostIntegrationAdapters;
   analyticsConfig?: AnalyticsConfig;
+  assessmentUIMode?: AssessmentUIMode;
+  platform?: string;
+  templateConfig?: Omit<AssessmentSurveyTemplateConfig, 'assessmentUIMode'>;
 }
 
 export interface SummaryData {
@@ -83,6 +97,10 @@ export class App {
   public enableAndroidSummary: boolean;
   public enableParentPostMessage: boolean;
   public hostIntegrationAdapters: HostIntegrationAdapters;
+  public assessmentUIMode: AssessmentUIMode;
+  private assessmentUI: AssessmentUI;
+  private uiRoot: Document | ShadowRoot | HTMLElement = document;
+  private templateConfig: Omit<AssessmentSurveyTemplateConfig, 'assessmentUIMode'> = {};
 
   lang: string = 'english';
 
@@ -91,8 +109,15 @@ export class App {
     this.applyHostIntegrationConfig(config);
 
     if (config.uiRoot) {
-      UIController.ConfigureRoot?.(config.uiRoot);
+      this.uiRoot = config.uiRoot;
+      // UIController.ConfigureRoot is called in spinUp() after the template is mounted.
     }
+
+    this.assessmentUIMode = config.assessmentUIMode ?? 'legacy';
+    this.templateConfig = config.templateConfig ?? {};
+    // Safe no-op placeholder — spinUp() resolves the final mode (config + flag)
+    // and replaces this after mounting the template.
+    this.assessmentUI = new LegacyAssessmentUIAdapter();
 
     this.unityBridge = this.enableUnityBridge ? new UnityBridge() : App.createNoopUnityBridge();
 
@@ -112,13 +137,6 @@ export class App {
     const skipStartScreen = config.skipStartScreen ?? false;
     this.enableServiceWorker = config.enableServiceWorker ?? this.enableServiceWorker;
 
-    UIController.SetGameReady?.(false);
-    UIController.SetSkipStartScreen?.(skipStartScreen);
-
-    if (skipLoadingScreen) {
-      UIController.SetLoadingVisible?.(false);
-    }
-
     if (config.analyticsConfig) {
       try {
         await AnalyticsIntegration.initializeAnalytics(config.analyticsConfig);
@@ -128,22 +146,55 @@ export class App {
       }
     }
 
+    try {
+      console.log('Initializing feature flags... With user:', {
+        userID: config.userId ?? getUUID(),
+        platform: config.platform ?? 'standalone',
+      });
+      featureFlagsService.init({ user: { userID: config.userId ?? getUUID(), custom: { platform: config.platform ?? 'standalone' } } });
+      await featureFlagsService.initialize();
+    } catch (error) {
+      console.warn('Feature flags initialization failed. Continuing with defaults.', error);
+    }
+
+    // Resolve mode once — this single value drives both the template and the controller.
+    this.assessmentUIMode = this.resolveAssessmentUIMode();
+
+    // Mount template now that the mode is known, then wire UIController to the new DOM.
+    if (this.uiRoot instanceof HTMLElement) {
+      mountAssessmentSurveyFragment(this.uiRoot, {
+        ...this.templateConfig,
+        assessmentUIMode: this.assessmentUIMode,
+      });
+      UIController.ConfigureRoot(this.uiRoot);
+    }
+
+    // Controller uses the same resolved mode — no independent flag check.
+    this.assessmentUI.dispose?.();
+    this.assessmentUI = this.createAssessmentUI();
+    this.assessmentUI.setGameReady(false);
+    this.assessmentUI.setSkipStartScreen(skipStartScreen);
+
+    if (skipLoadingScreen) {
+      this.assessmentUI.setLoadingVisible(false);
+    }
+
     const initialize = async () => {
       console.log('Window Loaded!');
       await this.initializeGame();
       if (skipLoadingScreen) {
         localStorage.setItem(this.cacheModel.appName, 'true');
-        UIController.SetLoadingProgress?.(100);
-        UIController.SetLoadingVisible?.(false);
-        UIController.SetContentLoaded?.(true);
+        this.assessmentUI.setLoadingProgress(100);
+        this.assessmentUI.setLoadingVisible(false);
+        this.assessmentUI.setContentLoaded(true);
       }
 
       if (this.enableServiceWorker) {
         await this.registerServiceWorker(this.game, this.dataURL, skipLoadingScreen);
       } else {
         localStorage.setItem(this.cacheModel.appName, 'true');
-        UIController.SetLoadingVisible?.(false);
-        UIController.SetContentLoaded?.(true);
+        this.assessmentUI.setLoadingVisible(false);
+        this.assessmentUI.setContentLoaded(true);
       }
     };
 
@@ -246,7 +297,8 @@ export class App {
 
         this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.feedbackAudio(this.dataURL)));
 
-        this.game = new Assessment(this.dataURL, this.unityBridge);
+        const assessmentUI = this.assessmentUI;
+        this.game = new Assessment(this.dataURL, this.unityBridge, assessmentUI);
       }
 
       this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.dingSfx));
@@ -364,7 +416,7 @@ export class App {
       if (localStorage.getItem(this.cacheModel.appName) == null) {
         console.log('Caching!' + this.cacheModel.appName);
         if (!skipLoadingScreen) {
-          UIController.SetLoadingVisible?.(true);
+          this.assessmentUI.setLoadingVisible(true);
         }
         broadcastChannel.postMessage({
           command: 'Cache',
@@ -373,10 +425,10 @@ export class App {
           },
         });
       } else {
-        UIController.SetLoadingProgress?.(100);
+        this.assessmentUI.setLoadingProgress(100);
         setTimeout(() => {
-          UIController.SetLoadingVisible?.(false);
-          UIController.SetContentLoaded?.(true);
+          this.assessmentUI.setLoadingVisible(false);
+          this.assessmentUI.setContentLoaded(true);
         }, skipLoadingScreen ? 0 : 1500);
       }
 
@@ -411,8 +463,29 @@ export class App {
     return this.dataURL;
   }
 
+  public dispose(): void {
+    this.assessmentUI.dispose?.();
+  }
+
+  /**
+   * Resolves the final UI mode by combining the explicit config value with the
+   * remote feature flag. Call this once in spinUp() after flags have initialized.
+   */
+  private resolveAssessmentUIMode(): AssessmentUIMode {
+    if (this.assessmentUIMode === 'new-ui' || featureFlagsService.isFeatureEnabled(FEATURE_DRAG_DROP_UI)) {
+      return 'new-ui';
+    }
+    return 'legacy';
+  }
+
+  public createAssessmentUI(): AssessmentUI {
+    return this.assessmentUIMode === 'new-ui'
+      ? new DragDropAssessmentUI(this.uiRoot)
+      : new LegacyAssessmentUIAdapter();
+  }
+
   public notifyLoaded(): void {
-    UIController.SetGameReady?.(true);
+    this.assessmentUI.setGameReady(true);
 
     if (this.enableUnityBridge) {
       this.unityBridge.SendLoaded();
@@ -522,7 +595,8 @@ export function createApp(config: AppStartupConfig = {}): App {
 
 export function startStandaloneApp(config: AppStartupConfig = {}): App {
   console.log(config);
-  const app = new App(config);
-  app.spinUp(config);
+  const resolvedConfig: AppStartupConfig = { platform: 'standalone', ...config };
+  const app = new App(resolvedConfig);
+  app.spinUp(resolvedConfig);
   return app;
 }
