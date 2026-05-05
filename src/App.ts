@@ -170,6 +170,7 @@ export class App {
     }
 
     // Controller uses the same resolved mode — no independent flag check.
+    this.assessmentUI.dispose?.();
     this.assessmentUI = this.createAssessmentUI();
     this.assessmentUI.setGameReady(false);
     this.assessmentUI.setSkipStartScreen(skipStartScreen);
@@ -460,6 +461,10 @@ export class App {
 
   public GetDataURL(): string {
     return this.dataURL;
+  }
+
+  public dispose(): void {
+    this.assessmentUI.dispose?.();
   }
 
   /**

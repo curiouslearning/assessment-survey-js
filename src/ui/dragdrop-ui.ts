@@ -57,6 +57,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
   private callbacks: AssessmentUICallbacks | null = null;
   private dragController: DragEventController | null = null;
   private dropUnsubscribe: (() => void) | null = null;
+  private landingClickHandler: (() => void) | null = null;
 
   constructor(root: Document | ShadowRoot | HTMLElement = document) {
     this.root = root;
@@ -148,11 +149,12 @@ export class DragDropAssessmentUI implements AssessmentUI {
       }
     );
 
-    this.landingContainer.addEventListener('click', () => {
+    this.landingClickHandler = () => {
       if (this.contentLoaded && this.gameReady) {
         this.showGame();
       }
-    });
+    };
+    this.landingContainer.addEventListener('click', this.landingClickHandler);
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -344,7 +346,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
             if (allVisible) {
               this.buttonsActive = true;
             }
-          });
+          }, { once: true });
         }, i * animDuration * this.animationSpeedMultiplier * 0.3);
       });
     }, delayBeforeOption);
@@ -437,7 +439,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
 
   changeStarImageAfterAnimation(): void {
     // Matches UIController: uses qAnsNum (post-increment) to find the star element
-    const star = this.root.querySelector<HTMLImageElement>(`#star${this.qAnsNum}`);
+    const star = this.root.querySelector<HTMLImageElement>(`#star${this.qAnsNum - 1}`);
     if (star) star.src = resolveAssetPath(ASSET_PATHS.STAR_AFTER_ANIMATION);
   }
 
@@ -448,7 +450,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
     const currentNum = parseInt(chestImage.src.slice(-6, -4), 10);
     const nextNum = (currentNum % 4) + 1;
     chestImage.src = Number.isNaN(nextNum)
-      ? resolveAssetPath(`img/chestprogression/TreasureChestOpen0${nextNum}.svg`)
+      ? resolveAssetPath(`img/chestprogression/TreasureChestOpen0${String(nextNum)}.svg`)
       : resolveAssetPath(ASSET_PATHS.CHEST_PROGRESSION[nextNum]);
   }
 
@@ -476,6 +478,18 @@ export class DragDropAssessmentUI implements AssessmentUI {
     handler: (container: HTMLElement, clickCallback: () => void) => void
   ): void {
     this.externalBucketControlsHandler = handler;
+  }
+
+  dispose(): void {
+    this.dragController?.detach();
+    this.dragController = null;
+    this.dropUnsubscribe?.();
+    this.dropUnsubscribe = null;
+    if (this.landingClickHandler) {
+      this.landingContainer.removeEventListener('click', this.landingClickHandler);
+      this.landingClickHandler = null;
+    }
+    this.callbacks = null;
   }
 
   // ─────────────────────────────────────────────────────────────────────────────

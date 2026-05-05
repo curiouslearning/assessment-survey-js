@@ -48,4 +48,7 @@ export interface AssessmentUI {
   setExternalBucketControlsGenerationHandler?(
     handler: (container: HTMLElement, clickCallback: () => void) => void
   ): void;
+
+  // --- lifecycle ---
+  dispose?(): void;
 }

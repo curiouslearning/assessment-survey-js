@@ -2,7 +2,6 @@ import { Assessment, BucketGenMode } from '../../src/assessment/assessment';
 import { UIController } from '../../src/ui/uiController';
 import { AudioController } from '../../src/components/audioController';
 import { fetchAssessmentBuckets } from '../../src/utils/jsonUtils';
-import { AssessmentUI } from '../../src/ui/assessment-ui';
 import { LegacyAssessmentUIAdapter } from '../../src/ui/legacy-assessment-ui-adapter';
 
 jest.mock('../../src/utils/jsonUtils', () => ({

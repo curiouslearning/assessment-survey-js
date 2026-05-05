@@ -152,6 +152,7 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
   }
 
   disconnectedCallback(): void {
+    this.appInstance?.dispose();
     this.appInstance = null;
     this.isInitialized = false;
     this.analyticsConfig = null;
