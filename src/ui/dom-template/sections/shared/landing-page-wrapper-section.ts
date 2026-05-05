@@ -3,7 +3,7 @@ import {
   createElement,
   START_BUTTON_ICON_SVG,
   TemplateSection,
-} from '../assessment-template-engine';
+} from '../../assessment-template-engine';
 import { LoadingScreenSection } from './loading-screen-section';
 
 export class LandingPageWrapperSection extends TemplateSection<HTMLDivElement> {

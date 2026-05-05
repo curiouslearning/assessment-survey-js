@@ -1,6 +1,6 @@
 import { App, AppStartupConfig, AssessmentCompletedPayload, AssessmentUIMode, HostIntegrationAdapters, SummaryData, createApp } from './App';
 import { PubSub } from '@curiouslearning/core';
-import { buildAssessmentSurveyFragment, normalizeBaseUrl, normalizeHostTheme } from './ui/dom-template';
+import { normalizeBaseUrl, normalizeHostTheme } from './ui/dom-template';
 import { UIController } from '@ui/uiController';
 import { AnalyticsConfig } from '@analytics/base-analytics-integration';
 
@@ -115,16 +115,6 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
     const hostTheme = normalizeHostTheme(this.getAttribute('host-theme'));
     const embedMode = toBooleanAttribute(this.getAttribute('embed-mode'), true);
     const modeDefaults = embedMode ? EMBED_MODE_DEFAULTS : STANDARD_MODE_DEFAULTS;
-    this.replaceChildren(
-      buildAssessmentSurveyFragment({
-        assetBaseUrl,
-        hostTheme,
-        includeStylesheetLink: true,
-        rootRelativeAssetPaths: true,
-      })
-    );
-
-    UIController.ConfigureRoot(this);
 
     const startupConfig: AppStartupConfig = {
       dataURL: this.getAttribute('data-key') ?? undefined,
@@ -148,6 +138,12 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
       hostIntegrationAdapters: this.buildHostIntegrationAdapters(),
       assessmentUIMode: (this.getAttribute('assessment-ui-mode') as AssessmentUIMode) ?? undefined,
       platform: this.getAttribute('platform') ?? 'ftm',
+      templateConfig: {
+        assetBaseUrl,
+        hostTheme,
+        includeStylesheetLink: true,
+        rootRelativeAssetPaths: true,
+      },
     };
 
     this.appInstance = createApp(startupConfig);

@@ -20,6 +20,8 @@ import { AssessmentUI } from '@ui/assessment-ui';
 import { LegacyAssessmentUIAdapter } from '@ui/legacy-assessment-ui-adapter';
 import { DragDropAssessmentUI } from '@ui/dragdrop-ui';
 import { featureFlagsService } from '@curiouslearning/features';
+import { mountAssessmentSurveyFragment } from '@ui/dom-template';
+import type { AssessmentSurveyTemplateConfig } from '@ui/dom-template';
 
 export type AssessmentUIMode = 'legacy' | 'new-ui';
 
@@ -58,6 +60,7 @@ export interface AppStartupConfig {
   analyticsConfig?: AnalyticsConfig;
   assessmentUIMode?: AssessmentUIMode;
   platform?: string;
+  templateConfig?: Omit<AssessmentSurveyTemplateConfig, 'assessmentUIMode'>;
 }
 
 export interface SummaryData {
@@ -97,6 +100,7 @@ export class App {
   public assessmentUIMode: AssessmentUIMode;
   private assessmentUI: AssessmentUI;
   private uiRoot: Document | ShadowRoot | HTMLElement = document;
+  private templateConfig: Omit<AssessmentSurveyTemplateConfig, 'assessmentUIMode'> = {};
 
   lang: string = 'english';
 
@@ -106,16 +110,14 @@ export class App {
 
     if (config.uiRoot) {
       this.uiRoot = config.uiRoot;
-      UIController.ConfigureRoot?.(config.uiRoot);
+      // UIController.ConfigureRoot is called in spinUp() after the template is mounted.
     }
 
     this.assessmentUIMode = config.assessmentUIMode ?? 'legacy';
-    // Do not call createAssessmentUI() here — featureFlagsService is not yet
-    // initialized at construction time. spinUp() recreates this after the flag
-    // service is ready. This is just a safe placeholder.
-    this.assessmentUI = this.assessmentUIMode === 'new-ui'
-      ? new DragDropAssessmentUI(this.uiRoot)
-      : new LegacyAssessmentUIAdapter();
+    this.templateConfig = config.templateConfig ?? {};
+    // Safe no-op placeholder — spinUp() resolves the final mode (config + flag)
+    // and replaces this after mounting the template.
+    this.assessmentUI = new LegacyAssessmentUIAdapter();
 
     this.unityBridge = this.enableUnityBridge ? new UnityBridge() : App.createNoopUnityBridge();
 
@@ -155,8 +157,19 @@ export class App {
       console.warn('Feature flags initialization failed. Continuing with defaults.', error);
     }
 
-    // Re-create UI after feature flags are available so the flag check in
-    // createAssessmentUI() reflects the resolved remote values.
+    // Resolve mode once — this single value drives both the template and the controller.
+    this.assessmentUIMode = this.resolveAssessmentUIMode();
+
+    // Mount template now that the mode is known, then wire UIController to the new DOM.
+    if (this.uiRoot instanceof HTMLElement) {
+      mountAssessmentSurveyFragment(this.uiRoot, {
+        ...this.templateConfig,
+        assessmentUIMode: this.assessmentUIMode,
+      });
+      UIController.ConfigureRoot(this.uiRoot);
+    }
+
+    // Controller uses the same resolved mode — no independent flag check.
     this.assessmentUI = this.createAssessmentUI();
     this.assessmentUI.setGameReady(false);
     this.assessmentUI.setSkipStartScreen(skipStartScreen);
@@ -449,12 +462,21 @@ export class App {
     return this.dataURL;
   }
 
-  public createAssessmentUI(): AssessmentUI {
-    console.log(featureFlagsService.isFeatureEnabled(FEATURE_DRAG_DROP_UI));
+  /**
+   * Resolves the final UI mode by combining the explicit config value with the
+   * remote feature flag. Call this once in spinUp() after flags have initialized.
+   */
+  private resolveAssessmentUIMode(): AssessmentUIMode {
     if (this.assessmentUIMode === 'new-ui' || featureFlagsService.isFeatureEnabled(FEATURE_DRAG_DROP_UI)) {
-      return new DragDropAssessmentUI(this.uiRoot);
+      return 'new-ui';
     }
-    return new LegacyAssessmentUIAdapter();
+    return 'legacy';
+  }
+
+  public createAssessmentUI(): AssessmentUI {
+    return this.assessmentUIMode === 'new-ui'
+      ? new DragDropAssessmentUI(this.uiRoot)
+      : new LegacyAssessmentUIAdapter();
   }
 
   public notifyLoaded(): void {
