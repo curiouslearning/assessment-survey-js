@@ -6,6 +6,7 @@ import { ASSET_PATHS } from '@configs/assetsPaths';
 import { AssessmentUI, AssessmentUICallbacks } from './assessment-ui';
 import { DragEventController, DraggableButton, DropAreaTarget, iDraggableHTMLElement } from '@ui/dom-events';
 import appEventBus from '@services/app-event-bus';
+import { DragDropAudioController } from '@services/drag-drop-audio-controller';
 
 /**
  * Drag-and-drop assessment UI.
@@ -59,7 +60,10 @@ export class DragDropAssessmentUI implements AssessmentUI {
   private dropUnsubscribe: (() => void) | null = null;
   private landingClickHandler: (() => void) | null = null;
 
+  private dragDropAudioControllerInstance: DragDropAudioController | null;
+
   constructor(root: Document | ShadowRoot | HTMLElement = document) {
+    this.dragDropAudioControllerInstance = new DragDropAudioController();
     this.root = root;
     this.init();
   }
@@ -485,11 +489,16 @@ export class DragDropAssessmentUI implements AssessmentUI {
     this.dragController = null;
     this.dropUnsubscribe?.();
     this.dropUnsubscribe = null;
+
+    this.dragDropAudioControllerInstance?.disposeSubscriptions();
+    this.dragDropAudioControllerInstance = null;
+
     if (this.landingClickHandler) {
       this.landingContainer.removeEventListener('click', this.landingClickHandler);
       this.landingClickHandler = null;
     }
     this.callbacks = null;
+
   }
 
   // ─────────────────────────────────────────────────────────────────────────────

@@ -16,7 +16,7 @@ export class DropAreaTarget {
     }
 
     private handleOnHovering(): void {
-        //Add logic here for on hover
+        //Add logic here for on hover or logic for animation when hovering on the target area
     }
 
     private handleOnDrop(selectedAnswer: iDraggableHTMLElement): void {

@@ -303,6 +303,11 @@ export class App {
 
       this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.dingSfx));
 
+      //caching SFX(s) for drag and drop
+      this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.DRAG_SOUND_EFFECTS.DRAG_START_POP));
+      this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.DRAG_SOUND_EFFECTS.HAPPY_TRUMPET_PLUS_SPARKLE));
+      this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.DRAG_SOUND_EFFECTS.RETURN_BOING));
+
       this.game.unityBridge = this.unityBridge;
 
       contentVersion = data['contentVersion'];
