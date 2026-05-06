@@ -3,9 +3,9 @@ import { ASSET_PATHS } from '@configs/assetsPaths';
 import appEventBus from './app-event-bus';
 
 export class DragDropAudioController {
-    private dragStartUnsubscribe: () => void;
-    private dragReturnUnsubscribe: () => void;
-    private dropSuccessfulUnsubscribe: () => void;
+    private dragStartUnsubscribe: () => void | null = null;
+    private dragReturnUnsubscribe: () => void | null = null;
+    private dropSuccessfulUnsubscribe: () => void | null = null;
 
     constructor() {
         this.dragStartUnsubscribe = appEventBus.subscribe(
@@ -23,7 +23,7 @@ export class DragDropAudioController {
         );
 
         this.dropSuccessfulUnsubscribe = appEventBus.subscribe(
-            appEventBus.EVENTS.DROP_ELEMENT_INTERACTION,
+            appEventBus.EVENTS.ANSWERED_CORRECTLY,
             () => {
                 this.handleAudioOnCorrectDrop();
             }
