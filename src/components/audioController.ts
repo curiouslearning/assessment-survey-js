@@ -15,6 +15,7 @@ export class AudioController {
   public allAudios: any = {};
   public allImages: any = {};
   public dataURL: string = '';
+  public soundEffects: any = {};
 
   private feedbackAudio: any = null;
   private correctAudio: any = null;
@@ -149,6 +150,32 @@ export class AudioController {
       .catch((error) => {
         console.error('Promise error:', error);
       });
+  }
+
+  //For handling SFX that are not just mp3 audio file.
+  public static PlaySoundEffect(audioPath: string, finishedCallback?: Function): void {
+    const normalizedAudioPath = audioPath.trim();
+    let audio = AudioController.getInstance().soundEffects[normalizedAudioPath];
+
+    if (!audio) {
+      audio = new Audio(resolveAssetPath(normalizedAudioPath));
+      AudioController.getInstance().soundEffects[normalizedAudioPath] = audio;
+    }
+
+    audio.currentTime = 0;
+    audio.onended = null;
+
+    if (typeof finishedCallback !== 'undefined') {
+      audio.onended = () => finishedCallback();
+    }
+
+    const playResult = audio.play();
+    if (playResult && typeof playResult.then === 'function') {
+      playResult
+        .catch((error) => {
+          console.error(`Error playing sound effect '${normalizedAudioPath}':`, error);
+        });
+    }
   }
 
   public static GetImage(imageName: string): any {
