@@ -16,6 +16,7 @@ export class AudioController {
   public allImages: any = {};
   public dataURL: string = '';
   public soundEffects: any = {};
+  public soundEffectLastPlayedAt: any = {};
 
   private feedbackAudio: any = null;
   private correctAudio: any = null;
@@ -155,6 +156,16 @@ export class AudioController {
   //For handling SFX that are not just mp3 audio file.
   public static PlaySoundEffect(audioPath: string, finishedCallback?: Function): void {
     const normalizedAudioPath = audioPath.trim();
+    const soundEffectCooldownMs = 200;
+    const now = Date.now();
+    const lastPlayedAt = AudioController.getInstance().soundEffectLastPlayedAt[normalizedAudioPath] ?? 0;
+
+    // Prevent rapid repeated clicks or drag-start events from spamming the same sound effect.
+    if (now - lastPlayedAt < soundEffectCooldownMs) {
+      return;
+    }
+
+    AudioController.getInstance().soundEffectLastPlayedAt[normalizedAudioPath] = now;
     let audio = AudioController.getInstance().soundEffects[normalizedAudioPath];
 
     if (!audio) {
