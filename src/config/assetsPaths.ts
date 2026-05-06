@@ -13,5 +13,10 @@ export const ASSET_PATHS = {
         itemAudio: (dataURL: string, itemName: string) => `audio/${dataURL}/${itemName}`,
         feedbackAudio: (dataURL: string) => `audio/${dataURL}/answer_feedback.mp3`,
         dingSfx: 'audio/Correct.wav',
+        DRAG_SOUND_EFFECTS: {
+            DRAG_START_POP: 'audio/sound-effects/drag_start_pop.wav',
+            RETURN_BOING: 'audio/sound-effects/return_boing.wav',
+            HAPPY_TRUMPET_PLUS_SPARKLE: 'audio/sound-effects/happy_trumpet_plus_sparkle.wav'
+        }
     }
 } as const;

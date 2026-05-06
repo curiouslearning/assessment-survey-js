@@ -15,6 +15,7 @@ import { AudioController } from '@components/audioController';
 import { AnalyticsEventsType, AnalyticsIntegration } from '@analytics/analytics-integration';
 import { calculateScore, getBasalBucketID, getCeilingBucketID, getCommonAnalyticsEventsProperties } from '@utils/AnalyticsUtils';
 import { getNextAssessment, getRequiredScore } from '@utils/urlUtils';
+import appEventBus from '@services/app-event-bus';
 
 enum searchStage {
   BinarySearch,
@@ -373,6 +374,10 @@ export class Assessment extends BaseQuiz {
     if (this.currentQuestion.answers[answer - 1].answerName == this.currentQuestion.correct) {
       this.currentBucket.numCorrect += 1;
       this.currentBucket.numConsecutiveWrong = 0;
+
+      //Publish ANSWERED_CORRECTLY to fire SFX for correct drop featured. This will be no effect if dragdrop-ui is not loaded.
+      appEventBus.publish(appEventBus.EVENTS.ANSWERED_CORRECTLY, true);
+
       console.log('Answered correctly');
     } else {
       this.currentBucket.numConsecutiveWrong += 1;

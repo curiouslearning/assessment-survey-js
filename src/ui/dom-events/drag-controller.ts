@@ -1,5 +1,6 @@
 import { iDraggableHTMLElement } from './draggable-button';
 import { iDropAreaHTMLElement } from './drop-target';
+import appEventBus from '@services/app-event-bus';
 
 export default class DragEventController {
     private targetDropElement: iDropAreaHTMLElement | null = null;
@@ -68,6 +69,9 @@ export default class DragEventController {
         if (this.foundDragElement) {
             this.foundDragElement?.onStart(event);
             this.setChestImage('TreasureChestOpen04');
+
+            //Trigger the SFX for start drag.
+            appEventBus.publish(appEventBus.EVENTS.ON_DRAG_START, true);
         }
 
     };
@@ -105,6 +109,9 @@ export default class DragEventController {
         const dropContext = this.getActiveDropContext();
         if (dropContext) {
             dropContext.dropElement?.onDrop(dropContext.dragElement);
+        } else if (this.foundDragElement) {
+            //Trigger the SFX for return drag.
+            appEventBus.publish(appEventBus.EVENTS.ON_DRAG_RETURN, true);
         }
 
         this.endDrag();
