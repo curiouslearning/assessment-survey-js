@@ -1,4 +1,4 @@
-import { DraggableButton, type iDraggableHTMLElement } from '@ui/new/dom-events/draggable-button';
+import { DraggableButton, type iDraggableHTMLElement } from '@ui/drag-drop/dom-events/draggable-button';
 
 const createPointerLikeEvent = (type: string, init: MouseEventInit = {}): PointerEvent =>
   new MouseEvent(type, init) as PointerEvent;
