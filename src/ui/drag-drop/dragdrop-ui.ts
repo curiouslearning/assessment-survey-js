@@ -442,6 +442,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
   }
 
   changeStarImageAfterAnimation(): void {
+    // Matches UIController: uses qAnsNum (post-increment) to find the star element
     const star = this.root.querySelector<HTMLImageElement>(`#star${this.qAnsNum - 1}`);
     if (star) star.src = resolveAssetPath(ASSET_PATHS.STAR_AFTER_ANIMATION);
   }

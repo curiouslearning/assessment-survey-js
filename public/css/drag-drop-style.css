@@ -50,7 +50,7 @@ body.assessment-survey-standalone {
 
 .chestWrapper {
   width: 85%;
-  margin: 15px auto;
+  margin: 35px auto;
   display: flex;
 }
 
@@ -79,7 +79,7 @@ body.assessment-survey-standalone {
 }
 
 .chestdiv img {
-  width: 50%;
+  width: 60%;
   aspect-ratio: 1008 / 1027;
   object-fit: contain;
 }
@@ -169,10 +169,9 @@ body.assessment-survey-standalone {
   margin: auto;
   color: rgb(109, 204, 122);
   width: 70%;
-  height: 120px;
+  height: 80px;
   font-size: 200%;
   font-weight: bold;
-  top: -120px;
   position: relative;
   z-index: 5;
   justify-content: center;
@@ -255,6 +254,21 @@ button {
   overflow: hidden;
 }
 
+/* Drag-and-drop UI: ladybug button visuals */
+.as-ui-mode-new .answerButton {
+  padding: 26px 10px 6px;
+  color: rgb(255, 255, 255);
+  background-color: transparent;
+  background-image: url('../img/ladybug_close.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  transition: none;
+}
+
+.as-ui-mode-new .answerButton.dragging {
+  background-image: url('../img/ladybug_open.svg');
+}
 
 .answerButton img {
   margin: 2% 2%;
