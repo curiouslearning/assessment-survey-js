@@ -29,7 +29,7 @@ export class DraggableQuestionViewWrapperSection extends TemplateSection<HTMLDiv
             createElement('img', {
                 id: 'chestImage',
                 attrs: {
-                    src: this.context.resolveAsset('img/chestprogression/TreasureChestOpen01.svg'),
+                    src: this.context.resolveAsset('img/chestprogression/TreasureChestOpen01-new.svg'),
                 },
             })
         );

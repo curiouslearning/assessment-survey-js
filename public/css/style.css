@@ -228,8 +228,8 @@ button {
 
 .answerButton {
   margin-top: 16px;
-  padding: 26px 10px 6px;
-  color: rgb(255, 255, 255);
+  padding: 16px 10px;
+  color: rgb(60, 67, 162);
   min-height: 32px;
 
   cursor: pointer;
@@ -237,13 +237,12 @@ button {
   max-height: 200px;
   max-width: 200px;
 
-  background-color: transparent;
-  background-image: url('../img/ladybug_close.svg');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
+  background-color: #ffee6b;
   border-radius: 4px;
+
   font-family: BalooBhai2, Kalam, sans-serif;
+
+  transition: box-shadow 1s;
 
   text-shadow: 0px 2px 6px rgba(80, 90, 220, 0.7);
 
@@ -255,7 +254,19 @@ button {
   overflow: hidden;
 }
 
-.answerButton.dragging {
+/* New-UI only: ladybug drag-and-drop button visuals */
+.as-ui-mode-new .answerButton {
+  padding: 26px 10px 6px;
+  color: rgb(255, 255, 255);
+  background-color: transparent;
+  background-image: url('../img/ladybug_close.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  transition: none;
+}
+
+.as-ui-mode-new .answerButton.dragging {
   background-image: url('../img/ladybug_open.svg');
 }
 

@@ -20,7 +20,6 @@ export class DropAreaTarget {
     }
 
     private handleOnDrop(selectedAnswer: iDraggableHTMLElement): void {
-        //Publish the selected element passed in drop area.
         appEventBus.publish(appEventBus.EVENTS.DROP_ELEMENT_INTERACTION, { selectedAnswer })
     }
 }

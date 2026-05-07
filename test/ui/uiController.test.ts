@@ -748,13 +748,13 @@ describe('UIController', () => {
   it('should set img src to animation gif when playing is true and devModeBucketControlsEnabled is false', () => {
     UIController.ShowAudioAnimation(true);
 
-    expect(playButtonImg.src).toContain('SoundButton_playing.svg');
+    expect(playButtonImg.src).toContain('SoundButton.gif');
   });
 
   it('should set img src to idle image when playing is false and devModeBucketControlsEnabled is false', () => {
     UIController.ShowAudioAnimation(false);
 
-    expect(playButtonImg.src).toContain('SoundButton_Idle.svg');
+    expect(playButtonImg.src).toContain('SoundButton_Idle.png');
   });
 
   it('should not change img src if devModeBucketControlsEnabled is true', () => {

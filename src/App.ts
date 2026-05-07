@@ -17,8 +17,8 @@ import { AndroidInterface } from '@curiouslearning/core';
 import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from '@utils/AnalyticsUtils';
 import { ASSET_PATHS } from '@configs/assetsPaths';
 import { AssessmentUI } from '@ui/assessment-ui';
-import { LegacyAssessmentUIAdapter } from '@ui/legacy-assessment-ui-adapter';
-import { DragDropAssessmentUI } from '@ui/dragdrop-ui';
+import { LegacyAssessmentUIAdapter } from '@ui/legacy';
+import { DragDropAssessmentUI } from '@ui/new';
 import { featureFlagsService } from '@curiouslearning/features';
 import { mountAssessmentSurveyFragment } from '@ui/dom-template';
 import type { AssessmentSurveyTemplateConfig } from '@ui/dom-template';
@@ -477,6 +477,8 @@ export class App {
    * remote feature flag. Call this once in spinUp() after flags have initialized.
    */
   private resolveAssessmentUIMode(): AssessmentUIMode {
+    console.log("Checking assessment UI mode:" + (this.assessmentUIMode === 'new-ui' || featureFlagsService.isFeatureEnabled(FEATURE_DRAG_DROP_UI)));
+    
     if (this.assessmentUIMode === 'new-ui' || featureFlagsService.isFeatureEnabled(FEATURE_DRAG_DROP_UI)) {
       return 'new-ui';
     }
