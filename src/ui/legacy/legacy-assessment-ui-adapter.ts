@@ -1,6 +1,6 @@
 import { qData } from '@components/questionData';
-import { AssessmentUI, AssessmentUICallbacks } from './assessment-ui';
-import { UIController } from './uiController';
+import { AssessmentUI, AssessmentUICallbacks } from '../assessment-ui';
+import { UIController } from '@ui/uiController';
 import { AudioController } from '@components/audioController';
 
 /**

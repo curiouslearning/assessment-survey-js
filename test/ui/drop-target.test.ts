@@ -8,7 +8,7 @@ jest.mock('@services/app-event-bus', () => ({
   },
 }));
 
-import { DropAreaTarget, type iDropAreaHTMLElement } from '@ui/dom-events/drop-target';
+import { DropAreaTarget, type iDropAreaHTMLElement } from '@ui/new/dom-events/drop-target';
 
 describe('DropAreaTarget', () => {
   let dropArea: iDropAreaHTMLElement;

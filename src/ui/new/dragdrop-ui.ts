@@ -3,8 +3,8 @@ import { AudioController } from '@components/audioController';
 import { shuffleArray } from '@utils/mathUtils';
 import { resolveAssetPath } from '@utils/assetUtils';
 import { ASSET_PATHS } from '@configs/assetsPaths';
-import { AssessmentUI, AssessmentUICallbacks } from './assessment-ui';
-import { DragEventController, DraggableButton, DropAreaTarget, iDraggableHTMLElement } from '@ui/dom-events';
+import { AssessmentUI, AssessmentUICallbacks } from '../assessment-ui';
+import { DragEventController, DraggableButton, DropAreaTarget, iDraggableHTMLElement } from './dom-events';
 import appEventBus from '@services/app-event-bus';
 import { DragDropAudioController } from '@services/drag-drop-audio-controller';
 
@@ -246,7 +246,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
         );
       });
     } else {
-      this.playButton.innerHTML = `<button id='nextqButton'><img class="audio-button" width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE)}' type='image/svg+xml'></img></button>`;
+      this.playButton.innerHTML = `<button id='nextqButton'><img class="audio-button" width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE_NEW)}' type='image/svg+xml'></img></button>`;
       const nextBtn = this.playButton.querySelector('#nextqButton') as HTMLElement;
       nextBtn?.addEventListener('click', () => {
         this.revealQuestion();
@@ -277,7 +277,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
     // Replace the play button handler so subsequent clicks only replay audio
     // without re-hiding the answer buttons (matches UIController.ShowQuestion behavior).
     if (!this.devModeBucketControlsEnabled) {
-      this.playButton.innerHTML = `<button id='nextqButton'><img class="audio-button" width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE)}' type='image/svg+xml'></img></button>`;
+      this.playButton.innerHTML = `<button id='nextqButton'><img class="audio-button" width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE_NEW)}' type='image/svg+xml'></img></button>`;
       const replayBtn = this.playButton.querySelector('#nextqButton') as HTMLElement;
       replayBtn?.addEventListener('click', () => {
         AudioController.PlayAudio(
@@ -331,7 +331,6 @@ export class DragDropAssessmentUI implements AssessmentUI {
 
         setTimeout(() => {
           button.style.visibility = 'visible';
-          button.style.boxShadow = '0px 6px 8px #606060';
           button.style.animation = `zoomIn ${animDuration * this.animationSpeedMultiplier}ms ease forwards`;
 
           if ('answerImg' in answer) {
@@ -364,7 +363,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
       this.playButton.appendChild(img);
     }
     img.src = resolveAssetPath(
-      playing ? ASSET_PATHS.SOUND_BUTTON_ANIMATION : ASSET_PATHS.SOUND_BUTTON_IDLE
+      playing ? ASSET_PATHS.SOUND_BUTTON_ANIMATION_NEW : ASSET_PATHS.SOUND_BUTTON_IDLE_NEW
     );
   }
 
@@ -417,7 +416,8 @@ export class DragDropAssessmentUI implements AssessmentUI {
     starToShow.style.transform = 'scale(10)';
     starToShow.style.transition = `top ${1 * mult}s ease, left ${1 * mult}s ease, transform ${0.5 * mult}s ease`;
     starToShow.style.zIndex = '500';
-    starToShow.style.top = window.innerHeight / 2 + 'px';
+    const containerRect = this.starContainer.getBoundingClientRect();
+    starToShow.style.top = (window.innerHeight / 2 - containerRect.top) + 'px';
     starToShow.style.left =
       this.gameContainer.offsetWidth / 2 - starToShow.offsetWidth / 2 + 'px';
 
@@ -442,7 +442,6 @@ export class DragDropAssessmentUI implements AssessmentUI {
   }
 
   changeStarImageAfterAnimation(): void {
-    // Matches UIController: uses qAnsNum (post-increment) to find the star element
     const star = this.root.querySelector<HTMLImageElement>(`#star${this.qAnsNum - 1}`);
     if (star) star.src = resolveAssetPath(ASSET_PATHS.STAR_AFTER_ANIMATION);
   }
@@ -451,11 +450,10 @@ export class DragDropAssessmentUI implements AssessmentUI {
     const chestImage = this.root.querySelector<HTMLImageElement>('#chestImage');
     if (!chestImage) return;
 
-    const currentNum = parseInt(chestImage.src.slice(-6, -4), 10);
-    const nextNum = (currentNum % 4) + 1;
-    chestImage.src = Number.isNaN(nextNum)
-      ? resolveAssetPath(`img/chestprogression/TreasureChestOpen0${String(nextNum)}.svg`)
-      : resolveAssetPath(ASSET_PATHS.CHEST_PROGRESSION[nextNum]);
+    const match = chestImage.src.match(/TreasureChestOpen(\d+)/);
+    const currentNum = match ? parseInt(match[1], 10) : NaN;
+    const nextNum = isNaN(currentNum) ? 1 : (currentNum % 4) + 1;
+    chestImage.src = resolveAssetPath(ASSET_PATHS.CHEST_PROGRESSION_NEW[nextNum as 1 | 2 | 3 | 4]);
   }
 
   getShownStarsCount(): number {
@@ -498,7 +496,6 @@ export class DragDropAssessmentUI implements AssessmentUI {
       this.landingClickHandler = null;
     }
     this.callbacks = null;
-
   }
 
   // ─────────────────────────────────────────────────────────────────────────────

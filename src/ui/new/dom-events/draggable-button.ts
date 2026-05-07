@@ -63,16 +63,13 @@ export class DraggableButton {
     }
 
     private enableDrag(event: PointerEvent): void {
-        //Enable the dragging flag.
         this.isDragging = true;
 
-        //Mark the starting position of the pointer.
         this.startPointer = {
             x: event.clientX,
             y: event.clientY
         };
 
-        //Capture the element's original position on screen for this drag session.
         const rect = this.element.getBoundingClientRect();
         this.startRect = {
             left: rect.left,
@@ -81,40 +78,34 @@ export class DraggableButton {
             bottom: rect.bottom,
         };
 
-        //Ensures the element being drag will be on top of everything.
         this.element.style.zIndex = '1000';
+        this.element.classList.add('dragging');
     }
 
     private handleDragging(event: PointerEvent): void {
         if (!this.isDragging) return;
 
-        //Calculate the new position based on the starting pointer position.
         const dx = event.clientX - this.startPointer.x;
         const dy = event.clientY - this.startPointer.y;
 
         const viewport = this.getViewportSize();
 
-        //Limit movement so the element stays within the visible viewport.
         const minX = -this.startRect.left;
         const maxX = viewport.width - this.startRect.right;
         const minY = -this.startRect.top;
         const maxY = viewport.height - this.startRect.bottom;
 
-        //Update x and y using the clamped movement range.
         this.x = this.clamp(dx, minX, maxX);
         this.y = this.clamp(dy, minY, maxY);
 
-        //Update the element's position.
         this.updateTransformPosition(this.x, this.y);
     }
 
     private disableDrag(): void {
         if (!this.isDragging) return;
 
-        //Disable the drag flag.
         this.isDragging = false;
 
-        //Reset the x and y position.
         this.startPointer = { x: 0, y: 0 };
         this.startRect = {
             left: 0,
@@ -125,7 +116,7 @@ export class DraggableButton {
         this.x = 0;
         this.y = 0;
 
-        //Revert back the element back to it's original place.
+        this.element.classList.remove('dragging');
         this.applyDefaultStyles();
     }
 }

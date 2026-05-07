@@ -7,7 +7,6 @@ export default class DragEventController {
     private foundDragElement: iDraggableHTMLElement | null = null;
 
     constructor(private root: HTMLElement) {
-        //Get the target drop area.
         this.targetDropElement = this.getDropTarget();
     }
 
@@ -29,7 +28,6 @@ export default class DragEventController {
 
     private locateBtnElement(event: PointerEvent): iDraggableHTMLElement | null {
         const target = event.target as HTMLElement | null;
-        //recent lastest element within reach.
         const answerButton: iDraggableHTMLElement = target?.closest('.answerButton');
 
         return !answerButton ? null : answerButton;
@@ -57,13 +55,18 @@ export default class DragEventController {
         return { dragElement, dropElement };
     }
 
+    private setChestImage(variant: 'TreasureChestOpen01-new' | 'TreasureChestOpen04-new'): void {
+        const chestImage = this.root.querySelector('#chestImage') as HTMLImageElement | null;
+        if (!chestImage) return;
+        chestImage.src = chestImage.src.replace(/TreasureChestOpen[\w-]+\.svg/, `${variant}.svg`);
+    }
+
     private handlePointerDown = (event: PointerEvent) => {
         this.foundDragElement = this.locateBtnElement(event);
 
         if (this.foundDragElement) {
             this.foundDragElement?.onStart(event);
-
-            //Trigger the SFX for start drag.
+            this.setChestImage('TreasureChestOpen04-new');
             appEventBus.publish(appEventBus.EVENTS.ON_DRAG_START, true);
         }
 
@@ -76,7 +79,6 @@ export default class DragEventController {
         const buttonRect = dragElement.getBoundingClientRect();
         const dropAreaRect = dropElement.getBoundingClientRect();
 
-        //Check if the button element is within the box area of drop area element.
         const isOverlapping = buttonRect.left < dropAreaRect.right &&
             buttonRect.right > dropAreaRect.left &&
             buttonRect.top < dropAreaRect.bottom &&
@@ -86,10 +88,8 @@ export default class DragEventController {
     }
 
     private handlePointerDragMove = (event: PointerEvent) => {
-        //Returns none if there are no answer button element.
         if (!this.foundDragElement) return;
 
-        //Trigger the on move to move the button element.
         this.foundDragElement?.onMove(event);
 
         const dropContext = this.getActiveDropContext();
@@ -103,7 +103,6 @@ export default class DragEventController {
         if (dropContext) {
             dropContext.dropElement?.onDrop(dropContext.dragElement);
         } else if (this.foundDragElement) {
-            //Trigger the SFX for return drag.
             appEventBus.publish(appEventBus.EVENTS.ON_DRAG_RETURN, true);
         }
 
@@ -121,5 +120,6 @@ export default class DragEventController {
 
         this.foundDragElement?.onEnd?.();
         this.foundDragElement = null;
+        this.setChestImage('TreasureChestOpen01-new');
     };
 }
