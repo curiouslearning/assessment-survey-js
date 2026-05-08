@@ -355,7 +355,7 @@ button {
 
 /* Large ✦ stars — 8 positions on the inner ring around the ladybug */
 .as-ui-mode-new .answerButton.dragging::before {
-  content: '✦';
+  content: '\2726';
   position: absolute;
   font-size: 15px;
   line-height: 1;
@@ -369,7 +369,7 @@ button {
 
 /* Small ✦ stars — 6 positions on the outer ring, offset so both rings always overlap */
 .as-ui-mode-new .answerButton.dragging::after {
-  content: '✦';
+  content: '\2726';
   position: absolute;
   font-size: 9px;
   line-height: 1;
