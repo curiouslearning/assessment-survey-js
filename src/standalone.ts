@@ -2,6 +2,7 @@ import { startStandaloneApp } from './App';
 import { AnalyticsIntegration } from '@analytics/analytics-integration';
 import { normalizeBaseUrl, normalizeHostTheme } from '@ui/dom-template';
 import { firebaseConfig } from '@analytics/analytics-config';
+import { getAssessmentUIMode } from '@utils/urlUtils';
 
 const STANDALONE_ROOT_ID = 'assessment-survey-root';
 const DEFAULT_ASSET_BASE_URL = '/assets';
@@ -58,7 +59,7 @@ async function main() {
         assetBaseUrl,
         dataBaseUrl: assetBaseUrl,
         uiRoot: standaloneRoot,
-        assessmentUIMode: standaloneRoot.getAttribute('data-assessment-ui-mode') as 'new-ui' | 'legacy' ?? undefined,
+        assessmentUIMode: getAssessmentUIMode() ?? standaloneRoot.getAttribute('data-assessment-ui-mode') as 'new-ui' | 'legacy' ?? undefined,
         templateConfig: {
             assetBaseUrl,
             hostTheme: normalizeHostTheme(standaloneRoot.getAttribute('data-host-theme')),
