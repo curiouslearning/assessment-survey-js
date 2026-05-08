@@ -480,7 +480,6 @@ export class App {
    * remote feature flag. Call this once in spinUp() after flags have initialized.
    */
   private resolveAssessmentUIMode(): AssessmentUIMode {
-    console.log('Resolving assessment UI mode with config value:', this.configuredUIMode);
     if (this.configuredUIMode !== undefined) {
       return this.configuredUIMode;
     }
