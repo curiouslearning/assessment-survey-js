@@ -264,10 +264,121 @@ button {
   background-repeat: no-repeat;
   background-position: center;
   transition: none;
+  overflow: visible;
+  position: relative;
 }
 
 .as-ui-mode-new .answerButton.dragging {
   background-image: url('../img/ladybug_open.svg');
+}
+
+/* Sparkle ✦ glitter — continuous twinkle around the ladybug edges while dragging.
+   No global opacity is ever 0, so the effect never blinks out.
+   Each star has a fixed position (text-shadow offset); only its colour cycles
+   between gold/white and transparent, so stars pop in/out at the same spot. */
+@keyframes sparkle-glitter-a {
+  0%, 100% {
+    text-shadow:
+       0px -50px 0 #FFD700,
+      36px -36px 0 transparent,
+      52px   0px 0 #FFFFFF,
+      38px  42px 0 transparent,
+       0px  52px 0 #FFEE58,
+     -40px  38px 0 transparent,
+     -52px  -5px 0 #FFF176,
+     -35px -40px 0 transparent;
+  }
+  25% {
+    text-shadow:
+       0px -50px 0 transparent,
+      36px -36px 0 #FFD700,
+      52px   0px 0 transparent,
+      38px  42px 0 #FFFFFF,
+       0px  52px 0 transparent,
+     -40px  38px 0 #FFEE58,
+     -52px  -5px 0 transparent,
+     -35px -40px 0 #FFF9C4;
+  }
+  50% {
+    text-shadow:
+       0px -50px 0 #FFEE58,
+      36px -36px 0 transparent,
+      52px   0px 0 #FFD700,
+      38px  42px 0 transparent,
+       0px  52px 0 #FFFFFF,
+     -40px  38px 0 transparent,
+     -52px  -5px 0 #FFF176,
+     -35px -40px 0 transparent;
+  }
+  75% {
+    text-shadow:
+       0px -50px 0 transparent,
+      36px -36px 0 #FFF176,
+      52px   0px 0 transparent,
+      38px  42px 0 #FFD700,
+       0px  52px 0 transparent,
+     -40px  38px 0 #FFFFFF,
+     -52px  -5px 0 transparent,
+     -35px -40px 0 #FFEE58;
+  }
+}
+
+@keyframes sparkle-glitter-b {
+  0%, 100% {
+    text-shadow:
+      48px -48px 0 transparent,
+      60px -12px 0 #FFD700,
+      45px  52px 0 transparent,
+     -45px  54px 0 #FFF9C4,
+     -60px   8px 0 transparent,
+     -50px -50px 0 #FFEE58;
+  }
+  33% {
+    text-shadow:
+      48px -48px 0 #FFFFFF,
+      60px -12px 0 transparent,
+      45px  52px 0 #FFD700,
+     -45px  54px 0 transparent,
+     -60px   8px 0 #FFF176,
+     -50px -50px 0 transparent;
+  }
+  66% {
+    text-shadow:
+      48px -48px 0 transparent,
+      60px -12px 0 #FFEE58,
+      45px  52px 0 transparent,
+     -45px  54px 0 #FFFFFF,
+     -60px   8px 0 transparent,
+     -50px -50px 0 #FFD700;
+  }
+}
+
+/* Large ✦ stars — 8 positions on the inner ring around the ladybug */
+.as-ui-mode-new .answerButton.dragging::before {
+  content: '✦';
+  position: absolute;
+  font-size: 15px;
+  line-height: 1;
+  color: transparent;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: sparkle-glitter-a 1.6s linear infinite;
+}
+
+/* Small ✦ stars — 6 positions on the outer ring, offset so both rings always overlap */
+.as-ui-mode-new .answerButton.dragging::after {
+  content: '✦';
+  position: absolute;
+  font-size: 9px;
+  line-height: 1;
+  color: transparent;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: sparkle-glitter-b 1.2s linear infinite 0.5s;
 }
 
 .answerButton img {
