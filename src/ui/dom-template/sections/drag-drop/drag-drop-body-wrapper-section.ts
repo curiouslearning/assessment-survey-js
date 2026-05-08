@@ -14,10 +14,11 @@ import { DraggableQuestionViewWrapperSection } from './draggable-question-view-w
 export class DragDropBodyWrapperSection extends TemplateSection<HTMLDivElement> {
   public render(): HTMLDivElement {
     const bodyWrapper = createElement('div', {
-      className:
-        this.context.hostTheme === 'ftm-dim'
-          ? joinClassNames(this.context.classNames.bodyWrapper, this.context.classNames.hostThemeFtmDim)
-          : this.context.classNames.bodyWrapper,
+      className: joinClassNames(
+        this.context.classNames.bodyWrapper,
+        'as-ui-mode-new',
+        this.context.hostTheme === 'ftm-dim' ? this.context.classNames.hostThemeFtmDim : undefined
+      ),
     });
 
     appendChildren(bodyWrapper, [

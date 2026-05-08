@@ -117,11 +117,12 @@ class AssessmentSurveyTemplateBuilder {
  * Resolves partial caller config into a full renderable config object.
  */
 function resolveTemplateConfig(config: AssessmentSurveyTemplateConfig = {}): ResolvedTemplateConfig {
+  const assessmentUIMode = config.assessmentUIMode ?? 'legacy';
   return {
     assetBaseUrl: normalizeBaseUrl(config.assetBaseUrl ?? ''),
     hostTheme: normalizeHostTheme(config.hostTheme),
     includeStylesheetLink: config.includeStylesheetLink ?? true,
-    stylesheetPath: config.stylesheetPath ?? 'css/style.css',
+    stylesheetPath: config.stylesheetPath ?? (assessmentUIMode === 'new-ui' ? 'css/drag-drop-style.css' : 'css/style.css'),
     rootRelativeAssetPaths: config.rootRelativeAssetPaths ?? true,
     sections: {
       ...DEFAULT_SECTIONS,
@@ -135,7 +136,7 @@ function resolveTemplateConfig(config: AssessmentSurveyTemplateConfig = {}): Res
       ...DEFAULT_CLASS_NAMES,
       ...(config.classNames ?? {}),
     },
-    assessmentUIMode: config.assessmentUIMode ?? 'legacy',
+    assessmentUIMode,
   };
 }
 

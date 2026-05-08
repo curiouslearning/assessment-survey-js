@@ -10,6 +10,6 @@ export { DevModeToggleButtonSection } from './shared/dev-mode-toggle-button-sect
 export { QuestionViewWrapperSection } from './legacy/question-view-wrapper-section';
 export { LegacyBodyWrapperSection } from './legacy/legacy-body-wrapper-section';
 
-// New-UI sections — drag-and-drop interaction
-export { DraggableQuestionViewWrapperSection } from './new-ui/draggable-question-view-wrapper-section';
-export { DragDropBodyWrapperSection } from './new-ui/drag-drop-body-wrapper-section';
+// Drag-drop sections — drag-and-drop interaction
+export { DraggableQuestionViewWrapperSection } from './drag-drop/draggable-question-view-wrapper-section';
+export { DragDropBodyWrapperSection } from './drag-drop/drag-drop-body-wrapper-section';

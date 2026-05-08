@@ -17,8 +17,8 @@ import { AndroidInterface } from '@curiouslearning/core';
 import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from '@utils/AnalyticsUtils';
 import { ASSET_PATHS } from '@configs/assetsPaths';
 import { AssessmentUI } from '@ui/assessment-ui';
-import { LegacyAssessmentUIAdapter } from '@ui/legacy-assessment-ui-adapter';
-import { DragDropAssessmentUI } from '@ui/dragdrop-ui';
+import { LegacyAssessmentUIAdapter } from '@ui/legacy';
+import { DragDropAssessmentUI } from '@ui/drag-drop';
 import { featureFlagsService } from '@curiouslearning/features';
 import { mountAssessmentSurveyFragment } from '@ui/dom-template';
 import type { AssessmentSurveyTemplateConfig } from '@ui/dom-template';
@@ -159,6 +159,7 @@ export class App {
 
     // Resolve mode once — this single value drives both the template and the controller.
     this.assessmentUIMode = this.resolveAssessmentUIMode();
+    this.applyUIStylesheet();
 
     // Mount template now that the mode is known, then wire UIController to the new DOM.
     if (this.uiRoot instanceof HTMLElement) {
@@ -469,7 +470,7 @@ export class App {
   }
 
   public dispose(): void {
-    this.assessmentUI.dispose?.();
+    this.assessmentUI.dispose?.(); 
   }
 
   /**
@@ -477,10 +478,23 @@ export class App {
    * remote feature flag. Call this once in spinUp() after flags have initialized.
    */
   private resolveAssessmentUIMode(): AssessmentUIMode {
+    console.log("Checking assessment UI mode:" + (this.assessmentUIMode === 'new-ui' || featureFlagsService.isFeatureEnabled(FEATURE_DRAG_DROP_UI)));
+    
     if (this.assessmentUIMode === 'new-ui' || featureFlagsService.isFeatureEnabled(FEATURE_DRAG_DROP_UI)) {
       return 'new-ui';
     }
     return 'legacy';
+  }
+
+  private applyUIStylesheet(): void {
+    const link = document.getElementById('assessment-stylesheet') as HTMLLinkElement | null;
+    if (!link) return;
+
+    if (this.assessmentUIMode === 'new-ui') {
+      link.href = link.href.replace('style.css', 'drag-drop-style.css');
+    } else {
+      link.href = link.href.replace('drag-drop-style.css', 'style.css');
+    }
   }
 
   public createAssessmentUI(): AssessmentUI {

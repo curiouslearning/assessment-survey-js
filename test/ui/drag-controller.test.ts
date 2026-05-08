@@ -1,6 +1,6 @@
-import DragEventController from '@ui/dom-events/drag-controller';
-import type { iDraggableHTMLElement } from '@ui/dom-events/draggable-button';
-import type { iDropAreaHTMLElement } from '@ui/dom-events/drop-target';
+import DragEventController from '@ui/drag-drop/dom-events/drag-controller';
+import type { iDraggableHTMLElement } from '@ui/drag-drop/dom-events/draggable-button';
+import type { iDropAreaHTMLElement } from '@ui/drag-drop/dom-events/drop-target';
 
 const createPointerLikeEvent = (type: string, init: MouseEventInit = {}): PointerEvent =>
   new MouseEvent(type, init) as PointerEvent;
