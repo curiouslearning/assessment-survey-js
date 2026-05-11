@@ -13,11 +13,6 @@ export class DraggableQuestionViewWrapperSection extends TemplateSection<HTMLDiv
             style: 'display: none',
         });
 
-        const starWrapper = createElement('div', {
-            id: 'starWrapper',
-            className: this.context.classNames.starWrapper,
-        });
-
         const chestWrapper = createElement('div', {
             className: this.context.classNames.chestWrapper,
         });
@@ -70,11 +65,13 @@ export class DraggableQuestionViewWrapperSection extends TemplateSection<HTMLDiv
             text: this.context.text.feedbackText,
         });
 
-        appendChildren(controlsContainer, [nextQuestionInput, feedbackContainer]);
+        // Feedback overlays the audio button — placed inside nextQuestionInput so
+        // it can be absolutely positioned on top of #pbutton.
+        nextQuestionInput.appendChild(feedbackContainer);
+        controlsContainer.appendChild(nextQuestionInput);
 
-        // Layout order: audio button → question → options (single row) → treasure chest
+        // Layout order: audio button (+ feedback overlay) → question → options (single row) → treasure chest
         appendChildren(questionViewWrapper, [
-            starWrapper,
             controlsContainer,
             questionContainer,
             answerContainer,

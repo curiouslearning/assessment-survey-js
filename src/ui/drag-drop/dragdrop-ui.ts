@@ -1,6 +1,5 @@
 import { qData } from '@components/questionData';
 import { AudioController } from '@components/audioController';
-import { shuffleArray } from '@utils/mathUtils';
 import { resolveAssetPath } from '@utils/assetUtils';
 import { ASSET_PATHS } from '@configs/assetsPaths';
 import { AssessmentUI, AssessmentUICallbacks } from '../assessment-ui';
@@ -25,7 +24,6 @@ export class DragDropAssessmentUI implements AssessmentUI {
   private landingContainer: HTMLElement;
   private gameContainer: HTMLElement;
   private endContainer: HTMLElement;
-  private starContainer: HTMLElement;
   private questionsContainer: HTMLElement;
   private feedbackContainer: HTMLElement;
   private answersContainer: HTMLElement;
@@ -38,9 +36,6 @@ export class DragDropAssessmentUI implements AssessmentUI {
   private nextQuestion: qData | null = null;
   private shown = false;
   private qStart = 0;
-  private starPositions: Array<{ x: number; y: number }> = [];
-  private qAnsNum = 0;
-  private shownStarsCount = 0;
   private allStart: number | null = null;
   private contentLoaded = false;
   private gameReady = true;
@@ -76,7 +71,6 @@ export class DragDropAssessmentUI implements AssessmentUI {
     this.landingContainer = this.getElement('landWrap');
     this.gameContainer = this.getElement('gameWrap');
     this.endContainer = this.getElement('endWrap');
-    this.starContainer = this.getElement('starWrapper');
     this.questionsContainer = this.getElement('qWrap');
     this.feedbackContainer = this.getElement('feedbackWrap');
     this.answersContainer = this.getElement('aWrap');
@@ -86,7 +80,6 @@ export class DragDropAssessmentUI implements AssessmentUI {
       this.answerButtons.push(this.getElement(`answerButton${i}`));
     }
 
-    this.initializeStars();
   }
 
   private getElement(id: string): HTMLElement {
@@ -99,24 +92,6 @@ export class DragDropAssessmentUI implements AssessmentUI {
       return fallback;
     }
     return el;
-  }
-
-  private initializeStars(): void {
-    this.starContainer.innerHTML = '';
-    const indices: number[] = [];
-
-    for (let i = 0; i < 20; i++) {
-      const star = document.createElement('img');
-      star.id = `star${i}`;
-      star.classList.add('topstarv');
-      this.starContainer.appendChild(star);
-      if (i === 9) {
-        this.starContainer.appendChild(document.createElement('br'));
-      }
-      indices.push(i, i);
-    }
-
-    shuffleArray(indices);
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -389,62 +364,15 @@ export class DragDropAssessmentUI implements AssessmentUI {
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // AssessmentUI — star / chest progress
+  // AssessmentUI — star / chest progress (stars are not shown in new-ui mode)
   // ─────────────────────────────────────────────────────────────────────────────
 
-  addStar(): void {
-    const starToShow = this.root.querySelector<HTMLImageElement>(`#star${this.qAnsNum}`);
-    if (!starToShow) return;
+  addStar(): void {}
 
-    starToShow.src = resolveAssetPath(ASSET_PATHS.STAR_ANIMATION);
-    starToShow.classList.add('topstarv');
-    starToShow.classList.remove('topstarh');
-    starToShow.style.position = 'absolute';
+  changeStarImageAfterAnimation(): void {}
 
-    const containerWidth = this.starContainer.offsetWidth;
-    const containerHeight = this.starContainer.offsetHeight;
-
-    let randomX = 0;
-    let randomY = 0;
-    do {
-      randomX = Math.floor(Math.random() * (containerWidth - containerWidth * 0.2));
-      randomY = Math.floor(Math.random() * containerHeight);
-    } while (this.isOverlappingStars(randomX, randomY, 28));
-
-    const mult = this.animationSpeedMultiplier;
-
-    starToShow.style.transform = 'scale(10)';
-    starToShow.style.transition = `top ${1 * mult}s ease, left ${1 * mult}s ease, transform ${0.5 * mult}s ease`;
-    starToShow.style.zIndex = '500';
-    const containerRect = this.starContainer.getBoundingClientRect();
-    starToShow.style.top = (window.innerHeight / 2 - containerRect.top) + 'px';
-    starToShow.style.left =
-      this.gameContainer.offsetWidth / 2 - starToShow.offsetWidth / 2 + 'px';
-
-    setTimeout(() => {
-      starToShow.style.transition = `top ${2 * mult}s ease, left ${2 * mult}s ease, transform ${2 * mult}s ease`;
-      const rotation = 5 + Math.random() * 8;
-      starToShow.style.transform =
-        randomX < containerWidth / 2 - 30
-          ? `rotate(-${rotation}deg) scale(1)`
-          : `rotate(${rotation}deg) scale(1)`;
-      starToShow.style.left = `${10 + randomX}px`;
-      starToShow.style.top = `${randomY}px`;
-
-      setTimeout(() => {
-        starToShow.style.filter = 'drop-shadow(0px 0px 10px yellow)';
-      }, 1900 * mult);
-    }, 1000 * mult);
-
-    this.starPositions.push({ x: randomX, y: randomY });
-    this.qAnsNum++;
-    this.shownStarsCount++;
-  }
-
-  changeStarImageAfterAnimation(): void {
-    // Matches UIController: uses qAnsNum (post-increment) to find the star element
-    const star = this.root.querySelector<HTMLImageElement>(`#star${this.qAnsNum - 1}`);
-    if (star) star.src = resolveAssetPath(ASSET_PATHS.STAR_AFTER_ANIMATION);
+  getShownStarsCount(): number {
+    return 0;
   }
 
   progressChest(): void {
@@ -455,10 +383,6 @@ export class DragDropAssessmentUI implements AssessmentUI {
     const currentNum = match ? parseInt(match[1], 10) : NaN;
     const nextNum = isNaN(currentNum) ? 1 : (currentNum % 4) + 1;
     chestImage.src = resolveAssetPath(ASSET_PATHS.CHEST_PROGRESSION_NEW[nextNum as 1 | 2 | 3 | 4]);
-  }
-
-  getShownStarsCount(): number {
-    return this.shownStarsCount;
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -503,11 +427,4 @@ export class DragDropAssessmentUI implements AssessmentUI {
   // Private helpers
   // ─────────────────────────────────────────────────────────────────────────────
 
-  private isOverlappingStars(x: number, y: number, minDistance: number): boolean {
-    return this.starPositions.some((pos) => {
-      const dx = pos.x - x;
-      const dy = pos.y - y;
-      return Math.sqrt(dx * dx + dy * dy) < minDistance;
-    });
-  }
 }

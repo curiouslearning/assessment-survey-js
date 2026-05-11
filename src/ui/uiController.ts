@@ -211,6 +211,20 @@ export class UIController {
     window.addEventListener('resize', this.handleWindowResize);
   }
 
+  public SetAnimationSpeedMultiplier(multiplier: number): void {
+    UIController.getInstance().animationSpeedMultiplier = multiplier;
+  }
+
+  public SetCorrectLabelVisibility(visible: boolean): void {
+    this.devModeCorrectLabelVisibility = visible;
+    console.log('Correct label visibility set to ', this.devModeCorrectLabelVisibility);
+  }
+
+  public SetBucketControlsVisibility(visible: boolean): void {
+    console.log('Bucket controls visibility set to ', visible);
+    this.devModeBucketControlsEnabled = visible;
+  }
+
   public initializeStars(): void {
     this.stars = [];
     this.starPositions = [];
@@ -231,27 +245,12 @@ export class UIController {
     shuffleArray(this.stars);
   }
 
-  public SetAnimationSpeedMultiplier(multiplier: number): void {
-    UIController.getInstance().animationSpeedMultiplier = multiplier;
-  }
-
-  public SetCorrectLabelVisibility(visible: boolean): void {
-    this.devModeCorrectLabelVisibility = visible;
-    console.log('Correct label visibility set to ', this.devModeCorrectLabelVisibility);
-  }
-
-  public SetBucketControlsVisibility(visible: boolean): void {
-    console.log('Bucket controls visibility set to ', visible);
-    this.devModeBucketControlsEnabled = visible;
-  }
-
   public static OverlappingOtherStars(
     starPositions: Array<{ x: number; y: number }>,
     x: number,
     y: number,
     minDistance: number
   ): boolean {
-
     if (starPositions.length < 1) return false;
 
     for (let i = 0; i < starPositions.length; i++) {
@@ -263,6 +262,76 @@ export class UIController {
       }
     }
     return false;
+  }
+
+  public static AddStar(): void {
+    var starToShow = document.getElementById('star' + UIController.getInstance().qAnsNum) as HTMLImageElement;
+    if (!starToShow) {
+      throw new Error('Star element not found');
+    }
+    starToShow.src = resolveAssetPath(ASSET_PATHS.STAR_ANIMATION);
+    starToShow.classList.add('topstarv');
+    starToShow.classList.remove('topstarh');
+
+    starToShow.style.position = 'absolute';
+
+    let containerWidth = UIController.getInstance().starContainer.offsetWidth;
+    let containerHeight = UIController.getInstance().starContainer.offsetHeight;
+
+    console.log('Stars Container dimensions: ', containerWidth, containerHeight);
+
+    let randomX = 0;
+    let randomY = 0;
+
+    do {
+      randomX = Math.floor(Math.random() * (containerWidth - containerWidth * 0.2));
+      randomY = Math.floor(Math.random() * containerHeight);
+    } while (UIController.OverlappingOtherStars(UIController.instance.starPositions, randomX, randomY, 28));
+
+    const animationSpeedMultiplier = UIController.getInstance().animationSpeedMultiplier;
+
+    starToShow.style.transform = 'scale(10)';
+    starToShow.style.transition = `top ${1 * animationSpeedMultiplier}s ease, left ${1 * animationSpeedMultiplier}s ease, transform ${0.5 * animationSpeedMultiplier}s ease`;
+    starToShow.style.zIndex = '500';
+    starToShow.style.top = window.innerHeight / 2 + 'px';
+    starToShow.style.left = UIController.instance.gameContainer.offsetWidth / 2 - starToShow.offsetWidth / 2 + 'px';
+
+    setTimeout(() => {
+      starToShow.style.transition = `top ${2 * animationSpeedMultiplier}s ease, left ${2 * animationSpeedMultiplier}s ease, transform ${2 * animationSpeedMultiplier}s ease`;
+      if (randomX < containerWidth / 2 - 30) {
+        const rotation = 5 + Math.random() * 8;
+        console.log('Rotating star to the right', rotation);
+        starToShow.style.transform = 'rotate(-' + rotation + 'deg) scale(1)';
+      } else {
+        const rotation = 5 + Math.random() * 8;
+        console.log('Rotating star to the left', rotation);
+        starToShow.style.transform = 'rotate(' + rotation + 'deg) scale(1)';
+      }
+
+      starToShow.style.left = 10 + randomX + 'px';
+      starToShow.style.top = randomY + 'px';
+
+      setTimeout(() => {
+        starToShow.style.filter = 'drop-shadow(0px 0px 10px yellow)';
+      }, 1900 * animationSpeedMultiplier);
+    }, 1000 * animationSpeedMultiplier);
+
+    UIController.instance.starPositions.push({ x: randomX, y: randomY });
+    UIController.getInstance().qAnsNum += 1;
+    UIController.getInstance().shownStarsCount += 1;
+  }
+
+  public static ChangeStarImageAfterAnimation(): void {
+    const currentStarIndex = UIController.getInstance().qAnsNum - 1;
+    if (currentStarIndex < 0) {
+      return;
+    }
+
+    var starToShow = document.getElementById('star' + currentStarIndex) as HTMLImageElement;
+    if (!starToShow) {
+      return;
+    }
+    starToShow.src = resolveAssetPath(ASSET_PATHS.STAR_AFTER_ANIMATION);
   }
 
   public initEventListeners(): void {
@@ -555,83 +624,6 @@ export class UIController {
     for (var buttonIndex in UIController.getInstance().buttons) {
       UIController.getInstance().buttons[buttonIndex].style.visibility = 'hidden';
     }
-  }
-
-  public static AddStar(): void {
-    var starToShow = document.getElementById('star' + UIController.getInstance().qAnsNum) as HTMLImageElement;
-    if (!starToShow) {
-      throw new Error('Star element not found');
-    }
-    starToShow.src = resolveAssetPath(ASSET_PATHS.STAR_ANIMATION);
-    starToShow.classList.add('topstarv');
-    starToShow.classList.remove('topstarh');
-
-    starToShow.style.position = 'absolute';
-
-    let containerWidth = UIController.getInstance().starContainer.offsetWidth;
-    let containerHeight = UIController.getInstance().starContainer.offsetHeight;
-
-    console.log('Stars Container dimensions: ', containerWidth, containerHeight);
-
-    let randomX = 0;
-    let randomY = 0;
-
-    do {
-      randomX = Math.floor(Math.random() * (containerWidth - containerWidth * 0.2));
-      randomY = Math.floor(Math.random() * containerHeight);
-    } while (UIController.OverlappingOtherStars(UIController.instance.starPositions, randomX, randomY, 28));
-
-    const animationSpeedMultiplier = UIController.getInstance().animationSpeedMultiplier;
-
-    // Save these random x and y values, make the star appear in the center of the screen, make it 3 times bigger using scale and slowly transition to the random x and y values
-    starToShow.style.transform = 'scale(10)';
-    starToShow.style.transition = `top ${1 * animationSpeedMultiplier}s ease, left ${1 * animationSpeedMultiplier}s ease, transform ${0.5 * animationSpeedMultiplier}s ease`;
-    starToShow.style.zIndex = '500';
-    starToShow.style.top = window.innerHeight / 2 + 'px';
-    starToShow.style.left = UIController.instance.gameContainer.offsetWidth / 2 - starToShow.offsetWidth / 2 + 'px';
-
-
-    setTimeout(() => {
-      starToShow.style.transition = `top ${2 * animationSpeedMultiplier}s ease, left ${2 * animationSpeedMultiplier}s ease, transform ${2 * animationSpeedMultiplier}s ease`;
-      if (randomX < containerWidth / 2 - 30) {
-        // Rotate the star to the right a bit
-        const rotation = 5 + Math.random() * 8;
-        console.log('Rotating star to the right', rotation);
-        starToShow.style.transform = 'rotate(-' + rotation + 'deg) scale(1)';
-      } else {
-        // Rotate the star to the left a bit
-        const rotation = 5 + Math.random() * 8;
-        console.log('Rotating star to the left', rotation);
-        starToShow.style.transform = 'rotate(' + rotation + 'deg) scale(1)';
-      }
-
-      starToShow.style.left = 10 + randomX + 'px';
-      starToShow.style.top = randomY + 'px';
-
-      setTimeout(() => {
-        starToShow.style.filter = 'drop-shadow(0px 0px 10px yellow)';
-      }, 1900 * animationSpeedMultiplier);
-    }, 1000 * animationSpeedMultiplier);
-
-    UIController.instance.starPositions.push({ x: randomX, y: randomY });
-
-    UIController.getInstance().qAnsNum += 1;
-
-    //Updated star count.
-    UIController.getInstance().shownStarsCount += 1;
-  }
-
-  public static ChangeStarImageAfterAnimation(): void {
-    const currentStarIndex = UIController.getInstance().qAnsNum - 1;
-    if (currentStarIndex < 0) {
-      return;
-    }
-
-    var starToShow = document.getElementById('star' + currentStarIndex) as HTMLImageElement;
-    if (!starToShow) {
-      return;
-    }
-    starToShow.src = resolveAssetPath(ASSET_PATHS.STAR_AFTER_ANIMATION);
   }
 
   public answerButtonPress(buttonNum: number): void {
