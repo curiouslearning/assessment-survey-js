@@ -43,6 +43,9 @@ export class DragDropAssessmentUI implements AssessmentUI {
   private animationSpeedMultiplier = 1;
   private buttonsActive = false;
 
+  // --- star progress state ---
+  private shownStarsCount = 0;
+
   // --- dev-mode state ---
   private devModeCorrectLabelVisibility = false;
   private devModeBucketControlsEnabled = false;
@@ -367,12 +370,14 @@ export class DragDropAssessmentUI implements AssessmentUI {
   // AssessmentUI — star / chest progress (stars are not shown in new-ui mode)
   // ─────────────────────────────────────────────────────────────────────────────
 
-  addStar(): void {}
+  addStar(): void {
+    this.shownStarsCount += 1;
+  }
 
   changeStarImageAfterAnimation(): void {}
 
   getShownStarsCount(): number {
-    return 0;
+    return this.shownStarsCount;
   }
 
   progressChest(): void {
