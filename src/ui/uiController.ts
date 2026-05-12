@@ -211,6 +211,20 @@ export class UIController {
     window.addEventListener('resize', this.handleWindowResize);
   }
 
+  public SetAnimationSpeedMultiplier(multiplier: number): void {
+    UIController.getInstance().animationSpeedMultiplier = multiplier;
+  }
+
+  public SetCorrectLabelVisibility(visible: boolean): void {
+    this.devModeCorrectLabelVisibility = visible;
+    console.log('Correct label visibility set to ', this.devModeCorrectLabelVisibility);
+  }
+
+  public SetBucketControlsVisibility(visible: boolean): void {
+    console.log('Bucket controls visibility set to ', visible);
+    this.devModeBucketControlsEnabled = visible;
+  }
+  
   public initializeStars(): void {
     this.stars = [];
     this.starPositions = [];
@@ -229,20 +243,6 @@ export class UIController {
     }
 
     shuffleArray(this.stars);
-  }
-
-  public SetAnimationSpeedMultiplier(multiplier: number): void {
-    UIController.getInstance().animationSpeedMultiplier = multiplier;
-  }
-
-  public SetCorrectLabelVisibility(visible: boolean): void {
-    this.devModeCorrectLabelVisibility = visible;
-    console.log('Correct label visibility set to ', this.devModeCorrectLabelVisibility);
-  }
-
-  public SetBucketControlsVisibility(visible: boolean): void {
-    console.log('Bucket controls visibility set to ', visible);
-    this.devModeBucketControlsEnabled = visible;
   }
 
   public static OverlappingOtherStars(
