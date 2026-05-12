@@ -48,6 +48,30 @@ body.assessment-survey-standalone {
   overflow: hidden;
 }
 
+.as-ui-mode-new .questionViewWrapper {
+  padding-top: 24px;
+}
+
+.as-ui-mode-new .nextQuestionInput {
+  position: relative;
+  margin: 80px auto 20px;
+}
+
+.as-ui-mode-new .feedbackContainer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 120px;
+  margin: 0;
+  z-index: 10;
+}
+
+.as-ui-mode-new .feedbackContainer.hidden {
+  pointer-events: none;
+}
+
 .chestWrapper {
   width: 85%;
   margin: 35px auto;
