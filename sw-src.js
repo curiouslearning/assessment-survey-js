@@ -1,11 +1,35 @@
-importScripts(
-  'https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js'
-);
+// Wrap CDN import so the rest of the SW still executes if the CDN is
+// unreachable (e.g. DevTools offline on first SW activation).
+try {
+  importScripts(
+    'https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js'
+  );
+} catch (e) {
+  console.warn('Failed to load workbox from CDN — SW will rely on manual cache matching.', e);
+}
 
-workbox.precaching.precacheAndRoute(self.__WB_MANIFEST, {
-  ignoreURLParametersMatching: [/^data/, /^cr_user_id/],
-  exclude: [/^lang\//, /coverage\//, /node_modules\//, /test\//, /public\//],
-});
+if (typeof workbox !== 'undefined') {
+  workbox.precaching.precacheAndRoute(self.__WB_MANIFEST, {
+    ignoreURLParametersMatching: [/^data/, /^cr_user_id/],
+    exclude: [/^lang\//, /coverage\//, /node_modules\//, /test\//, /public\//],
+  });
+
+  // Serve index.html for any navigation request that isn't matched by a
+  // precache entry (handles the / → index.html mapping on refresh).
+  workbox.routing.registerNavigationRoute(
+    workbox.precaching.getCacheKeyForURL('index.html')
+  );
+} else {
+  // Workbox failed to load — install a minimal install handler so the SW still
+  // precaches index.html and bundle.js manually, giving the app an offline shell.
+  self.addEventListener('install', (event) => {
+    event.waitUntil(
+      caches.open('app-shell-fallback').then((cache) =>
+        cache.addAll(['/index.html', '/bundle.js'])
+      ).catch((err) => console.warn('Fallback shell cache failed:', err))
+    );
+  });
+}
 
 const channel = new BroadcastChannel('as-message-channel');
 const version = 1.6;
@@ -19,7 +43,6 @@ self.addEventListener('message', async (event) => {
     if (!(await caches.keys()).length) {
       cachingProgress = 0;
       const cacheName = await getCacheName(event.data.value);
-      // Assuming there's more to do with cacheName later
     }
   }
 });
@@ -35,6 +58,7 @@ self.addEventListener('activate', (event) => {
 });
 
 self.registration.addEventListener('updatefound', () => {
+  if (typeof workbox === 'undefined') return;
   caches.keys().then((cacheNames) => {
     cacheNames.forEach((cacheName) => {
       if (cacheName === workbox.core.cacheNames.precache) {
@@ -107,27 +131,60 @@ async function cacheTheBookJSONAndImages(data) {
 self.addEventListener('fetch', (event) => {
   try {
     const requestUrl = new URL(event.request.url);
-    if (requestUrl.protocol === 'chrome-extension:') return;
 
-    if (requestUrl.searchParams.has('cache-bust')) {
-      return event.respondWith(fetch(event.request));
-    }
+    // Never intercept non-HTTP(S) protocols (chrome-extension, data, etc.)
+    if (requestUrl.protocol !== 'http:' && requestUrl.protocol !== 'https:') return;
+
+    // Never intercept cross-origin requests — external APIs (Firebase, Statsig,
+    // Cloudflare, GTM) must reach the network directly; intercepting them offline
+    // causes "Failed to convert value to 'Response'" crashes in the SW.
+    if (requestUrl.origin !== self.location.origin) return;
+
+    // Never intercept the SW script itself — the browser's update check must reach
+    // the network (or fail gracefully). Returning 503 for sw.js would cause the
+    // browser to treat the SW update as failed, breaking navigator.serviceWorker.ready.
+    if (requestUrl.pathname.endsWith('/sw.js')) return;
+
+    // cache-bust requests must bypass the SW cache entirely so App.ts can do a
+    // live version check. Do NOT call event.respondWith — let the browser handle
+    // the request natively; App.ts already catches the offline failure.
+    if (requestUrl.searchParams.has('cache-bust')) return;
 
     event.respondWith(
       caches
         .match(event.request)
-        .then((response) => response || fetch(event.request))
+        .then((response) => {
+          if (response) return response;
+
+          // Navigation fallback: serve the cached index.html for any same-origin
+          // page navigation that isn't explicitly in the cache (handles / on refresh).
+          if (event.request.mode === 'navigate') {
+            return caches.match('/index.html').then(
+              (fallback) => fallback || fetch(event.request)
+            );
+          }
+
+          return fetch(event.request);
+        })
         .catch((error) => {
           console.log('Error while fetching:', event.request.url, error);
+          // Navigation fallback when network is also unavailable.
+          if (event.request.mode === 'navigate') {
+            return caches.match('/index.html').then(
+              (fallback) => fallback || new Response('', { status: 503, statusText: 'Service Unavailable' })
+            );
+          }
+          // Return a real Response so event.respondWith never receives undefined,
+          // which would throw "Failed to convert value to 'Response'".
+          return new Response('', { status: 503, statusText: 'Service Unavailable' });
         })
     );
   } catch (error) {
-    console.log("error", error);
+    console.log('fetch handler error:', error);
   }
 });
 
 // Placeholder function to handle cache name
 async function getCacheName(value) {
-  // Implement logic for generating cache name based on the value
   return `cache-${version}-${value}`;
 }

@@ -8,7 +8,8 @@ module.exports = {
   swDest: 'build/sw.js',
   swSrc: 'sw-src.js',
   globIgnores: [
-    '**/audio/**/*',
+    'assets/audio/*/*.mp3',
+    'assets/audio/*/*.wav',
     'workbox-config.js',
     'workbox-*.js',
     'workbox-*.js.map',

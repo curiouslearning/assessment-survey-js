@@ -100,6 +100,12 @@ export class AudioController {
       return;
     }
 
+    // If the element previously failed to load (e.g. network was offline),
+    // reload it so the browser re-fetches from cache or network before playing.
+    if (audio.error || audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) {
+      audio.load();
+    }
+
     const playResult = audio.play();
     if (playResult && typeof playResult.catch === 'function') {
       playResult.catch((error) => {
@@ -127,12 +133,12 @@ export class AudioController {
       if (audio) {
         audio.addEventListener('play', () => {
           typeof audioAnim !== 'undefined' ? audioAnim(true) : null;
-        });
+        }, { once: true });
 
         audio.addEventListener('ended', () => {
           typeof audioAnim !== 'undefined' ? audioAnim(false) : null;
           resolve();
-        });
+        }, { once: true });
 
         audio.play().catch((error) => {
           console.error('Error playing audio:', error);
@@ -171,6 +177,12 @@ export class AudioController {
     if (!audio) {
       audio = new Audio(resolveAssetPath(normalizedAudioPath));
       AudioController.getInstance().soundEffects[normalizedAudioPath] = audio;
+    }
+
+    // If the element previously failed to load (e.g. network was offline),
+    // reload it so the browser re-fetches from cache or network before playing.
+    if (audio.error || audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) {
+      audio.load();
     }
 
     audio.currentTime = 0;
