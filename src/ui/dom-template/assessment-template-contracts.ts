@@ -57,4 +57,5 @@ export interface AssessmentSurveyTemplateConfig {
   sections?: Partial<TemplateSections>;
   text?: Partial<TemplateTextOverrides>;
   classNames?: Partial<TemplateClassNames>;
+  assessmentUIMode?: string;
 }

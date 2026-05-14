@@ -3,8 +3,7 @@ import {
     createElement,
     joinClassNames,
     TemplateSection,
-} from '../assessment-template-engine';
-import { DraggableButton, DropAreaTarget } from '@ui/dom-events';
+} from '../../assessment-template-engine';
 
 export class DraggableQuestionViewWrapperSection extends TemplateSection<HTMLDivElement> {
     public render(): HTMLDivElement {
@@ -14,11 +13,6 @@ export class DraggableQuestionViewWrapperSection extends TemplateSection<HTMLDiv
             style: 'display: none',
         });
 
-        const starWrapper = createElement('div', {
-            id: 'starWrapper',
-            className: this.context.classNames.starWrapper,
-        });
-
         const chestWrapper = createElement('div', {
             className: this.context.classNames.chestWrapper,
         });
@@ -26,18 +20,14 @@ export class DraggableQuestionViewWrapperSection extends TemplateSection<HTMLDiv
             className: this.context.classNames.chestDiv,
         });
 
-        //Add the treasure chest element to treasure chest container.
         chestDiv.appendChild(
             createElement('img', {
                 id: 'chestImage',
                 attrs: {
-                    src: this.context.resolveAsset('img/chestprogression/TreasureChestOpen01.svg'),
+                    src: this.context.resolveAsset('img/chestprogression/TreasureChestOpen01-new.svg'),
                 },
             })
         );
-
-        //Add drop tartget event to treasure chest container.
-        new DropAreaTarget(chestDiv);
 
         chestWrapper.appendChild(chestDiv);
 
@@ -49,20 +39,18 @@ export class DraggableQuestionViewWrapperSection extends TemplateSection<HTMLDiv
         const answerContainer = createElement('div', {
             id: 'aWrap',
             className: this.context.classNames.answerContainer,
+            style: 'grid-template-columns: repeat(4, minmax(0, 1fr)); min-height: unset; margin-top: 0;',
         });
 
         for (let index = 1; index <= 6; index += 1) {
-            const button = createElement('div', {
-                id: `answerButton${index}`,
-                className: this.context.classNames.answerButton,
-                text: String(index),
-                style: index > 4 ? 'display: none' : undefined,
-            });
-
-            //Add drag callbacks to button element.
-            new DraggableButton(button);
-
-            answerContainer.appendChild(button);
+            answerContainer.appendChild(
+                createElement('div', {
+                    id: `answerButton${index}`,
+                    className: this.context.classNames.answerButton,
+                    text: String(index),
+                    style: index > 4 ? 'display: none' : undefined,
+                })
+            );
         }
 
         const controlsContainer = createElement('div');
@@ -77,14 +65,17 @@ export class DraggableQuestionViewWrapperSection extends TemplateSection<HTMLDiv
             text: this.context.text.feedbackText,
         });
 
-        appendChildren(controlsContainer, [nextQuestionInput, feedbackContainer]);
+        // Feedback overlays the audio button — placed inside nextQuestionInput so
+        // it can be absolutely positioned on top of #pbutton.
+        nextQuestionInput.appendChild(feedbackContainer);
+        controlsContainer.appendChild(nextQuestionInput);
 
+        // Layout order: audio button (+ feedback overlay) → question → options (single row) → treasure chest
         appendChildren(questionViewWrapper, [
-            starWrapper,
-            chestWrapper,
+            controlsContainer,
             questionContainer,
             answerContainer,
-            controlsContainer
+            chestWrapper,
         ]);
 
         return questionViewWrapper;

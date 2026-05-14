@@ -10,6 +10,7 @@ export type RuntimeConfigOverrides = {
   nextAssessment?: string;
   endpoint?: string;
   organization?: string;
+  assessmentUIMode?: string;
 };
 
 let runtimeConfigOverrides: RuntimeConfigOverrides = {};
@@ -111,6 +112,14 @@ export function getEndpoint() {
 
 export function getOrganization() {
   return getConfigValue('organization');
+}
+
+export function getAssessmentUIMode(): 'legacy' | 'new-ui' | null {
+  const value = getConfigValue('assessmentUIMode');
+  if (value === 'legacy' || value === 'new-ui') {
+    return value;
+  }
+  return null;
 }
 
 function getPathName() {

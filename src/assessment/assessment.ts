@@ -2,6 +2,7 @@
 //
 //once we start adding in the assessment functionality
 import { UIController } from '@ui/uiController';
+import { AssessmentUI } from '@ui/assessment-ui';
 import { qData, answerData } from '@components/questionData';
 import { AnalyticsEvents } from '@analytics/analyticsEvents';
 import { App } from '../App';
@@ -14,6 +15,7 @@ import { AudioController } from '@components/audioController';
 import { AnalyticsEventsType, AnalyticsIntegration } from '@analytics/analytics-integration';
 import { calculateScore, getBasalBucketID, getCeilingBucketID, getCommonAnalyticsEventsProperties } from '@utils/AnalyticsUtils';
 import { getNextAssessment, getRequiredScore } from '@utils/urlUtils';
+import appEventBus from '@services/app-event-bus';
 
 enum searchStage {
   BinarySearch,
@@ -49,10 +51,13 @@ export class Assessment extends BaseQuiz {
 
   private MAX_STARS_COUNT_IN_LINEAR_MODE = 20;
 
-  constructor(dataURL: string, unityBridge: any) {
+  public readonly ui: AssessmentUI;
+
+  constructor(dataURL: string, unityBridge: any, ui: AssessmentUI) {
     super();
     this.dataURL = dataURL;
     this.unityBridge = unityBridge;
+    this.ui = ui;
     this.questionNumber = 0;
     this.bucketArray = [];
     this.buckets = [];
@@ -76,10 +81,14 @@ export class Assessment extends BaseQuiz {
   }
 
   private setupUIHandlers(): void {
-
-    UIController.SetButtonPressAction(this.handleAnswerButtonPress);
-    UIController.SetStartAction(this.startAssessment);
-    UIController.SetExternalBucketControlsGenerationHandler(this.generateDevModeBucketControlsInContainer);
+    this.ui.configure({
+      onStart: this.startAssessment,
+      onAnswer: (selection) => {
+        // AssessmentUI contract uses 0-based index; internal handleAnswerButtonPress uses 1-based
+        this.handleAnswerButtonPress(selection.answerIndex + 1, selection.elapsedMs);
+      },
+    });
+    this.ui.setExternalBucketControlsGenerationHandler?.(this.generateDevModeBucketControlsInContainer);
   }
   public Run(applink: App): void {
     this.app = applink;
@@ -99,11 +108,11 @@ export class Assessment extends BaseQuiz {
   }
 
   public handleCorrectLabelShownChange(): void {
-    UIController.getInstance().SetCorrectLabelVisibility(this.isCorrectLabelShown);
+    this.ui.setCorrectLabelVisibility?.(this.isCorrectLabelShown);
   }
 
   public handleAnimationSpeedMultiplierChange(): void {
-    UIController.getInstance().SetAnimationSpeedMultiplier(this.animationSpeedMultiplier);
+    this.ui.setAnimationSpeedMultiplier?.(this.animationSpeedMultiplier);
   }
 
   public handleBucketInfoShownChange(): void {
@@ -111,7 +120,7 @@ export class Assessment extends BaseQuiz {
   }
 
   public handleBucketControlsShownChange(): void {
-    UIController.getInstance().SetBucketControlsVisibility(this.isBucketControlsEnabled);
+    this.ui.setBucketControlsVisibility?.(this.isBucketControlsEnabled);
   }
 
   public generateDevModeBucketControlsInContainer = (container: HTMLElement, clickHandler: () => void) => {
@@ -130,7 +139,8 @@ export class Assessment extends BaseQuiz {
           this.currentLinearTargetIndex = index;
           this.currentBucket.usedItems = [];
           console.log('Clicked on item ' + item.itemName + ' at index ' + this.currentLinearTargetIndex);
-          // UIController.ReadyForNext(this.buildNewQuestion(), false);
+          // TODO: Dev-mode only — still uses UIController internals directly.
+          // Will be cleaned up when dev-mode controls are routed through AssessmentUI.
           const newQ = this.buildNewQuestion();
           UIController.getInstance().answersContainer.style.visibility = 'hidden';
           for (let b in UIController.getInstance().buttons) {
@@ -161,7 +171,7 @@ export class Assessment extends BaseQuiz {
           this.currentLinearBucketIndex--;
           this.currentLinearTargetIndex = 0;
           this.tryMoveBucket(false);
-          UIController.ReadyForNext(this.buildNewQuestion());
+          this.ui.prepareQuestion(this.buildNewQuestion());
           this.updateBucketInfo();
         }
         if (this.currentLinearBucketIndex == 0) {
@@ -178,7 +188,7 @@ export class Assessment extends BaseQuiz {
           this.currentLinearBucketIndex++;
           this.currentLinearTargetIndex = 0;
           this.tryMoveBucket(false);
-          UIController.ReadyForNext(this.buildNewQuestion());
+          this.ui.prepareQuestion(this.buildNewQuestion());
           this.updateBucketInfo();
         }
       });
@@ -204,7 +214,7 @@ export class Assessment extends BaseQuiz {
 
   public startAssessment = () => {
     this.commonProperties = getCommonAnalyticsEventsProperties();
-    UIController.ReadyForNext(this.buildNewQuestion());
+    this.ui.prepareQuestion(this.buildNewQuestion());
     if (this.isInDevMode) {
       this.hideDevModeButton();
     }
@@ -348,13 +358,13 @@ export class Assessment extends BaseQuiz {
   private updateFeedbackAfterAnswer(answer: number) {
     if (
       this.bucketGenMode === BucketGenMode.LinearArrayBased &&
-      UIController.getInstance().shownStarsCount < this.MAX_STARS_COUNT_IN_LINEAR_MODE
+      this.ui.getShownStarsCount() < this.MAX_STARS_COUNT_IN_LINEAR_MODE
     ) {
-      UIController.AddStar();
+      this.ui.addStar();
     } else if (this.bucketGenMode === BucketGenMode.RandomBST) {
-      UIController.AddStar();
+      this.ui.addStar();
     }
-    UIController.SetFeedbackVisibile(
+    this.ui.showFeedback(
       true,
       this.currentQuestion.answers[answer - 1].answerName == this.currentQuestion.correct
     );
@@ -364,6 +374,10 @@ export class Assessment extends BaseQuiz {
     if (this.currentQuestion.answers[answer - 1].answerName == this.currentQuestion.correct) {
       this.currentBucket.numCorrect += 1;
       this.currentBucket.numConsecutiveWrong = 0;
+
+      //Publish ANSWERED_CORRECTLY to fire SFX for correct drop featured. This will be no effect if dragdrop-ui is not loaded.
+      appEventBus.publish(appEventBus.EVENTS.ANSWERED_CORRECTLY, true);
+
       console.log('Answered correctly');
     } else {
       this.currentBucket.numConsecutiveWrong += 1;
@@ -376,14 +390,14 @@ export class Assessment extends BaseQuiz {
       : 4000 * this.animationSpeedMultiplier;
 
     const endOperations = () => {
-      UIController.SetFeedbackVisibile(false, false);
+      this.ui.showFeedback(false, false);
       if (
         this.bucketGenMode === BucketGenMode.LinearArrayBased &&
-        UIController.getInstance().shownStarsCount < this.MAX_STARS_COUNT_IN_LINEAR_MODE
+        this.ui.getShownStarsCount() < this.MAX_STARS_COUNT_IN_LINEAR_MODE
       ) {
-        UIController.ChangeStarImageAfterAnimation();
+        this.ui.changeStarImageAfterAnimation();
       } else if (this.bucketGenMode === BucketGenMode.RandomBST) {
-        UIController.ChangeStarImageAfterAnimation();
+        this.ui.changeStarImageAfterAnimation();
       }
       if (this.HasQuestionsLeft()) {
         if (this.bucketGenMode === BucketGenMode.LinearArrayBased && !this.isBucketControlsEnabled) {
@@ -409,7 +423,7 @@ export class Assessment extends BaseQuiz {
           }
         }
 
-        UIController.ReadyForNext(this.buildNewQuestion());
+        this.ui.prepareQuestion(this.buildNewQuestion());
       } else {
         console.log('No questions left');
         this.onEnd();
@@ -620,7 +634,7 @@ export class Assessment extends BaseQuiz {
       this.logBucketCompletedEvent(this.currentBucket, true);
     }
 
-    UIController.ProgressChest();
+    this.ui.progressChest();
     return false;
   };
 
@@ -643,7 +657,7 @@ export class Assessment extends BaseQuiz {
         this.logBucketCompletedEvent(this.currentBucket, true);
       }
 
-      UIController.ProgressChest();
+      this.ui.progressChest();
       return false;
     }
 
@@ -699,7 +713,11 @@ export class Assessment extends BaseQuiz {
 
   public override onEnd(): void {
     this.LogCompletedEvent(this.buckets, this.basalBucket, this.ceilingBucket);
-    super.onEnd();
+    // Route through AssessmentUI instead of the base class UIController.ShowEnd()
+    this.ui.showEnd();
+    this.app.notifyClose();
+    this.endTime = Date.now();
+    this.publish('ENDED', this);
   }
 
   private LogCompletedEvent(buckets: bucket[] = null, basalBucket: number, ceilingBucket: number) {

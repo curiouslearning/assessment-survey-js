@@ -1,17 +1,12 @@
 import {
-  appendChildren,
   createElement,
-  hiddenDisplayStyle,
-  joinClassNames,
   type ResolvedTemplateConfig,
   TemplateContext,
   TemplateSection,
 } from './dom-template/assessment-template-engine';
 import {
-  DevModeSettingsModalSection,
-  LandingPageWrapperSection,
-  QuestionViewWrapperSection,
-  DraggableQuestionViewWrapperSection
+  LegacyBodyWrapperSection,
+  DragDropBodyWrapperSection,
 } from './dom-template/sections';
 import type {
   AssessmentSurveyTemplateConfig,
@@ -21,7 +16,6 @@ import type {
   TemplateTextOverrides,
 } from './dom-template/assessment-template-contracts';
 import { normalizeBaseUrl, normalizeHostTheme } from './dom-template/assessment-template-resolvers';
-import { DragEventController } from './dom-events/';
 
 export type {
   AssessmentSurveyTemplateConfig,
@@ -95,92 +89,6 @@ class StylesheetLinkSection extends TemplateSection<HTMLLinkElement> {
 }
 
 /**
- * Builds the ending screen wrapper section.
- */
-class EndingPageWrapperSection extends TemplateSection<HTMLDivElement> {
-  public render(): HTMLDivElement {
-    return createElement('div', {
-      id: 'endWrap',
-      className: this.context.classNames.endingPageWrapper,
-      style: 'display: none',
-      text: this.context.text.endingScreenText,
-    });
-  }
-}
-
-/**
- * Builds the optional dev-mode bucket info container.
- */
-class DevModeBucketInfoSection extends TemplateSection<HTMLDivElement> {
-  public render(): HTMLDivElement {
-    return createElement('div', {
-      id: 'devModeBucketInfoContainer',
-      style: hiddenDisplayStyle(this.context.sections.devModeBucketInfo),
-    });
-  }
-}
-
-/**
- * Builds the dev-mode modal toggle button section.
- */
-class DevModeToggleButtonSection extends TemplateSection<HTMLDivElement> {
-  public render(): HTMLDivElement {
-    const toggleContainer = createElement('div', {
-      id: 'devModeModalToggleButtonContainer',
-      style: hiddenDisplayStyle(this.context.sections.devModeToggleButton),
-    });
-
-    const toggleButton = createElement('button', {
-      id: 'devModeModalToggleButton',
-    });
-
-    appendChildren(toggleButton, [
-      document.createTextNode(this.context.text.devModeTogglePrimary),
-      document.createElement('br'),
-      document.createTextNode(this.context.text.devModeToggleSecondary),
-    ]);
-
-    toggleContainer.appendChild(toggleButton);
-    return toggleContainer;
-  }
-}
-
-/**
- * Composes all top-level gameplay sections into the body wrapper.
- */
-class BodyWrapperSection extends TemplateSection<HTMLDivElement> {
-  public render(isEmbed: boolean = false): HTMLDivElement {
-    const bodyWrapper = createElement('div', {
-      className:
-        this.context.hostTheme === 'ftm-dim'
-          ? joinClassNames(this.context.classNames.bodyWrapper, this.context.classNames.hostThemeFtmDim)
-          : this.context.classNames.bodyWrapper,
-    });
-
-    //Add the flag switch hook here to switch between default survey or the drag and drop survey.
-    const questionViewWrapper = isEmbed
-      ? new DraggableQuestionViewWrapperSection(this.context).render()
-      : new QuestionViewWrapperSection(this.context).render();
-
-    appendChildren(bodyWrapper, [
-      new LandingPageWrapperSection(this.context).render(),
-      questionViewWrapper,
-      this.context.sections.endingScreen ? new EndingPageWrapperSection(this.context).render() : null,
-      new DevModeBucketInfoSection(this.context).render(),
-      new DevModeToggleButtonSection(this.context).render(),
-      new DevModeSettingsModalSection(this.context).render(),
-    ]);
-
-    const interactionRoot = questionViewWrapper;
-    if (isEmbed && interactionRoot instanceof HTMLElement) {
-      new DragEventController(interactionRoot).attach();
-    }
-
-    return bodyWrapper;
-  }
-}
-
-/**
  * Orchestrates full template assembly into a document fragment.
  */
 class AssessmentSurveyTemplateBuilder {
@@ -196,9 +104,10 @@ class AssessmentSurveyTemplateBuilder {
       fragment.appendChild(new StylesheetLinkSection(this.context).render());
     }
 
-    //To Do: Hook up flag control here pass true in render to use drag and drop feature.
-    // Otherwise pass False or blank for the default select and click survey
-    fragment.appendChild(new BodyWrapperSection(this.context).render());
+    const bodyWrapper = this.context.assessmentUIMode === 'new-ui'
+      ? new DragDropBodyWrapperSection(this.context).render()
+      : new LegacyBodyWrapperSection(this.context).render();
+    fragment.appendChild(bodyWrapper);
 
     return fragment;
   }
@@ -208,11 +117,12 @@ class AssessmentSurveyTemplateBuilder {
  * Resolves partial caller config into a full renderable config object.
  */
 function resolveTemplateConfig(config: AssessmentSurveyTemplateConfig = {}): ResolvedTemplateConfig {
+  const assessmentUIMode = config.assessmentUIMode ?? 'legacy';
   return {
     assetBaseUrl: normalizeBaseUrl(config.assetBaseUrl ?? ''),
     hostTheme: normalizeHostTheme(config.hostTheme),
     includeStylesheetLink: config.includeStylesheetLink ?? true,
-    stylesheetPath: config.stylesheetPath ?? 'css/style.css',
+    stylesheetPath: config.stylesheetPath ?? (assessmentUIMode === 'new-ui' ? 'css/drag-drop-style.css' : 'css/style.css'),
     rootRelativeAssetPaths: config.rootRelativeAssetPaths ?? true,
     sections: {
       ...DEFAULT_SECTIONS,
@@ -226,6 +136,7 @@ function resolveTemplateConfig(config: AssessmentSurveyTemplateConfig = {}): Res
       ...DEFAULT_CLASS_NAMES,
       ...(config.classNames ?? {}),
     },
+    assessmentUIMode,
   };
 }
 
