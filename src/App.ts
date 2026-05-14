@@ -184,7 +184,15 @@ export class App {
 
     const initialize = async () => {
       console.log('Window Loaded!');
-      await this.initializeGame();
+      try {
+        await this.initializeGame();
+      } catch (error) {
+        console.error('Failed to initialize game data:', error);
+        this.assessmentUI.setLoadingVisible(false);
+        this.assessmentUI.setContentLoaded(true);
+        return;
+      }
+
       if (skipLoadingScreen) {
         localStorage.setItem(this.cacheModel.appName, 'true');
         this.assessmentUI.setLoadingProgress(100);
