@@ -123,6 +123,8 @@ export class DragDropAssessmentUI implements AssessmentUI {
       appEventBus.EVENTS.DROP_ELEMENT_INTERACTION,
       ({ selectedAnswer }: { selectedAnswer: iDraggableHTMLElement }) => {
         if (!this.buttonsActive || !this.callbacks) return;
+        this.buttonsActive = false;
+        this.dragController?.setLocked(true);
         // Button IDs are 'answerButton1'…'answerButton6' (1-based); convert to 0-based.
         const buttonNum = parseInt(selectedAnswer.id.replace('answerButton', ''), 10);
         if (isNaN(buttonNum)) return;
@@ -326,6 +328,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
             });
             if (allVisible) {
               this.buttonsActive = true;
+              this.dragController?.setLocked(false);
             }
           }, { once: true });
         }, i * animDuration * this.animationSpeedMultiplier * 0.3);
