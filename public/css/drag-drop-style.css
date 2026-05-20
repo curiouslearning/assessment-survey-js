@@ -108,6 +108,11 @@ body.assessment-survey-standalone {
   object-fit: contain;
 }
 
+.as-ui-mode-new #chestImage {
+  max-width: 380px;
+  max-height: 380px;
+}
+
 .starWrapper {
   width: 100%;
   margin-top: 60px;
