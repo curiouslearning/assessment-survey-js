@@ -28,7 +28,7 @@
 
 ## npm package outputs
 
-This repository now supports two build targets:
+This repository now supports two build targets commands:
 
 - Standalone app bundle (for direct hosting):
   - `npm run build:standalone`
