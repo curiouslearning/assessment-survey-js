@@ -5,9 +5,17 @@ import appEventBus from '@services/app-event-bus';
 export default class DragEventController {
     private targetDropElement: iDropAreaHTMLElement | null = null;
     private foundDragElement: iDraggableHTMLElement | null = null;
+    private locked = false;
 
     constructor(private root: HTMLElement) {
         this.targetDropElement = this.getDropTarget();
+    }
+
+    public setLocked(locked: boolean): void {
+        this.locked = locked;
+        if (locked && this.foundDragElement) {
+            this.endDrag();
+        }
     }
 
     public attach(): void {
@@ -64,6 +72,8 @@ export default class DragEventController {
     }
 
     private handlePointerDown = (event: PointerEvent) => {
+        if (this.locked) return;
+
         this.foundDragElement = this.locateBtnElement(event);
 
         if (this.foundDragElement) {
@@ -75,22 +85,21 @@ export default class DragEventController {
 
     };
 
-    // AABB (axis-aligned bounding box) overlap test:
-    // Returns true if any part of the dragged element's rect overlaps the drop zone rect.
-    // Two rectangles overlap when neither is fully to the left, right, above, or below the other.
     private isWithinTargetArea(
         dragElement: iDraggableHTMLElement,
         dropElement: iDropAreaHTMLElement,
     ): boolean {
         const buttonRect = dragElement.getBoundingClientRect();
-        const dropAreaRect = dropElement.getBoundingClientRect();
+        const hitTarget = this.root.querySelector('#chestImage') ?? dropElement;
+        const chestRect = hitTarget.getBoundingClientRect();
 
-        const isOverlapping = buttonRect.left < dropAreaRect.right &&
-            buttonRect.right > dropAreaRect.left &&
-            buttonRect.top < dropAreaRect.bottom &&
-            buttonRect.bottom > dropAreaRect.top;
+        const centerX = (buttonRect.left + buttonRect.right) / 2;
+        const centerY = (buttonRect.top + buttonRect.bottom) / 2;
 
-        return isOverlapping;
+        return centerX >= chestRect.left &&
+            centerX <= chestRect.right &&
+            centerY >= chestRect.top &&
+            centerY <= chestRect.bottom;
     }
 
     private handlePointerDragMove = (event: PointerEvent) => {
