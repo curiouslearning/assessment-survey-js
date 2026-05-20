@@ -72,7 +72,7 @@ export default class DragEventController {
     }
 
     private handlePointerDown = (event: PointerEvent) => {
-        if (this.locked) return;
+        if (this.locked && this.foundDragElement) return;
 
         this.foundDragElement = this.locateBtnElement(event);
 
