@@ -386,11 +386,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
   progressChest(): void {
     const chestImage = this.root.querySelector<HTMLImageElement>('#chestImage');
     if (!chestImage) return;
-
-    const match = chestImage.src.match(/TreasureChestOpen(\d+)/);
-    const currentNum = match ? parseInt(match[1], 10) : NaN;
-    const nextNum = isNaN(currentNum) ? 1 : (currentNum % 4) + 1;
-    chestImage.src = resolveAssetPath(ASSET_PATHS.CHEST_PROGRESSION_NEW[nextNum as 1 | 2 | 3 | 4]);
+    chestImage.src = resolveAssetPath(ASSET_PATHS.CHEST_PROGRESSION_NEW[4]);
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
