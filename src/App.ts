@@ -17,7 +17,7 @@ import { AndroidInterface } from '@curiouslearning/core';
 import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from '@utils/AnalyticsUtils';
 import { ASSET_PATHS } from '@configs/assetsPaths';
 
-const appVersion: string = 'v1.1.3';
+const appVersion: string = 'v1.1.4';
 
 /**
  * Content version from the data file in format v0.1
