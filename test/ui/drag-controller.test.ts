@@ -179,4 +179,39 @@ describe('DragEventController', () => {
     expect(button.onStart).toHaveBeenCalledTimes(1);
     expect(secondButton.onStart).not.toHaveBeenCalled();
   });
+
+  it('ignores pointermove from a different pointer while a drag is active', () => {
+    new DragEventController(root).attach();
+
+    button.dispatchEvent(createPointerLikeEvent('pointerdown', { bubbles: true }, 1));
+    button.dispatchEvent(createPointerLikeEvent('pointermove', { bubbles: true }, 2));
+
+    expect(button.onMove).not.toHaveBeenCalled();
+  });
+
+  it('ignores pointerup from a different pointer while a drag is active', () => {
+    new DragEventController(root).attach();
+
+    button.dispatchEvent(createPointerLikeEvent('pointerdown', { bubbles: true }, 1));
+    button.dispatchEvent(createPointerLikeEvent('pointerup', { bubbles: true }, 2));
+
+    expect(button.onEnd).not.toHaveBeenCalled();
+    expect(dropArea.onDrop).not.toHaveBeenCalled();
+
+    button.dispatchEvent(createPointerLikeEvent('pointermove', { bubbles: true }, 1));
+    expect(button.onMove).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores pointercancel from a different pointer while a drag is active', () => {
+    new DragEventController(root).attach();
+
+    button.dispatchEvent(createPointerLikeEvent('pointerdown', { bubbles: true }, 1));
+    button.dispatchEvent(createPointerLikeEvent('pointercancel', { bubbles: true }, 2));
+
+    expect(button.onEnd).not.toHaveBeenCalled();
+    expect(dropArea.onDrop).not.toHaveBeenCalled();
+
+    button.dispatchEvent(createPointerLikeEvent('pointermove', { bubbles: true }, 1));
+    expect(button.onMove).toHaveBeenCalledTimes(1);
+  });
 });
