@@ -2,8 +2,19 @@ import DragEventController from '@ui/drag-drop/dom-events/drag-controller';
 import type { iDraggableHTMLElement } from '@ui/drag-drop/dom-events/draggable-button';
 import type { iDropAreaHTMLElement } from '@ui/drag-drop/dom-events/drop-target';
 
-const createPointerLikeEvent = (type: string, init: MouseEventInit = {}): PointerEvent =>
-  new MouseEvent(type, init) as PointerEvent;
+const createPointerLikeEvent = (
+  type: string,
+  init: MouseEventInit = {},
+  pointerId = 1,
+): PointerEvent => {
+  const event = new MouseEvent(type, init) as PointerEvent;
+  Object.defineProperty(event, 'pointerId', {
+    configurable: true,
+    value: pointerId,
+  });
+
+  return event;
+};
 
 describe('DragEventController', () => {
   let root: HTMLElement;
@@ -150,5 +161,22 @@ describe('DragEventController', () => {
 
     expect(dropArea.onDrop).not.toHaveBeenCalled();
     expect(button.onEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores a second pointerdown while another drag is active', () => {
+    const secondButton = document.createElement('div') as iDraggableHTMLElement;
+    secondButton.className = 'answerButton';
+    secondButton.onStart = jest.fn();
+    secondButton.onMove = jest.fn();
+    secondButton.onEnd = jest.fn();
+    root.appendChild(secondButton);
+
+    new DragEventController(root).attach();
+
+    button.dispatchEvent(createPointerLikeEvent('pointerdown', { bubbles: true }, 1));
+    secondButton.dispatchEvent(createPointerLikeEvent('pointerdown', { bubbles: true }, 2));
+
+    expect(button.onStart).toHaveBeenCalledTimes(1);
+    expect(secondButton.onStart).not.toHaveBeenCalled();
   });
 });
