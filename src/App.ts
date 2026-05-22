@@ -352,6 +352,7 @@ export class App {
             max_score: gameInstance.max_score,
             time_spent: endTime - startTime,
             event_type: 'activity_completed',
+            app_version: appVersion,
           });
         }
       });
