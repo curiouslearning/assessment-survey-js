@@ -102,6 +102,7 @@ export class App {
   private assessmentUI: AssessmentUI;
   private uiRoot: Document | ShadowRoot | HTMLElement = document;
   private templateConfig: Omit<AssessmentSurveyTemplateConfig, 'assessmentUIMode'> = {};
+  private swMessageHandler: ((event: MessageEvent) => void) | null = null;
 
   lang: string = 'english';
 
@@ -398,7 +399,10 @@ export class App {
 
       // Instance-bound handler so this.assessmentUI (new-UI path) also receives
       // loading progress signals that arrive via the SW→client message channel.
-      navigator.serviceWorker.addEventListener('message', (event: MessageEvent) => {
+      if (this.swMessageHandler) {
+        navigator.serviceWorker.removeEventListener('message', this.swMessageHandler);
+      }
+      this.swMessageHandler = (event: MessageEvent) => {
         if (event.data.msg === 'Loading') {
           const progressValue = parseInt(event.data.data.progress);
           if (progressValue >= 100) {
@@ -411,7 +415,8 @@ export class App {
             this.assessmentUI.setLoadingProgress(progressValue);
           }
         }
-      });
+      };
+      navigator.serviceWorker.addEventListener('message', this.swMessageHandler);
 
       await navigator.serviceWorker.ready;
 
@@ -506,7 +511,11 @@ export class App {
   }
 
   public dispose(): void {
-    this.assessmentUI.dispose?.(); 
+    if (this.swMessageHandler) {
+      navigator.serviceWorker.removeEventListener('message', this.swMessageHandler);
+      this.swMessageHandler = null;
+    }
+    this.assessmentUI.dispose?.();
   }
 
   /**
