@@ -172,6 +172,15 @@ export class App {
       UIController.ConfigureRoot(this.uiRoot);
     }
 
+    // In new-UI mode DragDropAssessmentUI owns the game-start flow.
+    // UIController.gameReady defaults to true, so its landing click handler would
+    // call UIController.showGame() (setting #gameWrap display:grid) before
+    // DragDropAssessmentUI.showGame() runs, causing DragDropAssessmentUI to hit
+    // its idempotent guard and skip callbacks.onStart() entirely.
+    if (this.assessmentUIMode === 'new-ui') {
+      UIController.SetGameReady(false);
+    }
+
     // Controller uses the same resolved mode — no independent flag check.
     this.assessmentUI.dispose?.();
     this.assessmentUI = this.createAssessmentUI();
@@ -386,6 +395,23 @@ export class App {
         });
 
       navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+
+      // Instance-bound handler so this.assessmentUI (new-UI path) also receives
+      // loading progress signals that arrive via the SW→client message channel.
+      navigator.serviceWorker.addEventListener('message', (event: MessageEvent) => {
+        if (event.data.msg === 'Loading') {
+          const progressValue = parseInt(event.data.data.progress);
+          if (progressValue >= 100) {
+            this.assessmentUI.setLoadingProgress(100);
+            setTimeout(() => {
+              this.assessmentUI.setLoadingVisible(false);
+              this.assessmentUI.setContentLoaded(true);
+            }, skipLoadingScreen ? 0 : 1500);
+          } else if (progressValue >= 10) {
+            this.assessmentUI.setLoadingProgress(progressValue);
+          }
+        }
+      });
 
       await navigator.serviceWorker.ready;
 

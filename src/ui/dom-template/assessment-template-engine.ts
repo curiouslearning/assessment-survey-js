@@ -170,6 +170,13 @@ export class TemplateContext {
   public resolveAsset(path: string): string {
     return withBase(this.config.assetBaseUrl, path, this.config.rootRelativeAssetPaths);
   }
+
+  /**
+   * Returns a derived context with the given sections overrides applied.
+   */
+  public withSections(override: Partial<TemplateSections>): TemplateContext {
+    return new TemplateContext({ ...this.config, sections: { ...this.config.sections, ...override } });
+  }
 }
 
 /**

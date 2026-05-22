@@ -5,6 +5,7 @@ import { DevModeBucketInfoSection } from '../shared/dev-mode-bucket-info-section
 import { DevModeToggleButtonSection } from '../shared/dev-mode-toggle-button-section';
 import { DevModeSettingsModalSection } from '../shared/dev-mode-settings-modal-section';
 import { DraggableQuestionViewWrapperSection } from './draggable-question-view-wrapper-section';
+import { LoadingScreenSection } from '../shared/loading-screen-section';
 
 /**
  * Composes the drag-and-drop gameplay sections into the body wrapper.
@@ -21,8 +22,14 @@ export class DragDropBodyWrapperSection extends TemplateSection<HTMLDivElement> 
       ),
     });
 
+    // Loading screen is placed at body-wrapper level so `position:absolute` covers
+    // the full app viewport (bodyWrapper has position:relative), not just the landing section.
+    // LandingPageWrapperSection receives a context with loadingScreen:false to avoid a duplicate #loadingScreen.
+    const landingContext = this.context.withSections({ loadingScreen: false });
+
     appendChildren(bodyWrapper, [
-      new LandingPageWrapperSection(this.context).render(),
+      this.context.sections.loadingScreen ? new LoadingScreenSection(this.context).render() : null,
+      new LandingPageWrapperSection(landingContext).render(),
       new DraggableQuestionViewWrapperSection(this.context).render(),
       this.context.sections.endingScreen ? new EndingPageWrapperSection(this.context).render() : null,
       new DevModeBucketInfoSection(this.context).render(),

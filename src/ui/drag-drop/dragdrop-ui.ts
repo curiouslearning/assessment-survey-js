@@ -197,6 +197,10 @@ export class DragDropAssessmentUI implements AssessmentUI {
     this.landingContainer.style.display = 'none';
     this.gameContainer.style.display = 'grid';
     this.endContainer.style.display = 'none';
+    // Hide answer buttons immediately so placeholder text is never visible before the
+    // first question is prepared (guards against any frame painted before onStart fires).
+    this.answersContainer.style.visibility = 'hidden';
+    this.answerButtons.forEach((b) => (b.style.visibility = 'hidden'));
     this.allStart = Date.now();
     this.callbacks?.onStart();
   }
