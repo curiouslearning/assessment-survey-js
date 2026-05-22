@@ -418,6 +418,13 @@ button {
   height: 96%;
 }
 
+/* Prevent browser native image drag (long-press ghost image) on all assets */
+.bodyWrapper img {
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
+}
+
 #nextqButton {
   background-color: rgba(0, 0, 0, 0);
   border: none;
