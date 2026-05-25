@@ -197,6 +197,10 @@ export class DragDropAssessmentUI implements AssessmentUI {
     this.landingContainer.style.display = 'none';
     this.gameContainer.style.display = 'grid';
     this.endContainer.style.display = 'none';
+    // Hide answer buttons immediately so placeholder text is never visible before the
+    // first question is prepared (guards against any frame painted before onStart fires).
+    this.answersContainer.style.visibility = 'hidden';
+    this.answerButtons.forEach((b) => (b.style.visibility = 'hidden'));
     this.allStart = Date.now();
     this.callbacks?.onStart();
   }
@@ -226,7 +230,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
         );
       });
     } else {
-      this.playButton.innerHTML = `<button id='nextqButton'><img class="audio-button" width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE_NEW)}' type='image/svg+xml'></img></button>`;
+      this.playButton.innerHTML = `<button id='nextqButton'><img class="audio-button" draggable="false" width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE_NEW)}' type='image/svg+xml'></img></button>`;
       const nextBtn = this.playButton.querySelector('#nextqButton') as HTMLElement;
       nextBtn?.addEventListener('click', () => {
         this.revealQuestion();
@@ -257,7 +261,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
     // Replace the play button handler so subsequent clicks only replay audio
     // without re-hiding the answer buttons (matches UIController.ShowQuestion behavior).
     if (!this.devModeBucketControlsEnabled) {
-      this.playButton.innerHTML = `<button id='nextqButton'><img class="audio-button" width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE_NEW)}' type='image/svg+xml'></img></button>`;
+      this.playButton.innerHTML = `<button id='nextqButton'><img class="audio-button" draggable="false" width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE_NEW)}' type='image/svg+xml'></img></button>`;
       const replayBtn = this.playButton.querySelector('#nextqButton') as HTMLElement;
       replayBtn?.addEventListener('click', () => {
         AudioController.PlayAudio(
@@ -341,6 +345,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
     let img = this.playButton.querySelector('img') as HTMLImageElement;
     if (!img) {
       img = document.createElement('img');
+      img.draggable = false;
       this.playButton.appendChild(img);
     }
     img.src = resolveAssetPath(
