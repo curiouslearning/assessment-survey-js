@@ -292,6 +292,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
     this.answerButtons.forEach((btn) => {
       btn.style.visibility = 'hidden';
       btn.style.animation = '';
+      btn.style.fontSize = '';
       btn.innerHTML = '';
     });
 
@@ -301,7 +302,9 @@ export class DragDropAssessmentUI implements AssessmentUI {
         if (!button) return;
 
         const isCorrect = answer.answerName === question.correct;
-        button.innerHTML = 'answerText' in answer ? (answer as any).answerText : '';
+        const answerText = 'answerText' in answer ? (answer as any).answerText : '';
+        button.innerHTML = answerText;
+        this.applyTextFit(button, answerText);
 
         if (isCorrect && this.devModeCorrectLabelVisibility) {
           const label = document.createElement('div');
@@ -435,5 +438,35 @@ export class DragDropAssessmentUI implements AssessmentUI {
   // ─────────────────────────────────────────────────────────────────────────────
   // Private helpers
   // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Scales the button's font-size so the longest word fits on a single line
+   * inside the ladybug body. The 4-column layout gives ~60 px of usable text
+   * width (≈80 px column − 20 px padding). Breakpoints derived from
+   * BalooBhai2's ~0.58 avg char-width ratio: F = 60 / (chars × 0.58).
+   */
+  private applyTextFit(button: HTMLElement, rawText: string): void {
+    const plainText = rawText.replace(/<[^>]*>/g, '').trim();
+    if (!plainText) return;
+
+    const words = plainText.split(/\s+/);
+    const maxWordLen = Math.max(...words.map((w) => w.length));
+
+    if (maxWordLen <= 4) {
+      button.style.fontSize = '1.4rem';
+    } else if (maxWordLen <= 5) {
+      button.style.fontSize = '1.1rem';
+    } else if (maxWordLen <= 6) {
+      button.style.fontSize = '0.95rem';
+    } else if (maxWordLen <= 7) {
+      button.style.fontSize = '0.85rem';
+    } else if (maxWordLen <= 9) {
+      button.style.fontSize = '0.7rem';
+    } else if (maxWordLen <= 12) {
+      button.style.fontSize = '0.6rem';
+    } else {
+      button.style.fontSize = '0.5rem';
+    }
+  }
 
 }
