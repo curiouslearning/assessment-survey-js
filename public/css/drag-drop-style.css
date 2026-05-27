@@ -297,6 +297,9 @@ button {
   transition: none;
   overflow: visible;
   position: relative;
+  white-space: nowrap;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .as-ui-mode-new .answerButton.dragging {
@@ -416,6 +419,13 @@ button {
   margin: 2% 2%;
   width: 96%;
   height: 96%;
+}
+
+/* Prevent browser native image drag (long-press ghost image) on all assets */
+.bodyWrapper img {
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
 }
 
 #nextqButton {

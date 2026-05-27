@@ -102,6 +102,7 @@ export class App {
   private assessmentUI: AssessmentUI;
   private uiRoot: Document | ShadowRoot | HTMLElement = document;
   private templateConfig: Omit<AssessmentSurveyTemplateConfig, 'assessmentUIMode'> = {};
+  private swMessageHandler: ((event: MessageEvent) => void) | null = null;
 
   lang: string = 'english';
 
@@ -170,6 +171,15 @@ export class App {
         assessmentUIMode: this.assessmentUIMode,
       });
       UIController.ConfigureRoot(this.uiRoot);
+    }
+
+    // In new-UI mode DragDropAssessmentUI owns the game-start flow.
+    // UIController.gameReady defaults to true, so its landing click handler would
+    // call UIController.showGame() (setting #gameWrap display:grid) before
+    // DragDropAssessmentUI.showGame() runs, causing DragDropAssessmentUI to hit
+    // its idempotent guard and skip callbacks.onStart() entirely.
+    if (this.assessmentUIMode === 'new-ui') {
+      UIController.SetGameReady(false);
     }
 
     // Controller uses the same resolved mode — no independent flag check.
@@ -352,6 +362,7 @@ export class App {
             max_score: gameInstance.max_score,
             time_spent: endTime - startTime,
             event_type: 'activity_completed',
+            app_version: appVersion,
           });
         }
       });
@@ -386,6 +397,27 @@ export class App {
         });
 
       navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+
+      // Instance-bound handler so this.assessmentUI (new-UI path) also receives
+      // loading progress signals that arrive via the SW→client message channel.
+      if (this.swMessageHandler) {
+        navigator.serviceWorker.removeEventListener('message', this.swMessageHandler);
+      }
+      this.swMessageHandler = (event: MessageEvent) => {
+        if (event.data.msg === 'Loading') {
+          const progressValue = parseInt(event.data.data.progress);
+          if (progressValue >= 100) {
+            this.assessmentUI.setLoadingProgress(100);
+            setTimeout(() => {
+              this.assessmentUI.setLoadingVisible(false);
+              this.assessmentUI.setContentLoaded(true);
+            }, skipLoadingScreen ? 0 : 1500);
+          } else if (progressValue >= 10) {
+            this.assessmentUI.setLoadingProgress(progressValue);
+          }
+        }
+      };
+      navigator.serviceWorker.addEventListener('message', this.swMessageHandler);
 
       await navigator.serviceWorker.ready;
 
@@ -480,7 +512,11 @@ export class App {
   }
 
   public dispose(): void {
-    this.assessmentUI.dispose?.(); 
+    if (this.swMessageHandler) {
+      navigator.serviceWorker.removeEventListener('message', this.swMessageHandler);
+      this.swMessageHandler = null;
+    }
+    this.assessmentUI.dispose?.();
   }
 
   /**

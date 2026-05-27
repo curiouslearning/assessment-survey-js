@@ -647,16 +647,7 @@ export class UIController {
 
   public static ProgressChest() {
     const chestImage = UIController.getInstance().getElementById<HTMLImageElement>('chestImage');
-    let currentImgSrc = chestImage.src;
-    console.log('Chest Progression-->', chestImage);
-    console.log('Chest Progression-->', chestImage.src);
-    const currentImageNumber = parseInt(currentImgSrc.slice(-6, -4), 10);
-    console.log('Chest Progression number-->', currentImageNumber);
-    const nextImageNumber = (currentImageNumber % 4) + 1;
-    const nextImageSrc = Number.isNaN(nextImageNumber)
-      ? resolveAssetPath(`img/chestprogression/TreasureChestOpen0${String(nextImageNumber)}.svg`)
-      : resolveAssetPath(ASSET_PATHS.CHEST_PROGRESSION[nextImageNumber]);
-    chestImage.src = nextImageSrc;
+    chestImage.src = resolveAssetPath(ASSET_PATHS.CHEST_PROGRESSION[4]);
   }
 
   public static SetContentLoaded(value: boolean): void {

@@ -6,6 +6,7 @@ export default class DragEventController {
     private targetDropElement: iDropAreaHTMLElement | null = null;
     private foundDragElement: iDraggableHTMLElement | null = null;
     private locked = false;
+    private activePointerId: number | null = null;
 
     constructor(private root: HTMLElement) {
         this.targetDropElement = this.getDropTarget();
@@ -23,6 +24,7 @@ export default class DragEventController {
         this.root.addEventListener('pointermove', this.handlePointerDragMove);
         this.root.addEventListener('pointerup', this.handlePointerUp);
         this.root.addEventListener('pointercancel', this.handlePointerCancel);
+        this.root.addEventListener('dragstart', this.handleDragStart);
     }
 
     public detach(): void {
@@ -30,8 +32,10 @@ export default class DragEventController {
         this.root.removeEventListener('pointermove', this.handlePointerDragMove);
         this.root.removeEventListener('pointerup', this.handlePointerUp);
         this.root.removeEventListener('pointercancel', this.handlePointerCancel);
+        this.root.removeEventListener('dragstart', this.handleDragStart);
         this.foundDragElement = null;
         this.targetDropElement = null;
+        this.activePointerId = null;
     }
 
     private locateBtnElement(event: PointerEvent): iDraggableHTMLElement | null {
@@ -71,18 +75,30 @@ export default class DragEventController {
         chestImage.src = chestImage.src.replace(/TreasureChestOpen[\w-]+\.svg/, `${variant}.svg`);
     }
 
+    private isActivePointer(event: PointerEvent): boolean {
+        return this.activePointerId !== null && event.pointerId === this.activePointerId;
+    }
+
+    //suppress the browser's native HTML5 drag on any element inside
+    // the game container so only the custom pointer-event drag can fire.
+    private handleDragStart = (event: DragEvent) => {
+        event.preventDefault();
+    };
+
     private handlePointerDown = (event: PointerEvent) => {
         if (this.locked) return;
+        if (this.activePointerId !== null || this.foundDragElement) return;
 
-        this.foundDragElement = this.locateBtnElement(event);
+        const dragElement = this.locateBtnElement(event);
 
-        if (this.foundDragElement) {
-            this.foundDragElement?.onStart(event);
-            // Open the chest lid as soon as a drag begins
-            this.setChestImage('TreasureChestOpen04-new');
-            appEventBus.publish(appEventBus.EVENTS.ON_DRAG_START, true);
-        }
+        if (!dragElement) return;
 
+        this.activePointerId = event.pointerId;
+        this.foundDragElement = dragElement;
+        this.foundDragElement?.onStart(event);
+        // Open the chest lid as soon as a drag begins
+        this.setChestImage('TreasureChestOpen04-new');
+        appEventBus.publish(appEventBus.EVENTS.ON_DRAG_START, true);
     };
 
     private isWithinTargetArea(
@@ -104,7 +120,7 @@ export default class DragEventController {
 
     private handlePointerDragMove = (event: PointerEvent) => {
         //Returns none if there are no answer button element.
-        if (!this.foundDragElement) return;
+        if (!this.foundDragElement || !this.isActivePointer(event)) return;
 
         //Trigger the on move to move the button element.
         this.foundDragElement?.onMove(event);
@@ -116,7 +132,9 @@ export default class DragEventController {
         }
     };
 
-    private handlePointerUp = (_event: PointerEvent) => {
+    private handlePointerUp = (event: PointerEvent) => {
+        if (!this.isActivePointer(event)) return;
+
         const dropContext = this.getActiveDropContext();
         if (dropContext) {
             // Dragged element released over the drop zone — commit the answer selection
@@ -129,17 +147,21 @@ export default class DragEventController {
         this.endDrag();
     };
 
-    private handlePointerCancel = (_event: PointerEvent) => {
+    private handlePointerCancel = (event: PointerEvent) => {
+        if (!this.isActivePointer(event)) return;
+
         this.endDrag();
     };
 
     private endDrag(): void {
         if (!this.foundDragElement) {
+            this.activePointerId = null;
             return;
         }
 
         this.foundDragElement?.onEnd?.();
         this.foundDragElement = null;
+        this.activePointerId = null;
         // Close the chest lid once the drag interaction is over
         this.setChestImage('TreasureChestOpen01-new');
     };
