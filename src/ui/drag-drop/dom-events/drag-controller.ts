@@ -24,6 +24,7 @@ export default class DragEventController {
         this.root.addEventListener('pointermove', this.handlePointerDragMove);
         this.root.addEventListener('pointerup', this.handlePointerUp);
         this.root.addEventListener('pointercancel', this.handlePointerCancel);
+        this.root.addEventListener('dragstart', this.handleDragStart);
     }
 
     public detach(): void {
@@ -31,6 +32,7 @@ export default class DragEventController {
         this.root.removeEventListener('pointermove', this.handlePointerDragMove);
         this.root.removeEventListener('pointerup', this.handlePointerUp);
         this.root.removeEventListener('pointercancel', this.handlePointerCancel);
+        this.root.removeEventListener('dragstart', this.handleDragStart);
         this.foundDragElement = null;
         this.targetDropElement = null;
         this.activePointerId = null;
@@ -76,6 +78,12 @@ export default class DragEventController {
     private isActivePointer(event: PointerEvent): boolean {
         return this.activePointerId !== null && event.pointerId === this.activePointerId;
     }
+
+    //suppress the browser's native HTML5 drag on any element inside
+    // the game container so only the custom pointer-event drag can fire.
+    private handleDragStart = (event: DragEvent) => {
+        event.preventDefault();
+    };
 
     private handlePointerDown = (event: PointerEvent) => {
         if (this.locked) return;

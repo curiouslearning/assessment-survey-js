@@ -61,6 +61,7 @@ export class AudioController {
     console.log('Add image: ' + newImageURL);
     let newImage = new Image();
     newImage.src = resolveAssetPath(newImageURL);
+    newImage.draggable = false;
     AudioController.getInstance().allImages[newImageURL] = newImage;
   }
 

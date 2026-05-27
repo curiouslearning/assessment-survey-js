@@ -197,6 +197,10 @@ export class DragDropAssessmentUI implements AssessmentUI {
     this.landingContainer.style.display = 'none';
     this.gameContainer.style.display = 'grid';
     this.endContainer.style.display = 'none';
+    // Hide answer buttons immediately so placeholder text is never visible before the
+    // first question is prepared (guards against any frame painted before onStart fires).
+    this.answersContainer.style.visibility = 'hidden';
+    this.answerButtons.forEach((b) => (b.style.visibility = 'hidden'));
     this.allStart = Date.now();
     this.callbacks?.onStart();
   }
@@ -226,7 +230,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
         );
       });
     } else {
-      this.playButton.innerHTML = `<button id='nextqButton'><img class="audio-button" width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE_NEW)}' type='image/svg+xml'></img></button>`;
+      this.playButton.innerHTML = `<button id='nextqButton'><img class="audio-button" draggable="false" width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE_NEW)}' type='image/svg+xml'></img></button>`;
       const nextBtn = this.playButton.querySelector('#nextqButton') as HTMLElement;
       nextBtn?.addEventListener('click', () => {
         this.revealQuestion();
@@ -257,7 +261,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
     // Replace the play button handler so subsequent clicks only replay audio
     // without re-hiding the answer buttons (matches UIController.ShowQuestion behavior).
     if (!this.devModeBucketControlsEnabled) {
-      this.playButton.innerHTML = `<button id='nextqButton'><img class="audio-button" width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE_NEW)}' type='image/svg+xml'></img></button>`;
+      this.playButton.innerHTML = `<button id='nextqButton'><img class="audio-button" draggable="false" width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE_NEW)}' type='image/svg+xml'></img></button>`;
       const replayBtn = this.playButton.querySelector('#nextqButton') as HTMLElement;
       replayBtn?.addEventListener('click', () => {
         AudioController.PlayAudio(
@@ -288,6 +292,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
     this.answerButtons.forEach((btn) => {
       btn.style.visibility = 'hidden';
       btn.style.animation = '';
+      btn.style.fontSize = '';
       btn.innerHTML = '';
     });
 
@@ -297,7 +302,9 @@ export class DragDropAssessmentUI implements AssessmentUI {
         if (!button) return;
 
         const isCorrect = answer.answerName === question.correct;
-        button.innerHTML = 'answerText' in answer ? (answer as any).answerText : '';
+        const answerText = 'answerText' in answer ? (answer as any).answerText : '';
+        button.innerHTML = answerText;
+        this.applyTextFit(button, answerText);
 
         if (isCorrect && this.devModeCorrectLabelVisibility) {
           const label = document.createElement('div');
@@ -341,6 +348,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
     let img = this.playButton.querySelector('img') as HTMLImageElement;
     if (!img) {
       img = document.createElement('img');
+      img.draggable = false;
       this.playButton.appendChild(img);
     }
     img.src = resolveAssetPath(
@@ -430,5 +438,35 @@ export class DragDropAssessmentUI implements AssessmentUI {
   // ─────────────────────────────────────────────────────────────────────────────
   // Private helpers
   // ─────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Scales the button's font-size so the longest word fits on a single line
+   * inside the ladybug body. The 4-column layout gives ~60 px of usable text
+   * width (≈80 px column − 20 px padding). Breakpoints derived from
+   * BalooBhai2's ~0.58 avg char-width ratio: F = 60 / (chars × 0.58).
+   */
+  private applyTextFit(button: HTMLElement, rawText: string): void {
+    const plainText = rawText.replace(/<[^>]*>/g, '').trim();
+    if (!plainText) return;
+
+    const words = plainText.split(/\s+/);
+    const maxWordLen = Math.max(...words.map((w) => w.length));
+
+    if (maxWordLen <= 4) {
+      button.style.fontSize = '1.4rem';
+    } else if (maxWordLen <= 5) {
+      button.style.fontSize = '1.1rem';
+    } else if (maxWordLen <= 6) {
+      button.style.fontSize = '0.95rem';
+    } else if (maxWordLen <= 7) {
+      button.style.fontSize = '0.85rem';
+    } else if (maxWordLen <= 9) {
+      button.style.fontSize = '0.7rem';
+    } else if (maxWordLen <= 12) {
+      button.style.fontSize = '0.6rem';
+    } else {
+      button.style.fontSize = '0.5rem';
+    }
+  }
 
 }

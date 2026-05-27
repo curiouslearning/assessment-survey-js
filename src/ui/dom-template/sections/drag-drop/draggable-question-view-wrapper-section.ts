@@ -25,6 +25,7 @@ export class DraggableQuestionViewWrapperSection extends TemplateSection<HTMLDiv
                 id: 'chestImage',
                 attrs: {
                     src: this.context.resolveAsset('img/chestprogression/TreasureChestOpen01-new.svg'),
+                    draggable: 'false',
                 },
             })
         );
