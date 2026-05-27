@@ -109,8 +109,8 @@ body.assessment-survey-standalone {
 }
 
 .as-ui-mode-new #chestImage {
-  max-width: 380px;
-  max-height: 380px;
+  max-width: 260px;
+  max-height: 260px;
 }
 
 .starWrapper {
@@ -283,6 +283,10 @@ button {
   overflow: hidden;
 }
 
+.as-ui-mode-new .answerContainer {
+  justify-items: center !important;
+}
+
 /* Drag-and-drop UI: ladybug button visuals */
 /* Keep both ladybug assets referenced up front so the pre asset swap rendering stays consistent
    and does not show a brief decode delay the first time the dragging state appears. */
@@ -297,6 +301,9 @@ button {
   transition: none;
   overflow: visible;
   position: relative;
+  width: 100%;
+  max-width: 105px;
+  justify-self: center;
   white-space: nowrap;
   line-height: 1.2;
   text-align: center;
