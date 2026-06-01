@@ -285,6 +285,7 @@ button {
 
 .as-ui-mode-new .answerContainer {
   justify-items: center !important;
+  column-gap: 14px !important;
 }
 
 /* Drag-and-drop UI: ladybug button visuals */
@@ -295,7 +296,7 @@ button {
   color: rgb(255, 255, 255);
   background-color: transparent;
   background-image: url('../img/ladybug_close.svg'), url('../img/ladybug_open.svg');
-  background-size: contain, 0 0;
+  background-size: 82%, 0 0;
   background-repeat: no-repeat, no-repeat;
   background-position: center, center;
   transition: none;
@@ -310,7 +311,7 @@ button {
 }
 
 .as-ui-mode-new .answerButton.dragging {
-  background-size: 0 0, contain;
+  background-size: 0 0, 82%;
 }
 
 /* Sparkle ✦ glitter — continuous twinkle around the ladybug edges while dragging.
