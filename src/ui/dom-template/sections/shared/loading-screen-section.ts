@@ -2,11 +2,7 @@ import { appendChildren, createElement, TemplateSection } from '../../assessment
 
 export class LoadingScreenSection extends TemplateSection<HTMLDivElement> {
   public render(): HTMLDivElement {
-    const loadingScreen = createElement('div', {
-      id: 'loadingScreen',
-      style:
-        'position:absolute;top:0;left:0;width:100%;height:100%;display:flex;justify-content:center;align-items:center;z-index:100;background-color:white;flex-direction:column',
-    });
+    const loadingScreen = createElement('div', { id: 'loadingScreen' });
     const loadingGif = createElement('img', {
       id: 'loading-gif',
       attrs: {
