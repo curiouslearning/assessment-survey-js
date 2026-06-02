@@ -27,8 +27,11 @@ export class DragDropBodyWrapperSection extends TemplateSection<HTMLDivElement> 
     // LandingPageWrapperSection receives a context with loadingScreen:false to avoid a duplicate #loadingScreen.
     const landingContext = this.context.withSections({ loadingScreen: false });
 
+    if (this.context.sections.loadingScreen) {
+      bodyWrapper.appendChild(new LoadingScreenSection(this.context).render());
+    }
+
     appendChildren(bodyWrapper, [
-      this.context.sections.loadingScreen ? new LoadingScreenSection(this.context).render() : null,
       new LandingPageWrapperSection(landingContext).render(),
       new DraggableQuestionViewWrapperSection(this.context).render(),
       this.context.sections.endingScreen ? new EndingPageWrapperSection(this.context).render() : null,
