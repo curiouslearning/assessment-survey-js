@@ -3,7 +3,7 @@ import {
   createElement,
   joinClassNames,
   TemplateSection,
-} from '../assessment-template-engine';
+} from '../../assessment-template-engine';
 
 export class QuestionViewWrapperSection extends TemplateSection<HTMLDivElement> {
   public render(): HTMLDivElement {

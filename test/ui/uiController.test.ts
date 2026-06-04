@@ -242,29 +242,15 @@ describe('UIController', () => {
     expect(getInstanceSpy).toHaveBeenCalled();
     getInstanceSpy.mockRestore();
   });
-  it('should update chest image source to the next one', () => {
-    UIController.ProgressChest();
-    expect(chestImage.src).toContain('http://localhost/img/chestprogression/TreasureChestOpen0NaN.svg');
-  });
-
-  it('should loop from 04 to 01', () => {
-    chestImage.src = 'img/chestprogression/TreasureChestOpen04.svg';
-    UIController.ProgressChest();
-    expect(chestImage.src).toContain('http://localhost/img/chestprogression/TreasureChestOpen01.svg');
-  });
-
-  it('should extract correct current image number and increment', () => {
-    chestImage.src = 'img/chestprogression/TreasureChestOpen03.svg';
+  it('should always set chest image to TreasureChestOpen04 on completion', () => {
     UIController.ProgressChest();
     expect(chestImage.src).toContain('http://localhost/img/chestprogression/TreasureChestOpen04.svg');
   });
 
-  it('should default to image 01 if current number is invalid', () => {
-    chestImage.src = 'img/chestprogression/InvalidName.svg';
+  it('should set chest to TreasureChestOpen04 regardless of current image', () => {
+    chestImage.src = 'img/chestprogression/TreasureChestOpen01.svg';
     UIController.ProgressChest();
-    // Depending on how parseInt behaves, this might become NaN.
-    // So you might want to guard in actual code.
-    expect(chestImage.src).toContain('http://localhost/img/chestprogression/TreasureChestOpen0NaN.svg'); // <- can write a fallback in real code
+    expect(chestImage.src).toContain('http://localhost/img/chestprogression/TreasureChestOpen04.svg');
   });
   it('should add 20 stars with correct IDs and class', () => {
     const uiController = UIController.getInstance();

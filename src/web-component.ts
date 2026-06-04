@@ -1,6 +1,6 @@
-import { App, AppStartupConfig, AssessmentCompletedPayload, HostIntegrationAdapters, SummaryData, createApp } from './App';
+import { App, AppStartupConfig, AssessmentCompletedPayload, AssessmentUIMode, HostIntegrationAdapters, SummaryData, createApp } from './App';
 import { PubSub } from '@curiouslearning/core';
-import { buildAssessmentSurveyFragment, normalizeBaseUrl, normalizeHostTheme } from './ui/dom-template';
+import { normalizeBaseUrl, normalizeHostTheme } from './ui/dom-template';
 import { UIController } from '@ui/uiController';
 import { AnalyticsConfig } from '@analytics/base-analytics-integration';
 
@@ -115,16 +115,6 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
     const hostTheme = normalizeHostTheme(this.getAttribute('host-theme'));
     const embedMode = toBooleanAttribute(this.getAttribute('embed-mode'), true);
     const modeDefaults = embedMode ? EMBED_MODE_DEFAULTS : STANDARD_MODE_DEFAULTS;
-    this.replaceChildren(
-      buildAssessmentSurveyFragment({
-        assetBaseUrl,
-        hostTheme,
-        includeStylesheetLink: true,
-        rootRelativeAssetPaths: true,
-      })
-    );
-
-    UIController.ConfigureRoot(this);
 
     const startupConfig: AppStartupConfig = {
       dataURL: this.getAttribute('data-key') ?? undefined,
@@ -146,6 +136,14 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
       uiRoot: this,
       analyticsConfig: this.analyticsConfig ?? undefined,
       hostIntegrationAdapters: this.buildHostIntegrationAdapters(),
+      assessmentUIMode: (this.getAttribute('assessment-ui-mode') as AssessmentUIMode) ?? undefined,
+      platform: this.getAttribute('platform') ?? 'ftm',
+      templateConfig: {
+        assetBaseUrl,
+        hostTheme,
+        includeStylesheetLink: true,
+        rootRelativeAssetPaths: true,
+      },
     };
 
     this.appInstance = createApp(startupConfig);
@@ -154,6 +152,7 @@ export class AssessmentSurveyPlayerElement extends HTMLElement {
   }
 
   disconnectedCallback(): void {
+    this.appInstance?.dispose();
     this.appInstance = null;
     this.isInitialized = false;
     this.analyticsConfig = null;

@@ -1,4 +1,4 @@
-import { appendChildren, createElement, TemplateSection } from '../assessment-template-engine';
+import { appendChildren, createElement, TemplateSection } from '../../assessment-template-engine';
 
 export class LoadingScreenSection extends TemplateSection<HTMLDivElement> {
   public render(): HTMLDivElement {

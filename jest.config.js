@@ -9,6 +9,7 @@ module.exports = {
    moduleNameMapper: {
     '^@curiouslearning/analytics$': '<rootDir>/node_modules/@curiouslearning/analytics/dist/index.js',
     '^@curiouslearning/core$': '<rootDir>/test/_mocks/curiouslearning-core.js',
+    '^@curiouslearning/features$': '<rootDir>/test/_mocks/curiouslearning-features.js',
     ...pathsToModuleNameMapper(compilerOptions.paths, {
       prefix: '<rootDir>/',
     }),

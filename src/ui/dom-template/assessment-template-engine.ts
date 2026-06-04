@@ -18,6 +18,7 @@ export type ResolvedTemplateConfig = {
   sections: TemplateSections;
   text: TemplateTextOverrides;
   classNames: TemplateClassNames;
+  assessmentUIMode: string;
 };
 
 /**
@@ -157,10 +158,24 @@ export class TemplateContext {
   }
 
   /**
+   * The assessment UI mode controlling which question template is rendered.
+   */
+  public get assessmentUIMode(): string {
+    return this.config.assessmentUIMode;
+  }
+
+  /**
    * Resolves an asset URL using the normalized base URL rules.
    */
   public resolveAsset(path: string): string {
     return withBase(this.config.assetBaseUrl, path, this.config.rootRelativeAssetPaths);
+  }
+
+  /**
+   * Returns a derived context with the given sections overrides applied.
+   */
+  public withSections(override: Partial<TemplateSections>): TemplateContext {
+    return new TemplateContext({ ...this.config, sections: { ...this.config.sections, ...override } });
   }
 }
 
