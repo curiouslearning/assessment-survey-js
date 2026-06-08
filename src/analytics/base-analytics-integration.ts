@@ -1,4 +1,5 @@
 import { AnalyticsService, FirebaseStrategy, StatsigStrategy } from '@curiouslearning/analytics';
+import { getContainerAppVersion } from '@utils/urlUtils';
 
 export interface AnalyticsConfig {
     firebaseName: string;
@@ -10,6 +11,7 @@ export interface AnalyticsConfig {
     messagingSenderId: string;
     appId: string;
     measurementId: string;
+    container_app_version?: string;
 }
 
 /**
@@ -54,6 +56,8 @@ export class BaseAnalyticsIntegration {
         }
 
         try {
+            const containerAppVersion = config.container_app_version ?? getContainerAppVersion() ?? '';
+
             this.firebaseStrategy = new FirebaseStrategy({
                 firebaseName: config.firebaseName,
                 firebaseOptions: {
@@ -66,7 +70,9 @@ export class BaseAnalyticsIntegration {
                     appId: config.appId,
                     measurementId: config.measurementId,
                 },
-                userProperties: {}
+                userProperties: {
+                    container_app_version: containerAppVersion
+                }
             });
 
             await this.firebaseStrategy.initialize();

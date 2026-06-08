@@ -11,6 +11,7 @@ export type RuntimeConfigOverrides = {
   endpoint?: string;
   organization?: string;
   assessmentUIMode?: string;
+  container_app_version?: string;
 };
 
 let runtimeConfigOverrides: RuntimeConfigOverrides = {};
@@ -120,6 +121,10 @@ export function getAssessmentUIMode(): 'legacy' | 'new-ui' | null {
     return value;
   }
   return null;
+}
+
+export function getContainerAppVersion(): string | null {
+  return getConfigValue('container_app_version');
 }
 
 function getPathName() {
