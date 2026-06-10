@@ -351,6 +351,8 @@ export class App {
           const androidInterface = new AndroidInterface({
             cr_user_id,
             app_id: appType,
+            // appVersion travels as top-level metadata, not inside data.
+            metadata: { appVersion },
             debug: false,
             log: false,
           });
@@ -362,7 +364,6 @@ export class App {
             max_score: gameInstance.max_score,
             time_spent: endTime - startTime,
             event_type: 'activity_completed',
-            app_version: appVersion,
           });
         }
       });
@@ -571,6 +572,7 @@ export class App {
       const androidInterface = new AndroidInterface({
         cr_user_id,
         app_id: 'assessment',
+        metadata: { appVersion },
       });
       androidInterface.logSummaryData?.(summaryData);
     }
