@@ -48,12 +48,12 @@ def delete_extra_audio_files(audios_folder, distinct_items):
     print("Completed checking and deleting extra audio files.")
 
 if __name__ == "__main__":
-    root_folder = r"./data"
+    root_folder = r"./public/data"
     
     language = input("Enter the language: ")
-    assessment_type = input("Enter the type of assessment:")
+    assessment_type = input("Enter the type of assessment: ").replace("-", "")
     json_path = construct_json_path(root_folder, language, assessment_type)
-    audios_folder = os.path.join("./audio", f"{language}-{assessment_type}")
+    audios_folder = os.path.join("./public/assets/audio", f"{language}-{assessment_type}")
     print("Constructed JSON path:", json_path)
     
     # Get distinct items from JSON data
