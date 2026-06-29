@@ -1,7 +1,6 @@
 //this is where the logic for handling the buckets will go
 //
 //once we start adding in the assessment functionality
-import { UIController } from '@ui/uiController';
 import { AssessmentUI } from '@ui/assessment-ui';
 import { qData, answerData } from '@components/questionData';
 import { AnalyticsEvents } from '@analytics/analyticsEvents';
@@ -99,12 +98,15 @@ export class Assessment extends BaseQuiz {
   }
 
   public handleBucketGenModeChange(event: Event): void {
-    // TODO: Implement handleBucketGenModeChange
     this.bucketGenMode = parseInt(this.devModeBucketGenSelect.value) as BucketGenMode;
     this.buildBuckets(this.bucketGenMode).then(() => {
       // Finished building buckets
     });
     this.updateBucketInfo();
+    // Bucket controls only apply in LinearArrayBased mode; re-sync the UI flag.
+    this.ui.setBucketControlsVisibility?.(
+      this.isBucketControlsEnabled && this.bucketGenMode === BucketGenMode.LinearArrayBased
+    );
   }
 
   public handleCorrectLabelShownChange(): void {
@@ -120,7 +122,13 @@ export class Assessment extends BaseQuiz {
   }
 
   public handleBucketControlsShownChange(): void {
-    this.ui.setBucketControlsVisibility?.(this.isBucketControlsEnabled);
+    // Bucket controls are only meaningful in LinearArrayBased mode.
+    // Enabling them in RandomBST mode would leave the play button empty (no audio button,
+    // no item buttons) because generateDevModeBucketControlsInContainer only generates
+    // controls for LinearArrayBased.
+    this.ui.setBucketControlsVisibility?.(
+      this.isBucketControlsEnabled && this.bucketGenMode === BucketGenMode.LinearArrayBased
+    );
   }
 
   public generateDevModeBucketControlsInContainer = (container: HTMLElement, clickHandler: () => void) => {
@@ -139,24 +147,10 @@ export class Assessment extends BaseQuiz {
           this.currentLinearTargetIndex = index;
           this.currentBucket.usedItems = [];
           console.log('Clicked on item ' + item.itemName + ' at index ' + this.currentLinearTargetIndex);
-          // TODO: Dev-mode only — still uses UIController internals directly.
-          // Will be cleaned up when dev-mode controls are routed through AssessmentUI.
           const newQ = this.buildNewQuestion();
-          UIController.getInstance().answersContainer.style.visibility = 'hidden';
-          for (let b in UIController.getInstance().buttons) {
-            UIController.getInstance().buttons[b].style.visibility = 'hidden';
-          }
-          UIController.getInstance().shown = false;
-          UIController.getInstance().nextQuestion = newQ;
-          UIController.getInstance().questionsContainer.innerHTML = '';
-          UIController.getInstance().questionsContainer.style.display = 'none';
-          UIController.ShowQuestion(newQ);
-          AudioController.PlayAudio(
-            this.buildNewQuestion().promptAudio,
-            UIController.getInstance().showOptions,
-            UIController.ShowAudioAnimation
-          );
-          // clickHandler();
+          if (!newQ) return;
+          this.ui.prepareQuestion(newQ);
+          this.ui.revealQuestion();
         };
         container.append(itemButton);
       }
