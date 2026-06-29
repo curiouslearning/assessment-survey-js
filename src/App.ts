@@ -351,6 +351,8 @@ export class App {
           const androidInterface = new AndroidInterface({
             cr_user_id,
             app_id: appType,
+            // appVersion travels as top-level metadata, not inside data.
+            metadata: { app_version: appVersion },
             debug: false,
             log: false,
           });
@@ -570,6 +572,7 @@ export class App {
       const androidInterface = new AndroidInterface({
         cr_user_id,
         app_id: 'assessment',
+        metadata: { app_version: appVersion },
       });
       androidInterface.logSummaryData?.(summaryData);
     }
