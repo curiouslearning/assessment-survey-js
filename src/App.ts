@@ -28,7 +28,7 @@ export type AssessmentUIMode = 'legacy' | 'new-ui';
 /** Feature flag key that enables the drag-and-drop assessment UI at runtime. */
 export const FEATURE_DRAG_DROP_UI = 'drag-drop-assessment-ui';
 
-const appVersion: string = 'v1.1.3';
+const appVersion: string = 'v1.1.4';
 
 /**
  * Content version from the data file in format v0.1
