@@ -225,7 +225,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
         this.revealQuestion();
         AudioController.PlayAudio(
           question.promptAudio,
-          () => this.showAnswerTargets(),
+          () => { if (this.nextQuestion === question) this.showAnswerTargets(); },
           (playing: boolean) => this.updateAudioButtonImage(playing)
         );
       });
@@ -236,7 +236,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
         this.revealQuestion();
         AudioController.PlayAudio(
           question.promptAudio,
-          () => this.showAnswerTargets(),
+          () => { if (this.nextQuestion === question) this.showAnswerTargets(); },
           (playing: boolean) => this.updateAudioButtonImage(playing)
         );
       });
@@ -270,6 +270,14 @@ export class DragDropAssessmentUI implements AssessmentUI {
           (playing: boolean) => this.updateAudioButtonImage(playing)
         );
       });
+    } else {
+      // In dev-mode bucket-controls, the play button area holds item-selection buttons.
+      // Auto-play the prompt audio and reveal answer targets once it finishes.
+      AudioController.PlayAudio(
+        question.promptAudio,
+        () => { if (this.nextQuestion === question) this.showAnswerTargets(); },
+        (playing: boolean) => this.updateAudioButtonImage(playing)
+      );
     }
   }
 

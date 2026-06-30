@@ -584,7 +584,7 @@ input[type='checkbox'] {
 
 #devModeBucketInfoContainer {
   position: absolute;
-  bottom: 12px;
+  bottom: 30px;
   right: 12px;
   color: white;
   border: none;
