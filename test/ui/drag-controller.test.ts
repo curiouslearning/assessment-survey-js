@@ -63,17 +63,9 @@ describe('DragEventController', () => {
   });
 
   it('calls drop target onHover when button overlaps chest during pointermove', () => {
-    button.getBoundingClientRect = jest.fn(() => ({
-      left: 10,
-      right: 60,
-      top: 10,
-      bottom: 60,
-      width: 50,
-      height: 50,
-      x: 10,
-      y: 10,
-      toJSON: () => ({}),
-    })) as typeof button.getBoundingClientRect;
+    // Hit testing reads the tracked drag center (no layout read) against the
+    // drop-zone rect cached on pointerdown.
+    button.getDragCenter = jest.fn(() => ({ x: 35, y: 35 }));
 
     dropArea.getBoundingClientRect = jest.fn(() => ({
       left: 20,
@@ -96,17 +88,7 @@ describe('DragEventController', () => {
   });
 
   it('calls drop target onDrop and ends the drag on pointerup when overlapping', () => {
-    button.getBoundingClientRect = jest.fn(() => ({
-      left: 10,
-      right: 60,
-      top: 10,
-      bottom: 60,
-      width: 50,
-      height: 50,
-      x: 10,
-      y: 10,
-      toJSON: () => ({}),
-    })) as typeof button.getBoundingClientRect;
+    button.getDragCenter = jest.fn(() => ({ x: 35, y: 35 }));
 
     dropArea.getBoundingClientRect = jest.fn(() => ({
       left: 20,
@@ -130,17 +112,7 @@ describe('DragEventController', () => {
   });
 
   it('ends the drag without dropping on pointercancel', () => {
-    button.getBoundingClientRect = jest.fn(() => ({
-      left: 10,
-      right: 60,
-      top: 10,
-      bottom: 60,
-      width: 50,
-      height: 50,
-      x: 10,
-      y: 10,
-      toJSON: () => ({}),
-    })) as typeof button.getBoundingClientRect;
+    button.getDragCenter = jest.fn(() => ({ x: 35, y: 35 }));
 
     dropArea.getBoundingClientRect = jest.fn(() => ({
       left: 20,

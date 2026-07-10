@@ -7,6 +7,9 @@ export default class DragEventController {
     private foundDragElement: iDraggableHTMLElement | null = null;
     private locked = false;
     private activePointerId: number | null = null;
+    // Drop-zone rect measured once per drag on pointerdown — the chest never moves
+    // while dragging, so per-move hit tests need no layout reads at all.
+    private chestRect: DOMRect | null = null;
 
     constructor(private root: HTMLElement) {
         this.targetDropElement = this.getDropTarget();
@@ -36,6 +39,7 @@ export default class DragEventController {
         this.foundDragElement = null;
         this.targetDropElement = null;
         this.activePointerId = null;
+        this.chestRect = null;
     }
 
     private locateBtnElement(event: PointerEvent): iDraggableHTMLElement | null {
@@ -62,7 +66,7 @@ export default class DragEventController {
         }
 
         // Only a valid drop context if the dragged element is currently overlapping the drop zone
-        if (!this.isWithinTargetArea(dragElement, dropElement)) {
+        if (!this.isWithinTargetArea(dragElement)) {
             return null;
         }
 
@@ -95,27 +99,29 @@ export default class DragEventController {
 
         this.activePointerId = event.pointerId;
         this.foundDragElement = dragElement;
+        // Measure the drop zone once per drag, before any style writes dirty the
+        // layout — every per-move hit test then runs on this cached rect.
+        const hitTarget = this.root.querySelector('#chestImage') ?? this.targetDropElement;
+        this.chestRect = hitTarget?.getBoundingClientRect() ?? null;
         this.foundDragElement?.onStart(event);
         // Open the chest lid as soon as a drag begins
         this.setChestImage('TreasureChestOpen04-new');
         appEventBus.publish(appEventBus.EVENTS.ON_DRAG_START, true);
     };
 
-    private isWithinTargetArea(
-        dragElement: iDraggableHTMLElement,
-        dropElement: iDropAreaHTMLElement,
-    ): boolean {
-        const buttonRect = dragElement.getBoundingClientRect();
-        const hitTarget = this.root.querySelector('#chestImage') ?? dropElement;
-        const chestRect = hitTarget.getBoundingClientRect();
+    // Pure-math hit test: the dragged element's center comes from state tracked by
+    // DraggableButton and the chest rect was cached on pointerdown, so this never
+    // forces a synchronous style recalc / layout during pointermove.
+    private isWithinTargetArea(dragElement: iDraggableHTMLElement): boolean {
+        const center = dragElement.getDragCenter?.();
+        const chestRect = this.chestRect;
 
-        const centerX = (buttonRect.left + buttonRect.right) / 2;
-        const centerY = (buttonRect.top + buttonRect.bottom) / 2;
+        if (!center || !chestRect) return false;
 
-        return centerX >= chestRect.left &&
-            centerX <= chestRect.right &&
-            centerY >= chestRect.top &&
-            centerY <= chestRect.bottom;
+        return center.x >= chestRect.left &&
+            center.x <= chestRect.right &&
+            center.y >= chestRect.top &&
+            center.y <= chestRect.bottom;
     }
 
     private handlePointerDragMove = (event: PointerEvent) => {
@@ -162,6 +168,7 @@ export default class DragEventController {
         this.foundDragElement?.onEnd?.();
         this.foundDragElement = null;
         this.activePointerId = null;
+        this.chestRect = null;
         // Close the chest lid once the drag interaction is over
         this.setChestImage('TreasureChestOpen01-new');
     };
