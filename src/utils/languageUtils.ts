@@ -6,7 +6,6 @@
 const RTL_Languages = /\p{Script=Arabic}/u;
 
 export const isRTL = (text: string) => {
-  console.log({ text });
   return RTL_Languages.test(text);
 };
 
