@@ -2,7 +2,7 @@
   "quizName": "urdu sight words",
   "appType": "assessment",
   "assessmentType": "sight-words",
-  "feedbackText": "شاندار!",
+  "feedbackText": "!شاندار",
   "contentVersion": "v0.1",
   "buckets": [
     {
