@@ -466,13 +466,6 @@ export class DragDropAssessmentUI implements AssessmentUI {
     const words = plainText.split(/\s+/);
     const maxWordLen = Math.max(...words.map((w) => w.length));
     const textIsInRTL = isRTL(plainText);
-    console.log({
-      plainText,
-      rawText,
-      textIsInRTL,
-      maxWordLen,
-      words,
-    });
 
     if (textIsInRTL) {
       button.style.fontSize = setFontSizeRTL(maxWordLen);
