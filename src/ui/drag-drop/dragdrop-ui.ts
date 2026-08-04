@@ -55,6 +55,11 @@ export class DragDropAssessmentUI implements AssessmentUI {
   private dragController: DragEventController | null = null;
   private dropUnsubscribe: (() => void) | null = null;
   private landingClickHandler: (() => void) | null = null;
+  private playButtonClickHandler: (() => void) | null = null;
+  // Mirrors the moment revealQuestion() runs (set synchronously, unlike `shown`
+  // which only flips once the reveal animation completes) so the persistent
+  // play-button listener knows whether to reveal-and-play or just replay audio.
+  private revealTriggered = false;
 
   private dragDropAudioControllerInstance: DragDropAudioController | null;
 
@@ -210,6 +215,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
     if (!question) return;
     this.nextQuestion = question;
     this.shown = false;
+    this.revealTriggered = false;
     this.buttonsActive = false;
 
     this.answersContainer.style.visibility = 'hidden';
@@ -229,18 +235,10 @@ export class DragDropAssessmentUI implements AssessmentUI {
         );
       });
     } else {
-      this.playButton.innerHTML = `<button id='nextqButton'><img class="audio-button" draggable="false" width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE_NEW)}' type='image/svg+xml'></img></button>`;
-      const nextBtn = this.playButton.querySelector('#nextqButton') as HTMLElement;
-      nextBtn?.addEventListener('click', () => {
-        this.revealQuestion();
-        AudioController.PlayAudio(
-          question.promptAudio,
-          () => {
-            if (this.nextQuestion === question) this.showAnswerTargets();
-          },
-          (playing: boolean) => this.updateAudioButtonImage(playing)
-        );
-      });
+      // Dev-mode bucket controls may have overwritten #nextqButton's markup on a
+      // previous question; only (re)build it when it isn't already in place, so a
+      // normal question-to-question transition reuses the same node and listener.
+      this.ensureDefaultPlayButton();
     }
   }
 
@@ -248,6 +246,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
     const question = this.nextQuestion;
     if (!question) return;
 
+    this.revealTriggered = true;
     this.answersContainer.style.visibility = 'visible';
     this.questionsContainer.innerHTML = '';
 
@@ -259,17 +258,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
     this.questionsContainer.innerHTML += question.promptText + '<BR>';
     this.answerButtons.forEach((b) => (b.style.visibility = 'hidden'));
 
-    // Replace the play button handler so subsequent clicks only replay audio
-    // without re-hiding the answer buttons (matches UIController.ShowQuestion behavior).
-    if (!this.devModeBucketControlsEnabled) {
-      this.playButton.innerHTML = `<button id='nextqButton'><img class="audio-button" draggable="false" width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE_NEW)}' type='image/svg+xml'></img></button>`;
-      const replayBtn = this.playButton.querySelector('#nextqButton') as HTMLElement;
-      replayBtn?.addEventListener('click', () => {
-        AudioController.PlayAudio(question.promptAudio, undefined, (playing: boolean) =>
-          this.updateAudioButtonImage(playing)
-        );
-      });
-    } else {
+    if (this.devModeBucketControlsEnabled) {
       // In dev-mode bucket-controls, the play button area holds item-selection buttons.
       // Auto-play the prompt audio and reveal answer targets once it finishes.
       AudioController.PlayAudio(
@@ -280,6 +269,43 @@ export class DragDropAssessmentUI implements AssessmentUI {
         (playing: boolean) => this.updateAudioButtonImage(playing)
       );
     }
+    // Non-dev-mode: the persistent play-button listener (see ensureDefaultPlayButton)
+    // now sees revealTriggered === true and switches to replay-only behavior on its
+    // own, so no per-question DOM/listener rebuild is needed here.
+  }
+
+  /**
+   * Builds the #nextqButton play button once and reuses it across questions,
+   * instead of tearing down and recreating its markup + click listener on every
+   * question/reveal. Behavior (reveal-and-play vs. replay-only) is decided at
+   * click time from `revealTriggered`, matching the previous listener-swap logic.
+   */
+  private ensureDefaultPlayButton(): void {
+    if (this.playButton.querySelector('#nextqButton')) return;
+
+    this.playButton.innerHTML = `<button id='nextqButton'><img class="audio-button" draggable="false" width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE_NEW)}' type='image/svg+xml'></img></button>`;
+    const nextBtn = this.playButton.querySelector('#nextqButton') as HTMLElement;
+
+    this.playButtonClickHandler = () => {
+      const question = this.nextQuestion;
+      if (!question) return;
+
+      if (!this.revealTriggered) {
+        this.revealQuestion();
+        AudioController.PlayAudio(
+          question.promptAudio,
+          () => {
+            if (this.nextQuestion === question) this.showAnswerTargets();
+          },
+          (playing: boolean) => this.updateAudioButtonImage(playing)
+        );
+      } else {
+        AudioController.PlayAudio(question.promptAudio, undefined, (playing: boolean) =>
+          this.updateAudioButtonImage(playing)
+        );
+      }
+    };
+    nextBtn?.addEventListener('click', this.playButtonClickHandler);
   }
 
   /**
@@ -445,6 +471,11 @@ export class DragDropAssessmentUI implements AssessmentUI {
     if (this.landingClickHandler) {
       this.landingContainer.removeEventListener('click', this.landingClickHandler);
       this.landingClickHandler = null;
+    }
+
+    if (this.playButtonClickHandler) {
+      this.playButton.querySelector('#nextqButton')?.removeEventListener('click', this.playButtonClickHandler);
+      this.playButtonClickHandler = null;
     }
     this.callbacks = null;
   }

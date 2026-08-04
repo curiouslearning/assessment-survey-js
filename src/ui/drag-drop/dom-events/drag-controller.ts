@@ -8,6 +8,12 @@ export default class DragEventController {
     private locked = false;
     private activePointerId: number | null = null;
 
+    // Batches pointermove work to one update per animation frame instead of doing the
+    // transform write + drop-area rect read synchronously on every native pointermove —
+    // avoids forced-synchronous-layout (write-then-read) on low-end devices.
+    private pendingMoveEvent: PointerEvent | null = null;
+    private rafHandle: number | null = null;
+
     constructor(private root: HTMLElement) {
         this.targetDropElement = this.getDropTarget();
     }
@@ -20,10 +26,12 @@ export default class DragEventController {
     }
 
     public attach(): void {
-        this.root.addEventListener('pointerdown', this.handlePointerDown);
-        this.root.addEventListener('pointermove', this.handlePointerDragMove);
-        this.root.addEventListener('pointerup', this.handlePointerUp);
-        this.root.addEventListener('pointercancel', this.handlePointerCancel);
+        // pointerdown/pointermove/pointerup/pointercancel never call preventDefault(),
+        // so marking them passive lets the browser optimize scroll/composite scheduling.
+        this.root.addEventListener('pointerdown', this.handlePointerDown, { passive: true });
+        this.root.addEventListener('pointermove', this.handlePointerDragMove, { passive: true });
+        this.root.addEventListener('pointerup', this.handlePointerUp, { passive: true });
+        this.root.addEventListener('pointercancel', this.handlePointerCancel, { passive: true });
         this.root.addEventListener('dragstart', this.handleDragStart);
     }
 
@@ -33,9 +41,34 @@ export default class DragEventController {
         this.root.removeEventListener('pointerup', this.handlePointerUp);
         this.root.removeEventListener('pointercancel', this.handlePointerCancel);
         this.root.removeEventListener('dragstart', this.handleDragStart);
+        this.cancelPendingMove();
         this.foundDragElement = null;
         this.targetDropElement = null;
         this.activePointerId = null;
+    }
+
+    private cancelPendingMove(): void {
+        if (this.rafHandle !== null) {
+            cancelAnimationFrame(this.rafHandle);
+            this.rafHandle = null;
+        }
+        this.pendingMoveEvent = null;
+    }
+
+    // Applies a still-scheduled move immediately instead of discarding it, so a pointerup
+    // that lands between two animation frames is evaluated against the final pointer
+    // position rather than a frame-stale one.
+    private flushPendingMoveNow(): void {
+        if (this.rafHandle !== null) {
+            cancelAnimationFrame(this.rafHandle);
+            this.rafHandle = null;
+        }
+        const event = this.pendingMoveEvent;
+        this.pendingMoveEvent = null;
+
+        if (event && this.foundDragElement && this.isActivePointer(event)) {
+            this.foundDragElement.onMove(event);
+        }
     }
 
     private locateBtnElement(event: PointerEvent): iDraggableHTMLElement | null {
@@ -122,6 +155,21 @@ export default class DragEventController {
         //Returns none if there are no answer button element.
         if (!this.foundDragElement || !this.isActivePointer(event)) return;
 
+        // Keep only the latest pointer position; schedule at most one flush per frame
+        // so bursts of native pointermove events collapse into a single update.
+        this.pendingMoveEvent = event;
+        if (this.rafHandle !== null) return;
+
+        this.rafHandle = requestAnimationFrame(this.flushPendingMove);
+    };
+
+    private flushPendingMove = (): void => {
+        this.rafHandle = null;
+        const event = this.pendingMoveEvent;
+        this.pendingMoveEvent = null;
+
+        if (!event || !this.foundDragElement || !this.isActivePointer(event)) return;
+
         //Trigger the on move to move the button element.
         this.foundDragElement?.onMove(event);
 
@@ -134,6 +182,10 @@ export default class DragEventController {
 
     private handlePointerUp = (event: PointerEvent) => {
         if (!this.isActivePointer(event)) return;
+
+        // Commit any move still waiting for its animation frame so the drop-zone
+        // check below sees the pointer's actual final position.
+        this.flushPendingMoveNow();
 
         const dropContext = this.getActiveDropContext();
         if (dropContext) {
@@ -154,6 +206,8 @@ export default class DragEventController {
     };
 
     private endDrag(): void {
+        this.cancelPendingMove();
+
         if (!this.foundDragElement) {
             this.activePointerId = null;
             return;

@@ -317,7 +317,14 @@ button {
 /* Sparkle ✦ glitter — continuous twinkle around the ladybug edges while dragging.
    No global opacity is ever 0, so the effect never blinks out.
    Each star has a fixed position (text-shadow offset); only its colour cycles
-   between gold/white and transparent, so stars pop in/out at the same spot. */
+   between gold/white and transparent, so stars pop in/out at the same spot.
+   The animation-timing-function is `steps(...)` rather than `linear`: text-shadow
+   is a paint property (not compositor-only like transform/opacity), so a
+   continuously-interpolating animation forces a full repaint on every rendered
+   frame for the whole drag gesture. `steps()` snaps directly between the keyframe
+   values instead of interpolating between them, so the browser only needs to
+   repaint once per step (4x / 3x per cycle) rather than ~60x/sec — same visual
+   colours and positions as a continuous animation, far less paint work. */
 @keyframes sparkle-glitter-a {
   0%, 100% {
     text-shadow:
@@ -406,7 +413,7 @@ button {
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  animation: sparkle-glitter-a 1.6s linear infinite;
+  animation: sparkle-glitter-a 1.6s steps(4, jump-end) infinite;
 }
 
 /* Small ✦ stars — 6 positions on the outer ring, offset so both rings always overlap */
@@ -420,7 +427,7 @@ button {
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  animation: sparkle-glitter-b 1.2s linear infinite 0.5s;
+  animation: sparkle-glitter-b 1.2s steps(3, jump-end) infinite 0.5s;
 }
 
 .answerButton img {
