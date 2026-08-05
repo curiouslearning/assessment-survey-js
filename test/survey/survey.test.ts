@@ -11,6 +11,15 @@ jest.mock('../../src/utils/jsonUtils', () => ({
   getDataURL: jest.fn((url: string) => `/data/${url}.json`),
 }));
 
+// App.ts imports @curiouslearning/sw, which (like the workbox packages it
+// wraps) ships an ESM-only main entry — requiring it unmocked under Jest's
+// CommonJS transform throws "Cannot use import statement outside a module".
+// This survey test only needs a real `new App()` instance, not real SW
+// registration, so it's mocked the same way test/src/App.test.ts mocks it.
+jest.mock('@curiouslearning/sw', () => ({
+  registerServiceWorkerUpdates: jest.fn(),
+}));
+
 jest.mock('../../src/ui/uiController', () => ({
   UIController: {
     SetButtonPressAction: jest.fn(),
