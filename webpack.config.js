@@ -160,4 +160,14 @@ module.exports = {
     filename: 'bundle.js',
     path: buildPath,
   },
+  ignoreWarnings: [
+    // InjectManifest keeps a single plugin instance alive across every
+    // recompilation triggered by `webpack serve`/watch mode (HMR rebuilds,
+    // file saves, etc.), and it unconditionally warns starting on the 2nd
+    // call — see https://github.com/GoogleChrome/workbox/issues/1790. Each
+    // rebuild still regenerates the precache manifest correctly from that
+    // build's own assets, so this is expected dev-server noise rather than
+    // a real problem; it never fires on `build` (a one-shot compile).
+    { message: /InjectManifest has been called multiple times/ },
+  ],
 };
