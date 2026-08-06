@@ -2,6 +2,18 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const { InjectManifest } = require('workbox-webpack-plugin');
+
+// @curiouslearning/sw's single bundled entry point pulls in workbox-routing
+// and workbox-precaching alongside the createInjectManifestOptions() helper
+// we actually need here. Those workbox packages assume a service-worker
+// global scope and touch `self` at module-evaluation time (workbox-core's
+// logger), which throws under plain Node when this config is loaded. Only
+// createInjectManifestOptions() (a pure config-object builder) is used at
+// build time, so a minimal `self` shim is enough to satisfy that top-level
+// reference without affecting the actual browser/service-worker bundle.
+if (typeof self === 'undefined') {
+  global.self = global;
+}
 const { createInjectManifestOptions } = require('@curiouslearning/sw');
 
 const nodeEnv = process.env.NODE_ENV || 'development';
