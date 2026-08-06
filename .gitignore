@@ -29,3 +29,5 @@ logs
 .npm
 .eslintcache
 .cache/
+# Where I put spec files for agent to consume
+.ignore/
