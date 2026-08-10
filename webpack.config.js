@@ -160,4 +160,16 @@ module.exports = {
     filename: 'bundle.js',
     path: buildPath,
   },
+  // Dev-only noise suppression. In `webpack serve`/watch mode a single
+  // InjectManifest instance stays alive across every recompilation (HMR
+  // rebuilds, file saves) and unconditionally warns from the 2nd call on —
+  // see https://github.com/GoogleChrome/workbox/issues/1790. Each rebuild
+  // still regenerates the precache manifest from that build's own assets, so
+  // it's expected dev-server noise, not a real problem. Only filter it in
+  // dev; a production `build` compiles once and must never hide warnings.
+  ...(isDev
+    ? {
+        ignoreWarnings: [{ message: /InjectManifest has been called multiple times/ }],
+      }
+    : {}),
 };
