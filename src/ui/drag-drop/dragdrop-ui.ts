@@ -6,7 +6,7 @@ import { AssessmentUI, AssessmentUICallbacks } from '../assessment-ui';
 import { DragEventController, DraggableButton, DropAreaTarget, iDraggableHTMLElement } from './dom-events';
 import appEventBus from '@services/app-event-bus';
 import { DragDropAudioController } from '@services/drag-drop-audio-controller';
-
+import { isRTL, setFontSizeRTL, setFontSizeLTR } from '@utils/languageUtils';
 /**
  * Drag-and-drop assessment UI.
  *
@@ -49,9 +49,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
   // --- dev-mode state ---
   private devModeCorrectLabelVisibility = false;
   private devModeBucketControlsEnabled = false;
-  private externalBucketControlsHandler:
-    | ((container: HTMLElement, clickCallback: () => void) => void)
-    | null = null;
+  private externalBucketControlsHandler: ((container: HTMLElement, clickCallback: () => void) => void) | null = null;
 
   private callbacks: AssessmentUICallbacks | null = null;
   private dragController: DragEventController | null = null;
@@ -82,7 +80,6 @@ export class DragDropAssessmentUI implements AssessmentUI {
     for (let i = 1; i <= 6; i++) {
       this.answerButtons.push(this.getElement(`answerButton${i}`));
     }
-
   }
 
   private getElement(id: string): HTMLElement {
@@ -225,7 +222,9 @@ export class DragDropAssessmentUI implements AssessmentUI {
         this.revealQuestion();
         AudioController.PlayAudio(
           question.promptAudio,
-          () => this.showAnswerTargets(),
+          () => {
+            if (this.nextQuestion === question) this.showAnswerTargets();
+          },
           (playing: boolean) => this.updateAudioButtonImage(playing)
         );
       });
@@ -236,7 +235,9 @@ export class DragDropAssessmentUI implements AssessmentUI {
         this.revealQuestion();
         AudioController.PlayAudio(
           question.promptAudio,
-          () => this.showAnswerTargets(),
+          () => {
+            if (this.nextQuestion === question) this.showAnswerTargets();
+          },
           (playing: boolean) => this.updateAudioButtonImage(playing)
         );
       });
@@ -264,12 +265,20 @@ export class DragDropAssessmentUI implements AssessmentUI {
       this.playButton.innerHTML = `<button id='nextqButton'><img class="audio-button" draggable="false" width='100px' height='100px' src='${resolveAssetPath(ASSET_PATHS.SOUND_BUTTON_IDLE_NEW)}' type='image/svg+xml'></img></button>`;
       const replayBtn = this.playButton.querySelector('#nextqButton') as HTMLElement;
       replayBtn?.addEventListener('click', () => {
-        AudioController.PlayAudio(
-          question.promptAudio,
-          undefined,
-          (playing: boolean) => this.updateAudioButtonImage(playing)
+        AudioController.PlayAudio(question.promptAudio, undefined, (playing: boolean) =>
+          this.updateAudioButtonImage(playing)
         );
       });
+    } else {
+      // In dev-mode bucket-controls, the play button area holds item-selection buttons.
+      // Auto-play the prompt audio and reveal answer targets once it finishes.
+      AudioController.PlayAudio(
+        question.promptAudio,
+        () => {
+          if (this.nextQuestion === question) this.showAnswerTargets();
+        },
+        (playing: boolean) => this.updateAudioButtonImage(playing)
+      );
     }
   }
 
@@ -316,29 +325,36 @@ export class DragDropAssessmentUI implements AssessmentUI {
         button.style.visibility = 'hidden';
         button.style.boxShadow = '0px 0px 0px 0px rgba(0,0,0,0)';
 
-        setTimeout(() => {
-          button.style.visibility = 'visible';
-          button.style.animation = `zoomIn ${animDuration * this.animationSpeedMultiplier}ms ease forwards`;
+        setTimeout(
+          () => {
+            button.style.visibility = 'visible';
+            button.style.animation = `zoomIn ${animDuration * this.animationSpeedMultiplier}ms ease forwards`;
 
-          if ('answerImg' in answer) {
-            const img = AudioController.GetImage((answer as any).answerImg);
-            button.appendChild(img);
-          }
-
-          button.addEventListener('animationend', () => {
-            // Clear the animation so CSS fill-mode no longer overrides the
-            // JS transform set by DraggableButton during drag.
-            button.style.animation = '';
-            const allVisible = question.answers.every((_, idx) => {
-              const b = this.answerButtons[idx];
-              return !b || b.style.visibility === 'visible';
-            });
-            if (allVisible) {
-              this.buttonsActive = true;
-              this.dragController?.setLocked(false);
+            if ('answerImg' in answer) {
+              const img = AudioController.GetImage((answer as any).answerImg);
+              button.appendChild(img);
             }
-          }, { once: true });
-        }, i * animDuration * this.animationSpeedMultiplier * 0.3);
+
+            button.addEventListener(
+              'animationend',
+              () => {
+                // Clear the animation so CSS fill-mode no longer overrides the
+                // JS transform set by DraggableButton during drag.
+                button.style.animation = '';
+                const allVisible = question.answers.every((_, idx) => {
+                  const b = this.answerButtons[idx];
+                  return !b || b.style.visibility === 'visible';
+                });
+                if (allVisible) {
+                  this.buttonsActive = true;
+                  this.dragController?.setLocked(false);
+                }
+              },
+              { once: true }
+            );
+          },
+          i * animDuration * this.animationSpeedMultiplier * 0.3
+        );
       });
     }, delayBeforeOption);
   }
@@ -351,9 +367,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
       img.draggable = false;
       this.playButton.appendChild(img);
     }
-    img.src = resolveAssetPath(
-      playing ? ASSET_PATHS.SOUND_BUTTON_ANIMATION_NEW : ASSET_PATHS.SOUND_BUTTON_IDLE_NEW
-    );
+    img.src = resolveAssetPath(playing ? ASSET_PATHS.SOUND_BUTTON_ANIMATION_NEW : ASSET_PATHS.SOUND_BUTTON_IDLE_NEW);
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -451,22 +465,12 @@ export class DragDropAssessmentUI implements AssessmentUI {
 
     const words = plainText.split(/\s+/);
     const maxWordLen = Math.max(...words.map((w) => w.length));
+    const textIsInRTL = isRTL(plainText);
 
-    if (maxWordLen <= 4) {
-      button.style.fontSize = '1.4rem';
-    } else if (maxWordLen <= 5) {
-      button.style.fontSize = '1.1rem';
-    } else if (maxWordLen <= 6) {
-      button.style.fontSize = '0.95rem';
-    } else if (maxWordLen <= 7) {
-      button.style.fontSize = '0.85rem';
-    } else if (maxWordLen <= 9) {
-      button.style.fontSize = '0.7rem';
-    } else if (maxWordLen <= 12) {
-      button.style.fontSize = '0.6rem';
+    if (textIsInRTL) {
+      button.style.fontSize = setFontSizeRTL(maxWordLen);
     } else {
-      button.style.fontSize = '0.5rem';
+      button.style.fontSize = setFontSizeLTR(maxWordLen);
     }
   }
-
 }

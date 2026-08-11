@@ -8,7 +8,7 @@ import { UnityBridge } from '@utils/unityBridge';
 import { BaseQuiz } from './baseQuiz';
 import { fetchAppData, getDataURL, setDataBaseUrl } from '@utils/jsonUtils';
 import { resolveAssetPath, setAssetBaseUrl } from '@utils/assetUtils';
-import { Workbox } from 'workbox-window';
+import { registerServiceWorkerUpdates } from '@curiouslearning/sw';
 import CacheModel from '@components/cacheModel';
 import { UIController } from '@ui/uiController';
 import { AnalyticsEventsType, AnalyticsIntegration } from '@analytics/analytics-integration';
@@ -28,7 +28,7 @@ export type AssessmentUIMode = 'legacy' | 'new-ui';
 /** Feature flag key that enables the drag-and-drop assessment UI at runtime. */
 export const FEATURE_DRAG_DROP_UI = 'drag-drop-assessment-ui';
 
-const appVersion: string = 'v1.1.3';
+const appVersion: string = 'v1.1.4';
 
 /**
  * Content version from the data file in format v0.1
@@ -351,6 +351,8 @@ export class App {
           const androidInterface = new AndroidInterface({
             cr_user_id,
             app_id: appType,
+            // appVersion travels as top-level metadata, not inside data.
+            metadata: { app_version: appVersion },
             debug: false,
             log: false,
           });
@@ -362,7 +364,6 @@ export class App {
             max_score: gameInstance.max_score,
             time_spent: endTime - startTime,
             event_type: 'activity_completed',
-            app_version: appVersion,
           });
         }
       });
@@ -385,16 +386,19 @@ export class App {
     console.log('Registering service worker...');
 
     if ('serviceWorker' in navigator) {
-      let wb = new Workbox('./sw.js', {});
+      const registration = await registerServiceWorkerUpdates({
+        swUrl: './sw.js',
+        channelName: 'as-message-channel',
+        mode: 'confirm', // package default; see MR-169 spec §5.3 for the UX-copy tradeoff
+      }).catch((err) => {
+        console.log('Service worker registration failed: ' + err);
+        return undefined;
+      });
 
-      wb.register()
-        .then((registration) => {
-          console.log('Service worker registered!');
-          this.handleServiceWorkerRegistation(registration);
-        })
-        .catch((err) => {
-          console.log('Service worker registration failed: ' + err);
-        });
+      if (registration) {
+        console.log('Service worker registered!');
+        this.handleServiceWorkerRegistation(registration);
+      }
 
       navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
 
@@ -571,6 +575,7 @@ export class App {
       const androidInterface = new AndroidInterface({
         cr_user_id,
         app_id: 'assessment',
+        metadata: { app_version: appVersion },
       });
       androidInterface.logSummaryData?.(summaryData);
     }
@@ -613,10 +618,11 @@ function handleServiceWorkerMessage(event): void {
     let progressValue = parseInt(event.data.data.progress);
     handleLoadingMessage(event, progressValue);
   }
-  if (event.data.msg == 'UpdateFound') {
-    console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>.,update Found');
-    handleUpdateFoundMessage();
-  }
+  // 'UpdateFound' branch removed — registerServiceWorkerUpdates now owns the SW
+  // update-notification signal end-to-end via its own BroadcastChannel listener
+  // and built-in confirm()/reload (mode: 'confirm'). handleUpdateFoundMessage()
+  // is still used directly by the independent content-version-check reload path
+  // below (see registerServiceWorker), which is unchanged by this migration.
 }
 
 function handleLoadingMessage(event, progressValue): void {

@@ -1,6 +1,20 @@
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const { InjectManifest } = require('workbox-webpack-plugin');
+
+// @curiouslearning/sw's single bundled entry point pulls in workbox-routing
+// and workbox-precaching alongside the createInjectManifestOptions() helper
+// we actually need here. Those workbox packages assume a service-worker
+// global scope and touch `self` at module-evaluation time (workbox-core's
+// logger), which throws under plain Node when this config is loaded. Only
+// createInjectManifestOptions() (a pure config-object builder) is used at
+// build time, so a minimal `self` shim is enough to satisfy that top-level
+// reference without affecting the actual browser/service-worker bundle.
+if (typeof self === 'undefined') {
+  global.self = global;
+}
+const { createInjectManifestOptions } = require('@curiouslearning/sw');
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 const isDev = nodeEnv !== 'production';
@@ -108,10 +122,52 @@ module.exports = {
         }
       ],
     }),
+    (() => {
+      // createInjectManifestOptions() (per §4.3/README) returns
+      // { swSrc, swDest, globDirectory, maximumFileSizeToCacheInBytes, ...overrides }.
+      // globDirectory/globPatterns/globIgnores are options for workbox-build's
+      // filesystem-globbing injectManifest() (used by workbox-cli). They are NOT
+      // accepted by workbox-webpack-plugin's InjectManifest — its options schema
+      // (WebpackInjectManifestOptions, additionalProperties: false) rejects
+      // `globDirectory` outright ("property is not expected to be here"), verified
+      // against the actually-installed workbox-webpack-plugin@7.4.1 /
+      // workbox-build@7.4.1. The webpack flavor precaches whatever webpack itself
+      // emits/copies (bundle.js + CopyWebpackPlugin's assets), filtered via
+      // `exclude`/`include`/`chunks` instead of glob directory scanning. We still
+      // consume createInjectManifestOptions() for its swSrc/swDest/
+      // maximumFileSizeToCacheInBytes conventions, but strip the glob-only keys
+      // before handing the result to InjectManifest.
+      const { globDirectory, globPatterns, globIgnores, ...injectManifestOptions } =
+        createInjectManifestOptions({
+          swSrc: path.resolve(__dirname, 'src', 'sw-src.ts'),
+          swDest: 'sw.js', // relative to output.path (buildPath), matching current build/sw.js
+        });
+
+      return new InjectManifest({
+        ...injectManifestOptions,
+        // Re-expresses the old globIgnores audio exclusion (assets/audio/*/*.mp3|wav)
+        // as a webpack `exclude` condition, plus workbox's own defaults
+        // ([/\.map$/, /^manifest.*\.js$/]), which are replaced (not merged) once
+        // `exclude` is explicitly provided.
+        exclude: [/\.map$/, /^manifest.*\.js$/, /assets\/audio\/.*\.(mp3|wav)$/i],
+        // maximumFileSizeToCacheInBytes: inherited from the package default (10 MiB) —
+        // identical to today's explicit value, no override needed.
+      });
+    })(),
   ],
   output: {
     clean: true,
     filename: 'bundle.js',
     path: buildPath,
   },
+  ignoreWarnings: [
+    // InjectManifest keeps a single plugin instance alive across every
+    // recompilation triggered by `webpack serve`/watch mode (HMR rebuilds,
+    // file saves, etc.), and it unconditionally warns starting on the 2nd
+    // call — see https://github.com/GoogleChrome/workbox/issues/1790. Each
+    // rebuild still regenerates the precache manifest correctly from that
+    // build's own assets, so this is expected dev-server noise rather than
+    // a real problem; it never fires on `build` (a one-shot compile).
+    { message: /InjectManifest has been called multiple times/ },
+  ],
 };
