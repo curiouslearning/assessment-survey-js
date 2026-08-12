@@ -16,12 +16,14 @@ import {
 interface ServiceWorkerSelf extends EventTarget {
   __WB_MANIFEST: Array<string | { url: string; revision: string | null }>;
   location: Location;
+  registration: ServiceWorkerRegistration;
   skipWaiting(): Promise<void>;
   clients: {
     claim(): Promise<void>;
-    matchAll(options?: { includeUncontrolled?: boolean; type?: string }): Promise<
-      ReadonlyArray<{ postMessage(message: unknown): void }>
-    >;
+    matchAll(options?: {
+      includeUncontrolled?: boolean;
+      type?: string;
+    }): Promise<ReadonlyArray<{ postMessage(message: unknown): void }>>;
   };
   addEventListener(type: string, listener: (event: any) => any): void;
 }
@@ -71,9 +73,7 @@ export async function cacheTheBookJSONAndImages(data: { appData: CacheModelShape
   const { appData } = data;
   // Preserve the existing lower-cased lookup key behavior from the hand-rolled loop
   // this replaces (cache.add(asset.toLowerCase())).
-  const urls = [appData.contentFilePath, ...appData.audioVisualResources].map((url) =>
-    url.toLowerCase()
-  );
+  const urls = [appData.contentFilePath, ...appData.audioVisualResources].map((url) => url.toLowerCase());
 
   const cache = await caches.open(appData.appName);
   await cacheUrlsWithProgress(cache, urls, {
@@ -86,6 +86,19 @@ export async function cacheTheBookJSONAndImages(data: { appData: CacheModelShape
     },
     onItemError: (url, error) => console.warn('Failed to cache asset:', url, error),
   });
+}
+
+// Resolve a scope-relative URL for the offline shell fallback so the service
+// worker works whether the app is served from the domain root or a sub-path
+// (e.g. /assessment-survey-js). Mirrors resolveShellUrl in
+// build-config/base-path.js. Under root scope this yields "/index.html", so the
+// empty-base-path (dev/prod) behavior is unchanged.
+function scopePath(file: string): string {
+  try {
+    return new URL(file, self.registration.scope).pathname;
+  } catch (e) {
+    return '/' + file;
+  }
 }
 
 self.addEventListener('fetch', (event) => {
@@ -115,7 +128,7 @@ self.addEventListener('fetch', (event) => {
         // Navigation fallback: serve the cached index.html for any same-origin
         // page navigation that isn't explicitly in the cache (handles / on refresh).
         if (event.request.mode === 'navigate') {
-          return caches.match('/index.html').then((fallback) => fallback || fetch(event.request));
+          return caches.match(scopePath('index.html')).then((fallback) => fallback || fetch(event.request));
         }
 
         return fetch(event.request);
@@ -125,7 +138,7 @@ self.addEventListener('fetch', (event) => {
         // Navigation fallback when network is also unavailable.
         if (event.request.mode === 'navigate') {
           return caches
-            .match('/index.html')
+            .match(scopePath('index.html'))
             .then((fallback) => fallback || new Response('', { status: 503, statusText: 'Service Unavailable' }));
         }
         // Return a real Response so event.respondWith never receives undefined,

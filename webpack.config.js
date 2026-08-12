@@ -15,9 +15,12 @@ if (typeof self === 'undefined') {
   global.self = global;
 }
 const { createInjectManifestOptions } = require('@curiouslearning/sw');
+const { normalizeBasePath, applyBasePath } = require('./build-config/base-path');
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 const isDev = nodeEnv !== 'production';
+const basePath = normalizeBasePath(process.env.BASE_PATH);
+const injectBasePath = (content) => applyBasePath(content.toString(), basePath);
 const buildPath = path.resolve(__dirname, 'build');
 const curiousLearningPackagesPath = path.resolve(__dirname, 'node_modules', '@curiouslearning');
 const babelOptions = {
@@ -94,6 +97,7 @@ module.exports = {
         {
           from: path.resolve(__dirname, 'index.html'),
           to: 'index.html',
+          transform: injectBasePath,
         },
         {
           from: path.resolve(__dirname, 'favicon.ico'),
@@ -119,6 +123,7 @@ module.exports = {
           from: path.resolve(__dirname, 'public', 'manifest.json'),
           to: 'manifest.json',
           noErrorOnMissing: true,
+          transform: injectBasePath,
         }
       ],
     }),
