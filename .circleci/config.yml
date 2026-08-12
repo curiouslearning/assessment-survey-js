@@ -141,6 +141,8 @@ workflows:
             branches:
               only:
                 - test
+          requires:
+            - node/test
           context:
             - github-context
 
