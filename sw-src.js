@@ -8,6 +8,19 @@ try {
   console.warn('Failed to load workbox from CDN — SW will rely on manual cache matching.', e);
 }
 
+// Resolve a scope-relative URL for the offline shell / fallback precache so the
+// service worker works whether the app is served from the domain root or a
+// sub-path (e.g. /assessment-survey-js). Mirrors resolveShellUrl in
+// build-config/base-path.js. Under root scope this yields "/index.html", so the
+// empty-base-path behavior is unchanged.
+function scopePath(file) {
+  try {
+    return new URL(file, self.registration.scope).pathname;
+  } catch (e) {
+    return '/' + file;
+  }
+}
+
 if (typeof workbox !== 'undefined') {
   workbox.precaching.precacheAndRoute(self.__WB_MANIFEST, {
     ignoreURLParametersMatching: [/^data/, /^cr_user_id/],
@@ -25,7 +38,7 @@ if (typeof workbox !== 'undefined') {
   self.addEventListener('install', (event) => {
     event.waitUntil(
       caches.open('app-shell-fallback').then((cache) =>
-        cache.addAll(['/index.html', '/bundle.js'])
+        cache.addAll([scopePath('index.html'), scopePath('bundle.js')])
       ).catch((err) => console.warn('Fallback shell cache failed:', err))
     );
   });
@@ -159,7 +172,7 @@ self.addEventListener('fetch', (event) => {
           // Navigation fallback: serve the cached index.html for any same-origin
           // page navigation that isn't explicitly in the cache (handles / on refresh).
           if (event.request.mode === 'navigate') {
-            return caches.match('/index.html').then(
+            return caches.match(scopePath('index.html')).then(
               (fallback) => fallback || fetch(event.request)
             );
           }
@@ -170,7 +183,7 @@ self.addEventListener('fetch', (event) => {
           console.log('Error while fetching:', event.request.url, error);
           // Navigation fallback when network is also unavailable.
           if (event.request.mode === 'navigate') {
-            return caches.match('/index.html').then(
+            return caches.match(scopePath('index.html')).then(
               (fallback) => fallback || new Response('', { status: 503, statusText: 'Service Unavailable' })
             );
           }

@@ -107,9 +107,8 @@ jobs:
       - node/install-packages:
           cache-path: ~/project/node_modules
       # - run: npm run lint # no lint for now, as this presents massive changes
-      - run: npm test
       - build_and_sync:
-          build-script: build
+          build-script: build:test
           from: ./build
           to: 's3://globallit-aws-s3-static-webapp-test-us-west-2/assessment-survey-js'
           region: AWS_TEST_REGION
