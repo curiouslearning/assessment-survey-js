@@ -36,6 +36,22 @@ export interface CacheModelShape {
   audioVisualResources: Set<string> | string[];
 }
 
+// Resolve a scope-relative URL for the offline shell fallback so the service
+// worker works whether the app is served from the domain root or a sub-path
+// (e.g. /assessment-survey-js). Mirrors resolveShellUrl in
+// build-config/base-path.js. The precache manifest keys the shell relative to
+// the SW location, so under a sub-path scope "index.html" is precached as
+// "/assessment-survey-js/index.html"; a root-absolute "/index.html" would NOT
+// match and makes createHandlerBoundToURL throw "non-precached-url". Under root
+// scope this yields "/index.html", so dev/prod behavior is unchanged.
+function scopePath(file: string): string {
+  try {
+    return new URL(file, self.registration.scope).pathname;
+  } catch (e) {
+    return '/' + file;
+  }
+}
+
 precacheAndRoute(self.__WB_MANIFEST, {
   ignoreURLParametersMatching: [/^data/, /^cr_user_id/],
 });
@@ -43,7 +59,11 @@ precacheAndRoute(self.__WB_MANIFEST, {
 // Workbox v4 precacheAndRoute option; it has no v7 runtime equivalent. It now maps to
 // createInjectManifestOptions({ globIgnores: [...] }) in webpack.config.js instead (see §5.4).
 
-registerNavigationFallback(); // '/index.html', enabled: true — same behavior as today
+// Bind the navigation fallback to the scope-relative shell so it matches the
+// precache key under a sub-path (root-absolute '/index.html' throws
+// non-precached-url there). scopePath('index.html') is '/index.html' at root,
+// so dev/prod behavior is unchanged.
+registerNavigationFallback({ fallbackUrl: scopePath('index.html') });
 
 registerUpdateNotifier({ channelName: 'as-message-channel' });
 // Explicit channelName so the update-ready signal rides the SAME BroadcastChannel
@@ -86,19 +106,6 @@ export async function cacheTheBookJSONAndImages(data: { appData: CacheModelShape
     },
     onItemError: (url, error) => console.warn('Failed to cache asset:', url, error),
   });
-}
-
-// Resolve a scope-relative URL for the offline shell fallback so the service
-// worker works whether the app is served from the domain root or a sub-path
-// (e.g. /assessment-survey-js). Mirrors resolveShellUrl in
-// build-config/base-path.js. Under root scope this yields "/index.html", so the
-// empty-base-path (dev/prod) behavior is unchanged.
-function scopePath(file: string): string {
-  try {
-    return new URL(file, self.registration.scope).pathname;
-  } catch (e) {
-    return '/' + file;
-  }
 }
 
 self.addEventListener('fetch', (event) => {
