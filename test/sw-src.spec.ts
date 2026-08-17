@@ -79,7 +79,7 @@ describe('sw-src', () => {
         undefined, // self.__WB_MANIFEST is not set in this test environment
         expect.objectContaining({ ignoreURLParametersMatching: expect.any(Array) })
       );
-      expect(mockRegisterNavigationFallback).toHaveBeenCalledWith();
+      expect(mockRegisterNavigationFallback).toHaveBeenCalledWith({ fallbackUrl: '/index.html' });
       expect(mockRegisterUpdateNotifier).toHaveBeenCalledWith({ channelName: 'as-message-channel' });
     });
   });
