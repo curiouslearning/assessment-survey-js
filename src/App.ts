@@ -8,7 +8,7 @@ import { UnityBridge } from '@utils/unityBridge';
 import { BaseQuiz } from './baseQuiz';
 import { fetchAppData, getDataURL, setDataBaseUrl } from '@utils/jsonUtils';
 import { resolveAssetPath, setAssetBaseUrl } from '@utils/assetUtils';
-import { Workbox } from 'workbox-window';
+import { registerServiceWorkerUpdates } from '@curiouslearning/sw';
 import CacheModel from '@components/cacheModel';
 import { UIController } from '@ui/uiController';
 import { AnalyticsEventsType, AnalyticsIntegration } from '@analytics/analytics-integration';
@@ -386,16 +386,19 @@ export class App {
     console.log('Registering service worker...');
 
     if ('serviceWorker' in navigator) {
-      let wb = new Workbox('./sw.js', {});
+      const registration = await registerServiceWorkerUpdates({
+        swUrl: './sw.js',
+        channelName: 'as-message-channel',
+        mode: 'confirm', // package default; see MR-169 spec §5.3 for the UX-copy tradeoff
+      }).catch((err) => {
+        console.log('Service worker registration failed: ' + err);
+        return undefined;
+      });
 
-      wb.register()
-        .then((registration) => {
-          console.log('Service worker registered!');
-          this.handleServiceWorkerRegistation(registration);
-        })
-        .catch((err) => {
-          console.log('Service worker registration failed: ' + err);
-        });
+      if (registration) {
+        console.log('Service worker registered!');
+        this.handleServiceWorkerRegistation(registration);
+      }
 
       navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
 
@@ -615,10 +618,11 @@ function handleServiceWorkerMessage(event): void {
     let progressValue = parseInt(event.data.data.progress);
     handleLoadingMessage(event, progressValue);
   }
-  if (event.data.msg == 'UpdateFound') {
-    console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>.,update Found');
-    handleUpdateFoundMessage();
-  }
+  // 'UpdateFound' branch removed — registerServiceWorkerUpdates now owns the SW
+  // update-notification signal end-to-end via its own BroadcastChannel listener
+  // and built-in confirm()/reload (mode: 'confirm'). handleUpdateFoundMessage()
+  // is still used directly by the independent content-version-check reload path
+  // below (see registerServiceWorker), which is unchanged by this migration.
 }
 
 function handleLoadingMessage(event, progressValue): void {

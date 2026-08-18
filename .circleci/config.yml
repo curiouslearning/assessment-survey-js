@@ -12,6 +12,37 @@ orbs:
   aws-s3: circleci/aws-s3@3.0
   node: circleci/node@7.0.0
 
+commands:
+  build_and_sync:
+    description: Build via an npm script, then sync the build folder to an S3 destination.
+    parameters:
+      to:
+        type: string
+        description: S3 destination URI (e.g. s3://globallit-aws-s3-static-webapp-test-us-west-2).
+      build-script:
+        type: string
+        description: npm script name defined in package.json (e.g. build).
+      from:
+        type: string
+        default: './build'
+        description: Source build folder to synchronize from.
+      region:
+        type: env_var_name
+        default: AWS_DEFAULT_REGION
+        description: Name of the env var holding the AWS region (per-environment).
+    steps:
+      # Assumes the calling job has already run `checkout` + `node/install-packages`.
+      - run: npm run << parameters.build-script >>
+      - aws-s3/sync:
+          arguments: |
+            --acl public-read \
+            --cache-control "max-age=86400"
+          aws-access-key-id: AWS_ACCESS_KEY
+          aws-region: << parameters.region >>
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+          from: << parameters.from >>
+          to: << parameters.to >>
+
 jobs:
   build_and_publish:
     executor:
@@ -47,16 +78,11 @@ jobs:
       - checkout
       - node/install-packages:
           cache-path: ~/project/node_modules
-      - run: npm run build
-      - aws-s3/sync:
-          arguments: |
-            --acl public-read \
-            --cache-control "max-age=86400"
-          aws-access-key-id: AWS_ACCESS_KEY
-          aws-region: AWS_DEFAULT_REGION
-          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+      - build_and_sync:
+          build-script: build
           from: ./build
           to: 's3://assessment-and-survey-development'
+          region: AWS_DEFAULT_REGION
 
   s3-deploy-prod:
     executor:
@@ -66,16 +92,26 @@ jobs:
       - checkout
       - node/install-packages:
           cache-path: ~/project/node_modules
-      - run: npm run build
-      - aws-s3/sync:
-          arguments: |
-            --acl public-read \
-            --cache-control "max-age=86400"
-          aws-access-key-id: AWS_ACCESS_KEY
-          aws-region: AWS_PROD_REGION
-          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+      - build_and_sync:
+          build-script: build
           from: ./build
           to: 's3://assessment-and-survey-production'
+          region: AWS_PROD_REGION
+
+  s3-deploy-test:
+    executor:
+      name: node/default
+      tag: '24.10'
+    steps:
+      - checkout
+      - node/install-packages:
+          cache-path: ~/project/node_modules
+      # - run: npm run lint # no lint for now, as this presents massive changes
+      - build_and_sync:
+          build-script: build:test
+          from: ./build
+          to: 's3://globallit-aws-s3-static-webapp-test-us-west-2/assessment-survey-js'
+          region: AWS_TEST_REGION
 
 workflows:
   s3-deploy-workflow:
@@ -88,6 +124,8 @@ workflows:
                 - develop
           requires:
             - node/test
+          context:
+            - github-context
       - s3-deploy-prod:
           filters:
             branches:
@@ -95,6 +133,17 @@ workflows:
                 - main
           requires:
             - node/test
+          context:
+            - github-context
+      - s3-deploy-test:
+          filters:
+            branches:
+              only:
+                - test
+          requires:
+            - node/test
+          context:
+            - github-context
 
   dryrun_test_and_publish:
     when: << pipeline.parameters.run_dryrun_test_and_publish >>

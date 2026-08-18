@@ -29,3 +29,7 @@ logs
 .npm
 .eslintcache
 .cache/
+CLAUDE.md
+
+# Where I put spec files for agent to consume
+.ignore/
