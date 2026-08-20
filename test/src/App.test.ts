@@ -1,11 +1,11 @@
 import { App } from '../../src/App';
 import { Assessment } from '../../src/assessment/assessment';
 import { Survey } from '../../src/survey/survey';
-import { registerServiceWorkerUpdates } from '@curiouslearning/sw';
+import { Workbox } from 'workbox-window';
 import { UIController } from '../../src/ui/uiController';
 import { fetchAppData, getDataURL } from '../../src/utils/jsonUtils';
 
-const mockRegisterServiceWorkerUpdates = registerServiceWorkerUpdates as jest.Mock;
+const mockWorkboxRegister = jest.fn();
 
 jest.mock('../../src/utils/jsonUtils', () => ({
   fetchAppData: jest.fn().mockResolvedValue({
@@ -36,8 +36,10 @@ jest.mock('../../src/utils/jsonUtils', () => ({
   getDataURL: jest.fn((url: string) => `/data/${url}.json`),
 }));
 
-jest.mock('@curiouslearning/sw', () => ({
-  registerServiceWorkerUpdates: jest.fn(),
+jest.mock('workbox-window', () => ({
+  Workbox: jest.fn().mockImplementation(() => ({
+    register: mockWorkboxRegister,
+  })),
 }));
 
 jest.mock('../../src/ui/uiController', () => ({
@@ -80,7 +82,7 @@ describe('App Class', () => {
     `;
 
     jest.clearAllMocks();
-    mockRegisterServiceWorkerUpdates.mockResolvedValue({
+    mockWorkboxRegister.mockResolvedValue({
       installing: { postMessage: jest.fn() },
     });
 
@@ -166,28 +168,14 @@ describe('App Class', () => {
     await app.registerServiceWorker(app.game, app.dataURL);
     await Promise.resolve();
 
-    expect(mockRegisterServiceWorkerUpdates).toHaveBeenCalledTimes(1);
+    expect(Workbox).toHaveBeenCalledWith('./sw.js', {});
+    expect(mockWorkboxRegister).toHaveBeenCalled();
     expect(mockHandleServiceWorkerRegistration).toHaveBeenCalled();
-  });
-
-  test('registers via registerServiceWorkerUpdates with the shared channel and mode: "confirm"', async () => {
-    // mode: 'confirm' is the package-default UX (matches the app's previous
-    // confirm()/reload behavior) and channelName is explicitly set to
-    // 'as-message-channel' so the update-ready signal rides the same
-    // BroadcastChannel as the existing Cache/Activated handshake (MR-169 §5.2).
-    await app.registerServiceWorker(app.game, app.dataURL);
-    await Promise.resolve();
-
-    expect(mockRegisterServiceWorkerUpdates).toHaveBeenCalledWith({
-      swUrl: './sw.js',
-      channelName: 'as-message-channel',
-      mode: 'confirm',
-    });
   });
 
   test('should log error when service worker registration fails', async () => {
     const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    mockRegisterServiceWorkerUpdates.mockRejectedValueOnce('Registration failed');
+    mockWorkboxRegister.mockRejectedValueOnce('Registration failed');
 
     await app.registerServiceWorker(app.game, app.dataURL);
     await Promise.resolve();
@@ -257,9 +245,6 @@ describe('App Class', () => {
   });
 });
 
-// Mirrors src/App.ts's module-level handleServiceWorkerMessage: the
-// 'UpdateFound' branch is gone — registerServiceWorkerUpdates now owns SW
-// update notification end-to-end (mode: 'confirm', tested above).
 function handleServiceWorkerMessage(mockEvent: {
   data: { msg: string; data: { progress: string; bookName: string } };
 }) {
@@ -269,11 +254,11 @@ function handleServiceWorkerMessage(mockEvent: {
       localStorage.setItem(mockEvent.data.data.bookName, 'true');
     }
   }
+  if (mockEvent.data.msg === 'UpdateFound') {
+    handleUpdateFoundMessage();
+  }
 }
 
-// handleUpdateFoundMessage() itself is unchanged by MR-169 — it's still used
-// directly by the content-version-check reload path in registerServiceWorker,
-// which is independent of the SW update-notification lifecycle (MR-169 §2.2).
 function handleUpdateFoundMessage() {
   const text = 'Update Found.\nPlease accept the update by pressing Ok.';
   if (window.confirm(text) === true) {
