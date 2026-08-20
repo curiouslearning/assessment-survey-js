@@ -9,7 +9,7 @@
       "type": "image/png"
     }
   ],
-  "start_url": "__BASE_PATH__/",
+  "start_url": "/",
   "display": "standalone",
   "orientation": "landscape",
   "incognito": "split",
