@@ -47,7 +47,8 @@ jobs:
       - checkout
       - node/install-packages:
           cache-path: ~/project/node_modules
-      - run: npm run build
+      - run: npm run build:standalone:develop
+      - run: npm run wb:inject
       - aws-s3/sync:
           arguments: |
             --acl public-read \
@@ -57,6 +58,26 @@ jobs:
           aws-secret-access-key: AWS_SECRET_ACCESS_KEY
           from: ./build
           to: 's3://assessment-and-survey-development'
+
+  s3-deploy-test:
+    executor:
+      name: node/default
+      tag: '24.10'
+    steps:
+      - checkout
+      - node/install-packages:
+          cache-path: ~/project/node_modules
+      - run: npm run build:standalone:test
+      - run: npm run wb:inject
+      - aws-s3/sync:
+          arguments: |
+            --acl public-read \
+            --cache-control "max-age=86400"
+          aws-access-key-id: AWS_ACCESS_KEY
+          aws-region: AWS_TEST_REGION
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+          from: ./build
+          to: 's3://globallit-aws-s3-static-webapp-test-us-east-2/assessment-survey-js'
 
   s3-deploy-prod:
     executor:
@@ -86,6 +107,17 @@ workflows:
             branches:
               only:
                 - develop
+          requires:
+            - node/test
+      - s3-deploy-test:
+          # AWS_TEST_REGION lives in this CircleCI context, not as a plain project env var —
+          # see specs/001-add-environment-constant/research.md §5.
+          context:
+            - aws-context
+          filters:
+            branches:
+              only:
+                - test
           requires:
             - node/test
       - s3-deploy-prod:
