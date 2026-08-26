@@ -252,7 +252,7 @@ describe('App Class', () => {
 
     const instances = (AndroidInterface as any).instances;
     expect(instances).toHaveLength(1);
-    expect(instances[0].metadata).toEqual({ app_version: expect.any(String), environment });
+    expect(instances[0].metadata).toEqual({ appVersion: expect.any(String), environment });
   });
 
   test('Given an assessment session ends, When user-session data is logged through AndroidInterface, Then the metadata includes the current environment', async () => {
@@ -285,7 +285,7 @@ describe('App Class', () => {
     const instances = (AndroidInterface as any).instances;
     const sessionInstance = instances.find((instance: any) => 'debug' in instance);
     expect(sessionInstance).toBeDefined();
-    expect(sessionInstance.metadata).toEqual({ app_version: expect.any(String), environment });
+    expect(sessionInstance.metadata).toEqual({ appVersion: expect.any(String), environment });
   });
 });
 
