@@ -48,7 +48,6 @@ jobs:
       - node/install-packages:
           cache-path: ~/project/node_modules
       - run: npm run build:standalone:develop
-      - run: npm run wb:inject
       - aws-s3/sync:
           arguments: |
             --acl public-read \
@@ -68,7 +67,6 @@ jobs:
       - node/install-packages:
           cache-path: ~/project/node_modules
       - run: npm run build:standalone:test
-      - run: npm run wb:inject
       - aws-s3/sync:
           arguments: |
             --acl public-read \
