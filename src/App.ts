@@ -41,6 +41,9 @@ export type AssessmentUIMode = 'legacy' | 'new-ui';
 /** Feature flag key that enables the drag-and-drop assessment UI at runtime. */
 export const FEATURE_DRAG_DROP_UI = 'drag-drop-assessment-ui';
 
+/** Feature flag key gating AndroidInterface summary/session logging in standalone mode. */
+export const FEATURE_ANDROID_SUMMARY_STANDALONE = 'mr-75';
+
 const appVersion: string = 'v1.1.4';
 
 /**
@@ -173,6 +176,13 @@ export class App {
       await featureFlagsService.initialize();
     } catch (error) {
       console.warn('Feature flags initialization failed. Continuing with defaults.', error);
+    }
+
+    // MR-75: in standalone mode, AndroidInterface logging additionally requires this flag.
+    // ANDs with (never overrides) an explicit host-config enableAndroidSummary: false.
+    if ((config.platform ?? 'standalone') === 'standalone') {
+      this.enableAndroidSummary =
+        this.enableAndroidSummary && featureFlagsService.isFeatureEnabled(FEATURE_ANDROID_SUMMARY_STANDALONE);
     }
 
     // Resolve mode once — this single value drives both the template and the controller.
@@ -363,7 +373,7 @@ export class App {
           time_spent: endTime - startTime,
         });
 
-        if (appType === Assessment.TYPE) {
+        if (appType === Assessment.TYPE && this.enableAndroidSummary) {
           const { cr_user_id, language } = getCommonAnalyticsEventsProperties();
           const androidInterface = new AndroidInterface({
             cr_user_id,

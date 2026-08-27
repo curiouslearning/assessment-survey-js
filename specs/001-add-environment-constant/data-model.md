@@ -53,3 +53,24 @@ Existing external contract (defined by `@curiouslearning/core`, not owned by thi
 | `main` | `production` | `production` | `s3://assessment-and-survey-production` (unchanged, existing) |
 
 Relationships: each row is a 1:1 mapping — one branch triggers exactly one deploy job, which runs the build in exactly one mode, which sets `environment` to exactly one value, which is synced to exactly one destination. No branch maps to more than one row and no row is shared by two branches.
+
+## Feature flag gate (`mr-75`) — MR-75 amendment
+
+| Field | Type | Notes |
+|---|---|---|
+| `FEATURE_ANDROID_SUMMARY_STANDALONE` | `'mr-75'` (string literal constant) | New module-level constant in `src/App.ts`, alongside the existing `FEATURE_DRAG_DROP_UI`. |
+| effective `enableAndroidSummary` | `boolean` | Derived, not stored separately: `platform === 'standalone' ? (enableAndroidSummary && isFeatureEnabled('mr-75')) : enableAndroidSummary`. |
+
+**Resolution rule** (evaluated once per `spinUp()` call, after `featureFlagsService.initialize()` settles):
+
+| `platform` | `enableAndroidSummary` (pre-flag) | `isFeatureEnabled('mr-75')` | Effective `enableAndroidSummary` |
+|---|---|---|---|
+| `'standalone'` | `true` | `true` | `true` |
+| `'standalone'` | `true` | `false` | `false` |
+| `'standalone'` | `false` | `true` | `false` (explicit opt-out always wins — FR-015) |
+| `'standalone'` | `false` | `false` | `false` |
+| anything else (e.g. `'ftm'`) | `true` or `false` | not consulted | unchanged — `enableAndroidSummary` alone (FR-016) |
+
+**Validation rules**: None beyond the truth table above — `isFeatureEnabled()` always returns a `boolean` (confirmed safe-default `false` when unresolved, per `test/_mocks/curiouslearning-features.js`), so there is no error/invalid state to reject.
+
+**State transitions**: Resolved once per `spinUp()` call (same lifecycle as `assessmentUIMode`'s `FEATURE_DRAG_DROP_UI` check); not re-evaluated mid-session if the remote flag value changes after startup, per the Assumptions in spec.md.

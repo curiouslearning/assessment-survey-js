@@ -8,11 +8,13 @@
 
 Expose a single compile-time `environment` constant (`'develop' | 'test' | 'production'`) derived from the existing `NODE_ENV` build signal, extend `build:standalone` so all three modes are independently buildable (webpack's own `mode` stays a 2-way development/production switch internally, decoupled from the 3-way `environment`/`NODE_ENV`), wire a new `test`-branch CircleCI deploy job that syncs into a shared bucket's `assessment-survey-js/` sub-folder, apply a test-mode-only asset base-path prefix through the **existing `data-asset-base-url` webcomponent-parameter mechanism** (rewritten at build time on the copied `index.html` via a `CopyWebpackPlugin` transform, not by removing the attribute or adding a JS-side fallback) so the deployed bundle resolves its own assets under that sub-folder, and include `environment` in the `metadata` object at both existing `AndroidInterface` call sites in `App.ts`.
 
+**MR-75 amendment (2026-08-28)**: Additionally gate whether `AndroidInterface` is constructed at all (both existing call sites) behind a new remote feature flag, `mr-75`, checked via `featureFlagsService.isFeatureEnabled()` — but only when the resolved `platform` is `'standalone'`. The flag ANDs with the existing `enableAndroidSummary` value (never overrides an explicit host opt-out) and reuses the exact existing `FEATURE_DRAG_DROP_UI`-style constant/evaluation pattern already in `src/App.ts`. See User Story 4 in spec.md, research.md §6, data-model.md's "Feature flag gate (`mr-75`)" section, and contracts/feature-gate-mr-75.md.
+
 ## Technical Context
 
 **Language/Version**: TypeScript ~4.8.3 (strict mode), compiled/bundled for two targets: an ES5 web bundle (webpack 5 + Babel, `standalone.ts` entry) and an ESM npm package (`tsc`, `index.ts` entry); tooling scripts run under Node.js.
 
-**Primary Dependencies**: webpack 5 / webpack-cli / webpack-dev-server, `cross-env`, `copy-webpack-plugin`, `workbox-cli` (`wb:inject`), `@curiouslearning/core` (`AndroidInterface`), Jest + ts-jest; CircleCI `node` and `aws-s3` orbs.
+**Primary Dependencies**: webpack 5 / webpack-cli / webpack-dev-server, `cross-env`, `copy-webpack-plugin`, `workbox-cli` (`wb:inject`), `@curiouslearning/core` (`AndroidInterface`), `@curiouslearning/features` (`featureFlagsService.isFeatureEnabled()` — already a dependency for the existing `drag-drop-assessment-ui` flag; MR-75 reuses it, no new dependency added), Jest + ts-jest; CircleCI `node` and `aws-s3` orbs.
 
 **Storage**: N/A — no persistence involved; this feature only touches build configuration, one new small source module, and CI/deploy wiring.
 
@@ -29,8 +31,10 @@ Expose a single compile-time `environment` constant (`'develop' | 'test' | 'prod
 - The test-mode asset base-path prefix MUST be inert (no-op) for `develop` and `production` builds — no risk of regressing the two already-working deploy destinations.
 - Changes MUST NOT alter the npm-package publish workflows (`build_and_publish`, `build_and_publish_dryrun`) or the `rc`/`main` publish-approval jobs.
 - The `test` S3 destination is a bucket shared with other projects (`s3://globallit-aws-s3-static-webapp-test-us-east-2`) — the deploy job MUST only write under its own `assessment-survey-js/` prefix.
+- (MR-75) The `mr-75` flag check MUST run only after `featureFlagsService.initialize()` settles, and MUST only ever narrow `enableAndroidSummary` (`true` → `false`), never override an explicit host-config opt-out.
+- (MR-75) The gate MUST be scoped to `platform === 'standalone'` without editing `src/standalone.ts` — achieved via the `platform` signal `App.ts` already resolves/defaults, not a new mechanism.
 
-**Scale/Scope**: One new source file (`src/environment.ts`, ~15–20 lines), edits to two `AndroidInterface` call sites in `src/App.ts`, edits to `webpack.config.js` (mode/nodeEnv decoupling + a `CopyWebpackPlugin` transform on the `index.html` pattern that rewrites `data-asset-base-url`'s value per mode) and `package.json` scripts, one new job + one new branch filter in `.circleci/config.yml`, two test files. `index.html` and `src/standalone.ts` are **not edited** — the existing `data-asset-base-url` attribute mechanism is retained as-is (see research.md §3a).
+**Scale/Scope**: One new source file (`src/environment.ts`, ~15–20 lines), edits to two `AndroidInterface` call sites in `src/App.ts`, edits to `webpack.config.js` (mode/nodeEnv decoupling + a `CopyWebpackPlugin` transform on the `index.html` pattern that rewrites `data-asset-base-url`'s value per mode) and `package.json` scripts, one new job + one new branch filter in `.circleci/config.yml`, two test files. `index.html` and `src/standalone.ts` are **not edited** — the existing `data-asset-base-url` attribute mechanism is retained as-is (see research.md §3a). **MR-75 amendment**: one new constant + one new conditional (~5 lines) in `src/App.ts`'s `spinUp()`, one new contract file, additional assertions in the existing `test/src/App.test.ts` — no new source files.
 
 ## Constitution Check
 
@@ -55,6 +59,8 @@ No violations requiring the Complexity Tracking table.
 
 *Amendment (2026-08-26, cont'd again)*: the test-mode asset base-path fix originally called for removing `index.html`'s `data-asset-base-url` attribute and adding an environment-aware JS fallback (`DEFAULT_ASSET_BASE_URL` in `src/standalone.ts`). That's superseded — the existing `data-asset-base-url` webcomponent-parameter mechanism is retained untouched; the environment-aware value is instead injected into that same attribute at build time via a `CopyWebpackPlugin` transform in `webpack.config.js`. `index.html` and `src/standalone.ts` are no longer edited by this feature at all. See research.md §3a. This is a mechanism-routing change, not a paradigm change — the Constitution Check above (Principle IV in particular: `buildBasePath` is still a pure derivation from `NODE_ENV`) still holds without re-justification.
 
+*Amendment (2026-08-28, MR-75)*: Scope extended to gate `AndroidInterface` construction (both call sites) behind a new `mr-75` feature flag for `platform === 'standalone'` sessions — see spec.md User Story 4, research.md §6. Re-checked against all six principles: no new class or inheritance (Principle III unaffected); the gate is a single boolean expression assigned to an existing instance field inside the existing `App` class, evaluated once per `spinUp()` (Principle II — stateful orchestration in `App`, no transformation logic extracted into a separate pure function because there is no meaningful transformation beyond one boolean AND, consistent with how the adjacent `FEATURE_DRAG_DROP_UI` check is already written inline); no `any` introduced, `isFeatureEnabled()` is already typed `(flag: string) => boolean` (Principle I); new Given/When/Then acceptance scenarios (User Story 4) get corresponding `test/src/App.test.ts` assertions per Principle VI. All rows still PASS; no Complexity Tracking entry needed.
+
 ## Project Structure
 
 ### Documentation (this feature)
@@ -67,7 +73,8 @@ specs/001-add-environment-constant/
 ├── quickstart.md        # Phase 1 output
 ├── contracts/           # Phase 1 output
 │   ├── build-scripts.md
-│   └── android-interface-metadata.md
+│   ├── android-interface-metadata.md
+│   └── feature-gate-mr-75.md      # NEW (MR-75 amendment)
 └── tasks.md             # Phase 2 output (/speckit-tasks — not created here)
 ```
 
@@ -76,11 +83,14 @@ specs/001-add-environment-constant/
 ```text
 src/
 ├── environment.ts                 # NEW — exports `Environment` type + `environment` constant + `buildBasePath`
-└── App.ts                         # EDIT — both AndroidInterface call sites gain `environment` in metadata
+└── App.ts                         # EDIT — both AndroidInterface call sites gain `environment` in metadata;
+                                    #        (MR-75) new `FEATURE_ANDROID_SUMMARY_STANDALONE` constant + gate
+                                    #        applied to `this.enableAndroidSummary` in `spinUp()`
 
 test/
 ├── environment.test.ts            # NEW — Gherkin-style resolution tests
-└── src/App.test.ts                # EDIT — asserts `environment` present in both metadata payloads
+└── src/App.test.ts                # EDIT — asserts `environment` present in both metadata payloads;
+                                    #        (MR-75) new assertions per contracts/feature-gate-mr-75.md
 
 webpack.config.js                  # EDIT — decouple `mode` (2-way) from NODE_ENV (3-way); add a CopyWebpackPlugin
                                     #        `transform` on the index.html pattern that rewrites the existing

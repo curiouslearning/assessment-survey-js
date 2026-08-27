@@ -46,6 +46,18 @@ Expected: the new/updated assertions confirm both `AndroidInterface` call sites'
 - Confirm the `s3-deploy-test` job declares `context: [aws-context]` — without it, `AWS_TEST_REGION` won't resolve (it's context-scoped, not a plain project env var like `AWS_DEFAULT_REGION`/`AWS_PROD_REGION`).
 - **Operational prerequisite** (outside this repo's tracked files): the `aws-context` CircleCI context must exist and contain `AWS_TEST_REGION`, and the access key used for the upload (existing shared `AWS_ACCESS_KEY`/`AWS_SECRET_ACCESS_KEY`, per current assumption) must have write permission scoped to the `assessment-survey-js/` prefix of the shared bucket, before the new job can run for real (research.md §5).
 
+## 6. Verify the `mr-75` feature-flag gate on standalone `AndroidInterface` logging (MR-75 amendment)
+
+```bash
+npm test -- test/src/App.test.ts
+```
+
+Expected: new/updated assertions cover, per [contracts/feature-gate-mr-75.md](./contracts/feature-gate-mr-75.md):
+- `platform: 'standalone'`, `enableAndroidSummary` true (default), `isFeatureEnabled('mr-75')` mocked `true` → `AndroidInterface` is constructed (unchanged behavior).
+- Same, but `isFeatureEnabled('mr-75')` mocked `false` → `AndroidInterface` is NOT constructed.
+- `platform: 'standalone'`, `enableAndroidSummary: false` explicitly, `isFeatureEnabled('mr-75')` mocked `true` → still NOT constructed (explicit opt-out wins).
+- `platform` left at a non-standalone default (e.g. omitted so it resolves to the web component's `'ftm'`) → `AndroidInterface` construction follows `enableAndroidSummary` alone, and `isFeatureEnabled` is never called with `'mr-75'`.
+
 ## Success criteria covered
 
-Steps 1–5 above map directly to SC-001 through SC-005 in [spec.md](./spec.md#success-criteria-mandatory-outcomes).
+Steps 1–5 above map directly to SC-001 through SC-005 in [spec.md](./spec.md#success-criteria-mandatory-outcomes). Step 6 covers SC-006 and SC-007 (MR-75 amendment).
