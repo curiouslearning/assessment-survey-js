@@ -4,6 +4,8 @@ import { Survey } from '../../src/survey/survey';
 import { Workbox } from 'workbox-window';
 import { UIController } from '../../src/ui/uiController';
 import { fetchAppData, getDataURL } from '../../src/utils/jsonUtils';
+import { AndroidInterface } from '@curiouslearning/core';
+import { environment } from '../../src/environment';
 
 const mockWorkboxRegister = jest.fn();
 
@@ -82,6 +84,7 @@ describe('App Class', () => {
     `;
 
     jest.clearAllMocks();
+    (AndroidInterface as any).instances = [];
     mockWorkboxRegister.mockResolvedValue({
       installing: { postMessage: jest.fn() },
     });
@@ -242,6 +245,47 @@ describe('App Class', () => {
     app.notifyClose();
 
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  test('Given summary data is logged through AndroidInterface, When notifySummaryData runs, Then the metadata includes the current environment', () => {
+    app.notifySummaryData({ app_type: 'assessment', score: 100, time_spent: 1000 });
+
+    const instances = (AndroidInterface as any).instances;
+    expect(instances).toHaveLength(1);
+    expect(instances[0].metadata).toEqual({ appVersion: expect.any(String), environment });
+  });
+
+  test('Given an assessment session ends, When user-session data is logged through AndroidInterface, Then the metadata includes the current environment', async () => {
+    (fetchAppData as jest.Mock).mockResolvedValue({
+      appType: 'assessment',
+      feedbackText: 'Feedback text',
+      buckets: [
+        {
+          bucketID: 1,
+          items: [{ itemName: 'Alpha', itemText: 'Alpha' }],
+          usedItems: [],
+          numTried: 0,
+          numCorrect: 0,
+          numConsecutiveWrong: 0,
+          tested: false,
+          passed: false,
+          score: 0,
+        },
+      ],
+      contentVersion: 'v1.0.0',
+      quizName: 'Test Quiz',
+    });
+    jest.spyOn(app, 'registerServiceWorker').mockResolvedValue();
+
+    await app.spinUp();
+    app.game.onEnd();
+
+    // game.onEnd() also triggers notifySummaryData's own AndroidInterface construction (a
+    // separate call site) — isolate the user-session one by its distinguishing `debug` key.
+    const instances = (AndroidInterface as any).instances;
+    const sessionInstance = instances.find((instance: any) => 'debug' in instance);
+    expect(sessionInstance).toBeDefined();
+    expect(sessionInstance.metadata).toEqual({ appVersion: expect.any(String), environment });
   });
 });
 
