@@ -8,6 +8,8 @@
 
 **Input**: User description: "add a feature that creats a constant called environment that contains the value of the build mode used (develop, test, production). This means and build:standalone will have develop, test and production modes. Update circle ci config to use those modes to its corresponding environment (main branches). Pass that environment constant as a metadata parameter for AndroidInterface."
 
+**Amendment (2026-08-28, MR-75)**: Scope extended, at the user's direction, to also gate `AndroidInterface` summary logging in standalone mode behind a remote feature flag (`mr-75`) fetched via `featureFlagsService.isFeatureEnabled()` — see User Story 4 below. This is folded into this existing spec rather than a new feature folder, per explicit instruction.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Runtime code knows which environment it was built for (Priority: P1)
@@ -62,6 +64,24 @@ As a support/QA engineer investigating a session or summary report received thro
 
 ---
 
+### User Story 4 - `AndroidInterface` summary logging in standalone mode is gated behind feature flag `mr-75` (Priority: P2)
+
+As a developer rolling out Android-host summary reporting for the standalone bundle, I need the existing `enableAndroidSummary` behavior to also require the remote `mr-75` feature flag to be enabled when the app is running in standalone mode, so the summary-logging integration can be turned on/off remotely (via Statsig) without a redeploy, independent of whatever the host page's own `enableAndroidSummary` config says.
+
+**Why this priority**: Independent of Stories 1–3's `environment` constant, but shares the same host-integration surface (`AndroidInterface`) as Story 3, so it's sequenced alongside it. Not required for Stories 1/2 to deliver value.
+
+**Independent Test**: Can be fully tested by starting the app with `platform: 'standalone'` (the default for `startStandaloneApp`/`src/standalone.ts`) under each combination of `enableAndroidSummary` config value (`true`/default vs. explicit `false`) and `featureFlagsService.isFeatureEnabled('mr-75')` mock return value (`true`/`false`), and asserting whether `notifySummaryData`/session-end logging actually constructs an `AndroidInterface` instance.
+
+**Acceptance Scenarios**:
+
+1. **Given** the app is running with `platform: 'standalone'` and `enableAndroidSummary` resolves to `true` (default or explicit), **When** the `mr-75` feature flag resolves to `true`, **Then** `AndroidInterface` is constructed and summary/session data is logged exactly as it is today.
+2. **Given** the app is running with `platform: 'standalone'` and `enableAndroidSummary` resolves to `true`, **When** the `mr-75` feature flag resolves to `false`, **Then** `AndroidInterface` is NOT constructed and no summary/session data is logged, even though `enableAndroidSummary` itself says "on".
+3. **Given** the app is running with `platform: 'standalone'` and the host explicitly passed `enableAndroidSummary: false`, **When** the `mr-75` feature flag resolves to `true`, **Then** `AndroidInterface` is still NOT constructed — the flag can only narrow (AND with) the existing config, never force logging on against an explicit opt-out.
+4. **Given** the app is running with a `platform` other than `standalone` (e.g. the `<assessment-survey-player>` web component's default `'ftm'` platform), **When** the game ends, **Then** the `mr-75` flag is not consulted at all and `enableAndroidSummary` alone (existing, unchanged behavior) determines whether `AndroidInterface` is constructed.
+5. **Given** `featureFlagsService.initialize()` fails or the flag is otherwise unresolvable, **When** the app is running in standalone mode, **Then** the `mr-75` flag is treated as disabled (fail-safe/closed), matching the existing fail-safe treatment of the `drag-drop-assessment-ui` flag at the same initialization call.
+
+---
+
 ### Edge Cases
 
 - What happens when the underlying mode signal is an unrecognized string (something other than the three known modes)? System MUST fall back to `develop` rather than propagating an invalid value.
@@ -69,6 +89,8 @@ As a support/QA engineer investigating a session or summary report received thro
 - What happens for branches/workflows that don't deploy a standalone bundle at all (e.g. the npm package publish jobs)? They are unaffected — the environment-to-mode mapping only governs the standalone bundle build/deploy jobs.
 - What happens if a future branch is added without an explicit environment mapping? It must not silently deploy under an incorrect environment label; it should be treated the same as "no environment-specific job runs" until explicitly wired.
 - What happens if the test-mode base URL is accidentally applied to a develop or production build? Assets would 404 under a non-existent sub-path on buckets that are served from their root — this MUST NOT happen; the sub-path prefix is exclusively a `test`-mode concern.
+- What happens if `mr-75` resolves to `true` but `platform !== 'standalone'`? No effect — the flag is only ever consulted for standalone-platform sessions (FR-016); non-standalone consumers keep today's `enableAndroidSummary`-only behavior unconditionally.
+- What happens if the flag check runs before `featureFlagsService.initialize()` resolves? It MUST NOT — the gate is applied only after `initialize()` settles (success or caught failure), never against a not-yet-initialized service (which could return a stale/default value non-deterministically).
 
 ## Requirements *(mandatory)*
 
@@ -86,6 +108,11 @@ As a support/QA engineer investigating a session or summary report received thro
 - **FR-010**: Introducing the `environment` constant and its propagation into `AndroidInterface` metadata MUST NOT change any other field already present in those metadata payloads (e.g. `app_version`) or alter unrelated CircleCI jobs (npm package publish workflows).
 - **FR-011**: The build MUST support a configurable base URL (a sub-path prefix under which the bundle's own assets are served) that is applied only to `test`-mode builds, so the bundle deployed into `assessment-survey-js/` on the shared bucket resolves its own assets under that same sub-path.
 - **FR-012**: `develop`- and `production`-mode builds MUST NOT have any base-URL sub-path applied; their assets continue to resolve exactly as they do today (served from each destination's root).
+- **FR-013**: The system MUST expose a named constant for the `mr-75` feature-flag key (mirroring the existing `FEATURE_DRAG_DROP_UI` constant pattern), so the literal flag string is defined once and referenced by name, not repeated as a magic string.
+- **FR-014**: When the resolved `platform` is `'standalone'`, the effective value used to decide whether `AndroidInterface` is constructed (at both existing call sites) MUST be `enableAndroidSummary AND featureFlagsService.isFeatureEnabled('mr-75')` — evaluated only after `featureFlagsService.initialize()` has settled.
+- **FR-015**: The `mr-75` gate MUST only ever narrow `enableAndroidSummary` from `true` to effectively-`false`; it MUST NOT cause `AndroidInterface` to be constructed when `enableAndroidSummary` itself resolved to `false` (explicit config opt-out always wins).
+- **FR-016**: When the resolved `platform` is anything other than `'standalone'`, the `mr-75` flag MUST NOT be consulted; `enableAndroidSummary` alone continues to determine whether `AndroidInterface` is constructed, unchanged from current behavior.
+- **FR-017**: If feature-flag initialization fails or `isFeatureEnabled('mr-75')` cannot be resolved, the flag MUST be treated as disabled (fail-safe/closed) — consistent with how a failed `featureFlagsService.initialize()` already leaves `isFeatureEnabled(FEATURE_DRAG_DROP_UI)` resolving to `false` today.
 
 ### Key Entities
 
@@ -93,6 +120,7 @@ As a support/QA engineer investigating a session or summary report received thro
 - **AndroidInterface metadata**: The existing metadata object sent alongside session and summary logs to the Android host app; gains one new field (`environment`) alongside the existing `app_version`.
 - **CircleCI deploy job**: A per-branch pipeline job that builds the standalone bundle and syncs it to an S3 destination; each of the three relevant branches (`develop`, `test`, `main`) maps one-to-one to one `environment` value and one S3 destination (the `test` destination being a sub-folder of a bucket shared with other projects, rather than a dedicated bucket).
 - **Base URL / public path**: A sub-path prefix under which a build's own assets are served; empty for `develop`/`production`, and set to the shared bucket's `assessment-survey-js/` folder for `test` builds only.
+- **Feature flag gate (`mr-75`)**: A remotely-controlled boolean (Statsig, via `featureFlagsService.isFeatureEnabled()`) that, only when `platform === 'standalone'`, is ANDed with `enableAndroidSummary` to decide whether `AndroidInterface` is constructed at either existing call site; defaults to disabled if unresolved.
 
 ## Success Criteria *(mandatory)*
 
@@ -103,6 +131,8 @@ As a support/QA engineer investigating a session or summary report received thro
 - **SC-003**: All three branch-based CircleCI deploy jobs (`develop`, `test`, `main`) run their build step with the correct mode and deploy to the correct, distinct S3 destination, with zero manual post-deploy correction needed.
 - **SC-005**: The bundle deployed to the shared test bucket's `assessment-survey-js/` folder loads and runs correctly from that sub-path (no broken asset references), while develop and production deployments show no change in how their assets resolve.
 - **SC-004**: Existing CI workflows unrelated to the standalone bundle (npm package publish/dry-run) show no behavior change after this feature ships.
+- **SC-006**: Toggling the `mr-75` Statsig flag off, with no code deploy, stops all `AndroidInterface` construction from standalone-mode sessions within one feature-flag refresh cycle, verified by an automated test that mocks the flag both ways.
+- **SC-007**: Non-standalone consumers (web component default platform) show zero behavior change in `enableAndroidSummary` handling after this feature ships, verified by an automated test asserting the flag is never consulted off the standalone platform.
 
 ## Assumptions
 
@@ -112,3 +142,5 @@ As a support/QA engineer investigating a session or summary report received thro
 - The two existing `AndroidInterface` call sites in the app's Android integration path are the complete set of places that need the `environment` field; no other host-integration payload is in scope.
 - Consumers of the published npm package (as opposed to the standalone bundle) are responsible for their own bundler/runtime environment configuration; this feature only guarantees a correct default (`develop`) when no mode signal is present, not a build-time-frozen value inside the published package artifact.
 - The existing `rc` branch and its npm-publish-approval workflow are out of scope; they are not being converted into a fourth environment.
+- `platform: 'standalone'` (the default `startStandaloneApp`/`src/standalone.ts` sets, per `src/App.ts:691`) is a reliable, existing signal that distinguishes standalone-bootstrap sessions from other consumers (e.g. the web component defaults `platform` to `'ftm'`); this feature relies on that existing signal rather than introducing a new one or editing `src/standalone.ts` itself.
+- The `mr-75` flag is evaluated once per `spinUp()` call, immediately after `featureFlagsService.initialize()` settles — same lifecycle as the existing `FEATURE_DRAG_DROP_UI` check — not re-evaluated later (e.g. mid-session) if the remote flag value changes after the app has already started.

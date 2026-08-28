@@ -84,3 +84,27 @@ Adding `environment` alongside the existing `app_version` key at both call sites
 **Region**: the `test` environment has its own AWS region, distinct from `develop`/`production`. It's supplied by a new CircleCI environment variable, `AWS_TEST_REGION` — but unlike `AWS_DEFAULT_REGION`/`AWS_PROD_REGION` (plain project-level env vars, since today's `s3-deploy`/`s3-deploy-prod` jobs declare no `context:` at all), `AWS_TEST_REGION` lives inside a CircleCI **context** named `aws-context`. The new `s3-deploy-test` job therefore MUST declare `context: [aws-context]` (mirroring how `build_and_publish`/`build_and_publish_dryrun` already declare `context: [github-context, npmjs-context]` to pull in their own context-scoped secrets) so that variable resolves at all — a plain env-var reference with no matching `context:` entry would simply be empty.
 
 **Open item for the implementer (not a design ambiguity, an ops/secrets prerequisite)**: the `aws-context` CircleCI context must exist and contain `AWS_TEST_REGION` (value: the shared bucket's actual region, e.g. `us-east-2` per the bucket name `globallit-aws-s3-static-webapp-test-us-east-2`) before the new job can run for real. Whether `AWS_ACCESS_KEY`/`AWS_SECRET_ACCESS_KEY` for the test job also come from `aws-context` or continue to be the existing project-level ones is an assumption, not confirmed — assumed to still be the existing shared project-level `AWS_ACCESS_KEY`/`AWS_SECRET_ACCESS_KEY` (same as `s3-deploy`/`s3-deploy-prod` use today) unless told otherwise, since only `AWS_TEST_REGION` was called out as living in the context. Either way, that access key must have write permission scoped to the `assessment-survey-js/` prefix of the shared bucket. This is an IAM/CircleCI-settings change outside this repo's tracked files, called out in `quickstart.md` and `tasks.md` rather than silently assumed to already exist.
+
+## 6. How should the `mr-75` feature flag gate `enableAndroidSummary` for standalone mode? (MR-75 amendment, 2026-08-28)
+
+**Decision**: Add a module-level constant `FEATURE_ANDROID_SUMMARY_STANDALONE = 'mr-75'` in `src/App.ts`, alongside the existing `FEATURE_DRAG_DROP_UI = 'drag-drop-assessment-ui'` (same file, same pattern). Inside `spinUp()`, immediately after the existing `featureFlagsService.initialize()` try/catch block (so it always runs, success or caught failure) and before `applyHostIntegrationConfig`'s result is relied upon elsewhere, apply:
+
+```ts
+if ((config.platform ?? 'standalone') === 'standalone') {
+  this.enableAndroidSummary =
+    this.enableAndroidSummary && featureFlagsService.isFeatureEnabled(FEATURE_ANDROID_SUMMARY_STANDALONE);
+}
+```
+
+placed after `applyHostIntegrationConfig(config)` (which sets the pre-flag `this.enableAndroidSummary` from config/default) and after the feature-flags `initialize()` block.
+
+**Rationale**:
+- Reuses the exact existing pattern (`FEATURE_DRAG_DROP_UI` constant + `featureFlagsService.isFeatureEnabled()` call, evaluated once right after `initialize()` settles) rather than inventing a second mechanism — Constitution Principle II/IV (pure, single-source derivation) and the "smallest diff that satisfies the ask" precedent already used throughout this spec.
+- `config.platform ?? 'standalone'` mirrors the exact same defaulting expression already used twice in `spinUp()` (feature-flags `init()`'s log line and `user.custom.platform`) — no new signal, no edit to `src/standalone.ts` needed, since `startStandaloneApp()` (`src/App.ts` `resolvedConfig`) already defaults `platform: 'standalone'` and the web component defaults it to `'ftm'` (`src/web-component.ts:140`). This is what makes "standalone bootstrap only" achievable without touching `src/standalone.ts` itself.
+- AND-ing (not overwriting) `this.enableAndroidSummary` satisfies FR-015: an explicit `enableAndroidSummary: false` from host config always wins; the flag can only turn logging off, never force it on.
+- `featureFlagsService.isFeatureEnabled()` is synchronous and already-safe-by-default when uninitialized/failed (confirmed via `test/_mocks/curiouslearning-features.js`: `isFeatureEnabled: jest.fn().mockReturnValue(false)`), so no extra error handling is needed beyond the existing try/catch around `initialize()` — this satisfies FR-017's fail-closed requirement for free.
+
+**Alternatives considered**:
+- Checking the flag inside `notifySummaryData()`/the session-end handler at call time instead of once in `spinUp()` — rejected: would re-evaluate the flag on every call (inconsistent with the once-per-session lifecycle the existing `drag-drop-assessment-ui` check already uses) and would require passing `platform` down to those methods, a larger diff for the same outcome.
+- Editing `src/standalone.ts` directly to pass a computed `enableAndroidSummary` into `startStandaloneApp()` — rejected: `src/standalone.ts` has no access to `featureFlagsService`'s initialized state (that lives inside `App.spinUp()`), so this would mean initializing feature flags twice or restructuring the existing single-initialization flow; keeping the gate inside `App.ts`, keyed off the `platform` signal that already distinguishes standalone from other consumers, is the smaller change.
+- Making the flag override (not AND with) `enableAndroidSummary` — rejected per the user's explicit precedence choice (FR-015): an explicit host opt-out must not be overridable by a remote flag turning logging back on.

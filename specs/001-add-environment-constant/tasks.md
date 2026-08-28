@@ -15,6 +15,8 @@ description: "Task list template for feature implementation"
 
 **Regenerated 2026-08-26**: supersedes the previous version of this file. The asset base-path mechanism changed — the existing `data-asset-base-url` attribute in `index.html` is retained as-is; the environment-aware value is now injected into that attribute at build time via a `CopyWebpackPlugin` transform in `webpack.config.js`, instead of removing the attribute and adding a JS-side fallback in `src/standalone.ts`. Neither `index.html` nor `src/standalone.ts` is edited by this feature. See research.md §3a and plan.md's Amendments.
 
+**Updated 2026-08-28 (MR-75 amendment)**: T001–T019 above are unchanged (already complete) and were not touched. Only Phase 7 (User Story 4) is new, adding the `mr-75` feature-flag gate on `AndroidInterface` construction in standalone mode — see spec.md User Story 4, research.md §6, data-model.md's "Feature flag gate (`mr-75`)" section, and [contracts/feature-gate-mr-75.md](./contracts/feature-gate-mr-75.md).
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependency on an incomplete task)
@@ -120,6 +122,25 @@ description: "Task list template for feature implementation"
 
 ---
 
+## Phase 7: User Story 4 - `AndroidInterface` summary logging in standalone mode is gated behind feature flag `mr-75` (Priority: P2) (MR-75 amendment, 2026-08-28)
+
+**Goal**: When the resolved `platform` is `'standalone'`, `this.enableAndroidSummary` is ANDed with `featureFlagsService.isFeatureEnabled('mr-75')` (evaluated once, after `featureFlagsService.initialize()` settles) before either `AndroidInterface` call site in `src/App.ts` runs — never overriding an explicit host `enableAndroidSummary: false`, and never consulted outside `platform === 'standalone'`.
+
+**Independent Test**: Run `npm test -- test/src/App.test.ts` and confirm the new assertions in T020 pass for all four combinations in [contracts/feature-gate-mr-75.md](./contracts/feature-gate-mr-75.md) (quickstart.md step 6).
+
+### Tests for User Story 4
+
+- [X] T020 [US4] In `test/src/App.test.ts`, add Gherkin-style tests per spec.md User Story 4 Acceptance Scenarios 1–5 and [contracts/feature-gate-mr-75.md](./contracts/feature-gate-mr-75.md): (a) `platform: 'standalone'`, `enableAndroidSummary` true (default), `featureFlagsService.isFeatureEnabled` mocked to return `true` for `'mr-75'` → `AndroidInterface` IS constructed; (b) same but mocked `false` → `AndroidInterface` is NOT constructed; (c) `platform: 'standalone'`, `enableAndroidSummary: false` explicit, flag mocked `true` → still NOT constructed; (d) `platform` omitted/non-standalone (e.g. `'ftm'`) → construction follows `enableAndroidSummary` alone and `isFeatureEnabled` is never called with `'mr-75'`; (e) `featureFlagsService.initialize` mocked to reject → flag treated as disabled (fail-closed), matching the existing `FEATURE_DRAG_DROP_UI` fallback assertion style already used in this file. Confirm the new assertions fail (the gate doesn't exist yet).
+  - **Correction found during implementation**: the user-session call site (`game.subscribe('ENDED', ...)`, `src/App.ts` ~line 376) never actually checked `enableAndroidSummary` — only `notifySummaryData` (call site 2) did. Without fixing call site 1 too, the `mr-75` gate would have zero effect on user-session logging, contradicting FR-014 ("both existing call sites"). Added two extra tests covering call site 1 specifically. Also updated the existing "Given an assessment session ends…" test (T012/T013, User Story 3), which calls `spinUp()` with default (standalone) platform, to mock the flag enabled — otherwise it would fail against the new default-off gate.
+
+### Implementation for User Story 4
+
+- [X] T021 [US4] In `src/App.ts`, add `export const FEATURE_ANDROID_SUMMARY_STANDALONE = 'mr-75';` alongside the existing `FEATURE_DRAG_DROP_UI` constant. In `spinUp()`, immediately after the existing `featureFlagsService.initialize()` try/catch block (so it runs whether that block succeeded or was caught) and after `applyHostIntegrationConfig(config)` has already set the pre-flag `this.enableAndroidSummary`, add: `if ((config.platform ?? 'standalone') === 'standalone') { this.enableAndroidSummary = this.enableAndroidSummary && featureFlagsService.isFeatureEnabled(FEATURE_ANDROID_SUMMARY_STANDALONE); }` (depends on T020; research.md §6). Also added `&& this.enableAndroidSummary` to call site 1's existing `if (appType === Assessment.TYPE)` guard (see T020's correction note) so the gate actually takes effect there too. Re-run T020's tests and confirm they now pass.
+
+**Checkpoint**: User Story 4 is independently functional — standalone-mode `AndroidInterface` construction now additionally requires the `mr-75` flag; non-standalone consumers (web component) are unaffected.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -129,7 +150,8 @@ description: "Task list template for feature implementation"
 - **User Story 1 (Phase 3)**: Depends on Foundational. No dependency on User Story 2 or 3.
 - **User Story 2 (Phase 4)**: Depends on Foundational and on User Story 1 (`environment` must exist before `buildBasePath` can derive from it, T007).
 - **User Story 3 (Phase 5)**: Depends on User Story 1 only (`environment` must exist, T004) — independent of User Story 2, can be implemented in parallel with Phase 4 by a different contributor.
-- **Polish (Phase 6)**: Depends on all three user stories being complete.
+- **Polish (Phase 6)**: Depends on all three original user stories being complete (T001–T014). Not re-run wholesale for the MR-75 amendment — see Phase 7's own checkpoint instead.
+- **User Story 4 (Phase 7, MR-75 amendment)**: No dependency on User Stories 1/2 (`environment`/`buildBasePath`) at all — only touches `src/App.ts`/`test/src/App.test.ts`, the same files as User Story 3 (T013, T014, T012). Sequence T020/T021 after T012–T014 (same-file edits, not parallel), not because of a data dependency.
 
 ### Within Each User Story
 
@@ -186,3 +208,4 @@ Before T009–T011 can be validated against a *real* CircleCI run (not just stat
 - Every implementation task has a preceding, initially-failing test task, per Constitution Principle VI.
 - Commit after each task or logical group.
 - Stop at either checkpoint (end of Phase 3, end of Phase 4/5) to validate independently before continuing.
+- **MR-75 amendment**: after T021, re-run `npm test` (full suite) and execute [quickstart.md](./quickstart.md) step 6 before considering the amendment done — no new Polish task was added since this is a ~5-line, same-file change riding on Phase 6's already-passing gates; re-running them is sufficient without a dedicated task entry.
