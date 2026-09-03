@@ -44,7 +44,10 @@ export const FEATURE_DRAG_DROP_UI = 'drag-drop-assessment-ui';
 /** Feature flag key gating AndroidInterface summary/session logging in standalone mode. */
 export const FEATURE_ANDROID_SUMMARY_STANDALONE = 'mr-75';
 
-const appVersion: string = 'v1.1.4';
+/**
+ * TODO: use CICD to bump this, on release. it bump package.json's version and import that here.
+ */
+const appVersion: string = 'v1.1.5';
 
 /**
  * Content version from the data file in format v0.1
@@ -379,7 +382,7 @@ export class App {
             cr_user_id,
             app_id: appType,
             // appVersion travels as top-level metadata, not inside data.
-            metadata: { appVersion, environment },
+            metadata: { app_version: appVersion, environment },
             debug: false,
             log: false,
           });
@@ -610,7 +613,7 @@ export class App {
       const androidInterface = new AndroidInterface({
         cr_user_id,
         app_id: 'assessment',
-        metadata: { appVersion, environment },
+        metadata: { app_version: appVersion, environment },
       });
       androidInterface.logSummaryData?.(summaryData);
     }
