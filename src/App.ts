@@ -44,10 +44,7 @@ export const FEATURE_DRAG_DROP_UI = 'drag-drop-assessment-ui';
 /** Feature flag key gating AndroidInterface summary/session logging in standalone mode. */
 export const FEATURE_ANDROID_SUMMARY_STANDALONE = 'mr-75';
 
-/**
- * TODO: use CICD to bump this, on release. it bump package.json's version and import that here.
- */
-const appVersion: string = 'v1.1.5';
+const appVersion: string = 'v1.1.4';
 
 /**
  * Content version from the data file in format v0.1
