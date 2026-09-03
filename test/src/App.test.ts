@@ -1,11 +1,14 @@
-import { App } from '../../src/App';
+import { App, FEATURE_ANDROID_SUMMARY_STANDALONE } from '../../src/App';
 import { Assessment } from '../../src/assessment/assessment';
 import { Survey } from '../../src/survey/survey';
-import { registerServiceWorkerUpdates } from '@curiouslearning/sw';
+import { Workbox } from 'workbox-window';
 import { UIController } from '../../src/ui/uiController';
 import { fetchAppData, getDataURL } from '../../src/utils/jsonUtils';
+import { AndroidInterface } from '@curiouslearning/core';
+import { featureFlagsService } from '@curiouslearning/features';
+import { environment } from '../../src/environment';
 
-const mockRegisterServiceWorkerUpdates = registerServiceWorkerUpdates as jest.Mock;
+const mockWorkboxRegister = jest.fn();
 
 jest.mock('../../src/utils/jsonUtils', () => ({
   fetchAppData: jest.fn().mockResolvedValue({
@@ -36,8 +39,10 @@ jest.mock('../../src/utils/jsonUtils', () => ({
   getDataURL: jest.fn((url: string) => `/data/${url}.json`),
 }));
 
-jest.mock('@curiouslearning/sw', () => ({
-  registerServiceWorkerUpdates: jest.fn(),
+jest.mock('workbox-window', () => ({
+  Workbox: jest.fn().mockImplementation(() => ({
+    register: mockWorkboxRegister,
+  })),
 }));
 
 jest.mock('../../src/ui/uiController', () => ({
@@ -80,7 +85,8 @@ describe('App Class', () => {
     `;
 
     jest.clearAllMocks();
-    mockRegisterServiceWorkerUpdates.mockResolvedValue({
+    (AndroidInterface as any).instances = [];
+    mockWorkboxRegister.mockResolvedValue({
       installing: { postMessage: jest.fn() },
     });
 
@@ -166,28 +172,14 @@ describe('App Class', () => {
     await app.registerServiceWorker(app.game, app.dataURL);
     await Promise.resolve();
 
-    expect(mockRegisterServiceWorkerUpdates).toHaveBeenCalledTimes(1);
+    expect(Workbox).toHaveBeenCalledWith('./sw.js', {});
+    expect(mockWorkboxRegister).toHaveBeenCalled();
     expect(mockHandleServiceWorkerRegistration).toHaveBeenCalled();
-  });
-
-  test('registers via registerServiceWorkerUpdates with the shared channel and mode: "confirm"', async () => {
-    // mode: 'confirm' is the package-default UX (matches the app's previous
-    // confirm()/reload behavior) and channelName is explicitly set to
-    // 'as-message-channel' so the update-ready signal rides the same
-    // BroadcastChannel as the existing Cache/Activated handshake (MR-169 §5.2).
-    await app.registerServiceWorker(app.game, app.dataURL);
-    await Promise.resolve();
-
-    expect(mockRegisterServiceWorkerUpdates).toHaveBeenCalledWith({
-      swUrl: './sw.js',
-      channelName: 'as-message-channel',
-      mode: 'confirm',
-    });
   });
 
   test('should log error when service worker registration fails', async () => {
     const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    mockRegisterServiceWorkerUpdates.mockRejectedValueOnce('Registration failed');
+    mockWorkboxRegister.mockRejectedValueOnce('Registration failed');
 
     await app.registerServiceWorker(app.game, app.dataURL);
     await Promise.resolve();
@@ -255,11 +247,156 @@ describe('App Class', () => {
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  test('Given summary data is logged through AndroidInterface, When notifySummaryData runs, Then the metadata includes the current environment', () => {
+    app.notifySummaryData({ app_type: 'assessment', score: 100, time_spent: 1000 });
+
+    const instances = (AndroidInterface as any).instances;
+    expect(instances).toHaveLength(1);
+    expect(instances[0].metadata).toEqual({ app_version: expect.any(String), environment });
+  });
+
+  test('Given an assessment session ends, When user-session data is logged through AndroidInterface, Then the metadata includes the current environment', async () => {
+    (fetchAppData as jest.Mock).mockResolvedValue({
+      appType: 'assessment',
+      feedbackText: 'Feedback text',
+      buckets: [
+        {
+          bucketID: 1,
+          items: [{ itemName: 'Alpha', itemText: 'Alpha' }],
+          usedItems: [],
+          numTried: 0,
+          numCorrect: 0,
+          numConsecutiveWrong: 0,
+          tested: false,
+          passed: false,
+          score: 0,
+        },
+      ],
+      contentVersion: 'v1.0.0',
+      quizName: 'Test Quiz',
+    });
+    jest.spyOn(app, 'registerServiceWorker').mockResolvedValue();
+    // Default platform ('standalone') now additionally requires the mr-75 flag (see
+    // "AndroidInterface construction in standalone mode is gated by mr-75" below) —
+    // enable it here so this test keeps exercising the metadata-shape behavior it targets.
+    (featureFlagsService.isFeatureEnabled as jest.Mock).mockImplementation(
+      (flag: string) => flag === FEATURE_ANDROID_SUMMARY_STANDALONE
+    );
+
+    await app.spinUp();
+    app.game.onEnd();
+
+    // game.onEnd() also triggers notifySummaryData's own AndroidInterface construction (a
+    // separate call site) — isolate the user-session one by its distinguishing `debug` key.
+    const instances = (AndroidInterface as any).instances;
+    const sessionInstance = instances.find((instance: any) => 'debug' in instance);
+    expect(sessionInstance).toBeDefined();
+    expect(sessionInstance.metadata).toEqual({ app_version: expect.any(String), environment });
+  });
+
+  describe('AndroidInterface construction in standalone mode is gated by mr-75', () => {
+    const assessmentAppData = {
+      appType: 'assessment',
+      feedbackText: 'Feedback text',
+      buckets: [
+        {
+          bucketID: 1,
+          items: [{ itemName: 'Alpha', itemText: 'Alpha' }],
+          usedItems: [],
+          numTried: 0,
+          numCorrect: 0,
+          numConsecutiveWrong: 0,
+          tested: false,
+          passed: false,
+          score: 0,
+        },
+      ],
+      contentVersion: 'v1.0.0',
+      quizName: 'Test Quiz',
+    };
+
+    beforeEach(() => {
+      (fetchAppData as jest.Mock).mockResolvedValue(assessmentAppData);
+      jest.spyOn(app, 'registerServiceWorker').mockResolvedValue();
+    });
+
+    test('Given platform is standalone and the mr-75 flag is enabled, When notifySummaryData runs, Then AndroidInterface is constructed', async () => {
+      (featureFlagsService.isFeatureEnabled as jest.Mock).mockImplementation(
+        (flag: string) => flag === FEATURE_ANDROID_SUMMARY_STANDALONE
+      );
+
+      await app.spinUp({ platform: 'standalone' });
+      app.notifySummaryData({ app_type: 'assessment', score: 100, time_spent: 1000 });
+
+      expect((AndroidInterface as any).instances).toHaveLength(1);
+    });
+
+    test('Given platform is standalone and the mr-75 flag is disabled, When notifySummaryData runs, Then AndroidInterface is NOT constructed', async () => {
+      (featureFlagsService.isFeatureEnabled as jest.Mock).mockReturnValue(false);
+
+      await app.spinUp({ platform: 'standalone' });
+      app.notifySummaryData({ app_type: 'assessment', score: 100, time_spent: 1000 });
+
+      expect((AndroidInterface as any).instances).toHaveLength(0);
+    });
+
+    test('Given platform is standalone, enableAndroidSummary is explicitly false, and the mr-75 flag is enabled, When notifySummaryData runs, Then AndroidInterface is still NOT constructed', async () => {
+      (featureFlagsService.isFeatureEnabled as jest.Mock).mockImplementation(
+        (flag: string) => flag === FEATURE_ANDROID_SUMMARY_STANDALONE
+      );
+
+      await app.spinUp({ platform: 'standalone', enableAndroidSummary: false });
+      app.notifySummaryData({ app_type: 'assessment', score: 100, time_spent: 1000 });
+
+      expect((AndroidInterface as any).instances).toHaveLength(0);
+    });
+
+    test('Given platform is not standalone, When the mr-75 flag is disabled, Then AndroidInterface is still constructed and the flag is never consulted for mr-75', async () => {
+      (featureFlagsService.isFeatureEnabled as jest.Mock).mockReturnValue(false);
+
+      await app.spinUp({ platform: 'ftm' });
+      app.notifySummaryData({ app_type: 'assessment', score: 100, time_spent: 1000 });
+
+      expect((AndroidInterface as any).instances).toHaveLength(1);
+      expect(featureFlagsService.isFeatureEnabled).not.toHaveBeenCalledWith(FEATURE_ANDROID_SUMMARY_STANDALONE);
+    });
+
+    test('Given featureFlagsService.initialize() fails, When platform is standalone, Then the mr-75 flag is treated as disabled and AndroidInterface is NOT constructed', async () => {
+      (featureFlagsService.initialize as jest.Mock).mockRejectedValueOnce(new Error('flags unavailable'));
+      (featureFlagsService.isFeatureEnabled as jest.Mock).mockReturnValue(false);
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      await app.spinUp({ platform: 'standalone' });
+      app.notifySummaryData({ app_type: 'assessment', score: 100, time_spent: 1000 });
+
+      expect((AndroidInterface as any).instances).toHaveLength(0);
+    });
+
+    test('Given platform is standalone and the mr-75 flag is enabled, When an assessment session ends, Then the user-session AndroidInterface call site also fires', async () => {
+      (featureFlagsService.isFeatureEnabled as jest.Mock).mockImplementation(
+        (flag: string) => flag === FEATURE_ANDROID_SUMMARY_STANDALONE
+      );
+
+      await app.spinUp({ platform: 'standalone' });
+      app.game.onEnd();
+
+      const sessionInstance = (AndroidInterface as any).instances.find((instance: any) => 'debug' in instance);
+      expect(sessionInstance).toBeDefined();
+    });
+
+    test('Given platform is standalone and the mr-75 flag is disabled, When an assessment session ends, Then the user-session AndroidInterface call site does NOT fire', async () => {
+      (featureFlagsService.isFeatureEnabled as jest.Mock).mockReturnValue(false);
+
+      await app.spinUp({ platform: 'standalone' });
+      app.game.onEnd();
+
+      const sessionInstance = (AndroidInterface as any).instances.find((instance: any) => 'debug' in instance);
+      expect(sessionInstance).toBeUndefined();
+    });
+  });
 });
 
-// Mirrors src/App.ts's module-level handleServiceWorkerMessage: the
-// 'UpdateFound' branch is gone — registerServiceWorkerUpdates now owns SW
-// update notification end-to-end (mode: 'confirm', tested above).
 function handleServiceWorkerMessage(mockEvent: {
   data: { msg: string; data: { progress: string; bookName: string } };
 }) {
@@ -269,11 +406,11 @@ function handleServiceWorkerMessage(mockEvent: {
       localStorage.setItem(mockEvent.data.data.bookName, 'true');
     }
   }
+  if (mockEvent.data.msg === 'UpdateFound') {
+    handleUpdateFoundMessage();
+  }
 }
 
-// handleUpdateFoundMessage() itself is unchanged by MR-169 — it's still used
-// directly by the content-version-check reload path in registerServiceWorker,
-// which is independent of the SW update-notification lifecycle (MR-169 §2.2).
 function handleUpdateFoundMessage() {
   const text = 'Update Found.\nPlease accept the update by pressing Ok.';
   if (window.confirm(text) === true) {

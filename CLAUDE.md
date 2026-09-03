@@ -9,9 +9,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev                # webpack-dev-server on port 8081
 
 # Build
-npm run build:standalone  # production webpack bundle → build/
-npm run build:package     # ESM + type declarations → dist/ (published to npm)
-npm run build:all         # both of the above
+npm run build:standalone          # production webpack bundle → build/ (environment: "production")
+npm run build:standalone:develop  # development-mode webpack bundle (environment: "develop")
+npm run build:standalone:test     # development-mode webpack bundle for the shared test S3 bucket (environment: "test")
+npm run build:package             # ESM + type declarations → dist/ (published to npm)
+npm run build:all                 # build:standalone (production) + build:package
 
 # Test
 npm test                  # jest (all tests)
@@ -42,11 +44,12 @@ This library is a self-contained **assessment/survey player** that supports two 
 ### Game Logic
 
 **`Assessment`** ([src/assessment/assessment.ts](src/assessment/assessment.ts)) — adaptive testing engine:
-- Organizes questions into *buckets* (competency levels)
+
+- Organizes questions into _buckets_ (competency levels)
 - Uses a binary search tree (BST) to navigate buckets; the search traverses until a ceiling bucket is found
 - Search progresses through stages: `BinarySearch → LinearSearchUp / LinearSearchDown`
 - Two bucket generation modes: `RandomBST` and `LinearArrayBased`
-- Final score derives from the *basal* bucket (highest bucket with all-correct answers)
+- Final score derives from the _basal_ bucket (highest bucket with all-correct answers)
 
 **`Survey`** ([src/survey/survey.ts](src/survey/survey.ts)) — simple linear iteration; no adaptive algorithm.
 
@@ -56,15 +59,16 @@ Both extend **`BaseQuiz`** ([src/baseQuiz.ts](src/baseQuiz.ts)), which implement
 
 There are two interchangeable UI implementations behind the `AssessmentUI` interface ([src/ui/assessment-ui.ts](src/ui/assessment-ui.ts)):
 
-| Mode | Class | Activation |
-|---|---|---|
-| Legacy | `LegacyAssessmentUIAdapter` → `UIController` | default |
-| New drag-drop | `DragDropAssessmentUI` | feature flag `drag-drop-assessment-ui` |
+| Mode          | Class                                        | Activation                             |
+| ------------- | -------------------------------------------- | -------------------------------------- |
+| Legacy        | `LegacyAssessmentUIAdapter` → `UIController` | default                                |
+| New drag-drop | `DragDropAssessmentUI`                       | feature flag `drag-drop-assessment-ui` |
 
 Both share the same DOM template structure (element IDs like `gameWrap`, `qWrap`, `aWrap`, `answerButton1`–`answerButton6`). The feature flag is resolved asynchronously via `@curiouslearning/features` during `App.spinUp()`.
 
 ### Key Subsystems
 
+- **Environment** ([src/environment.ts](src/environment.ts)) — exports the `environment` constant (`'develop' | 'test' | 'production'`), resolved once from `NODE_ENV` at build/run time, plus `buildBasePath` (a test-mode-only asset sub-path prefix for the shared test S3 bucket). Included in the `metadata` sent to `AndroidInterface`.
 - **Analytics** ([src/analytics/](src/analytics/)) — Firebase + Statsig via `@curiouslearning/analytics`. Singleton `AnalyticsIntegration` emits events: `Initialized`, `Opened`, `BucketCompleted`, `Answered`, `Completed`.
 - **Audio** ([src/components/audioController.ts](src/components/audioController.ts)) — preloads and caches audio assets; gated by user interaction unlock. [src/services/drag-drop-audio-controller.ts](src/services/drag-drop-audio-controller.ts) layers drag-and-drop SFX (drag start, return, correct drop) on top of it via the app event bus.
 - **App Event Bus** ([src/services/app-event-bus.ts](src/services/app-event-bus.ts)) — PubSub (from `@curiouslearning/core`) singleton carrying drag-and-drop interaction events (`ON_DRAG_START`, `ON_DRAG_RETURN`, `ANSWERED_CORRECTLY`, `DROP_ELEMENT_INTERACTION`) between the drag-drop UI and its audio controller. Distinct from the `BroadcastChannel` in [src/App.ts](src/App.ts), which is used for service-worker cache messaging.
@@ -76,6 +80,7 @@ Both share the same DOM template structure (element IDs like `gameWrap`, `qWrap`
 ### Configuration (`AppStartupConfig`)
 
 Key fields passed to `new App(config)`:
+
 - `dataURL` / `dataBaseUrl` — where to fetch assessment/survey JSON
 - `assetBaseUrl` — base path for images and audio
 - `assessmentUIMode` — `"legacy"` | `"new-ui"` (can be overridden by feature flag)
@@ -85,4 +90,4 @@ Key fields passed to `new App(config)`:
 
 ### Testing Notes
 
-Tests live under [test/](test/) (mirroring `src/` structure, e.g. `test/assessment/assessment.test.ts`), not alongside source files. Jest + ts-jest run in a jsdom environment (`jest.config.js`), with path aliases resolved via `pathsToModuleNameMapper` against `tsconfig.json`. `@curiouslearning/core` and `@curiouslearning/features` are mapped to hand-written mocks in [test/_mocks/](test/_mocks/); `@curiouslearning/analytics` resolves to its real built `dist`. [jest.setup.js](jest.setup.js) globally mocks `BroadcastChannel`, `UnityBridge`, and `fetch`.
+Tests live under [test/](test/) (mirroring `src/` structure, e.g. `test/assessment/assessment.test.ts`), not alongside source files. Jest + ts-jest run in a jsdom environment (`jest.config.js`), with path aliases resolved via `pathsToModuleNameMapper` against `tsconfig.json`. `@curiouslearning/core` and `@curiouslearning/features` are mapped to hand-written mocks in [test/\_mocks/](test/_mocks/); `@curiouslearning/analytics` resolves to its real built `dist`. [jest.setup.js](jest.setup.js) globally mocks `BroadcastChannel`, `UnityBridge`, and `fetch`.

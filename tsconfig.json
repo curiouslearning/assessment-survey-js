@@ -12,7 +12,6 @@
     "outDir": "dist",
     "sourceMap": true,
     "strict": false,
-    "skipLibCheck": true,
     "removeComments": true,
     "paths": {
       "@analytics/*": ["src/analytics/*"],

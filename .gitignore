@@ -25,9 +25,11 @@ __mocks__
 logs
 *.log
 
+# Device specific py things
+__pycache__/
+*.pyc
+
 # Optional caches
 .npm
 .eslintcache
 .cache/
-# Where I put spec files for agent to consume
-.ignore/
