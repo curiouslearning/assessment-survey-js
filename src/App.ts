@@ -1,20 +1,33 @@
 /**
  * App class that represents an entry point of the application.
  */
-import { getUUID, getUserSource, getDataFile, getAppLanguageFromDataURL, getAppTypeFromDataURL, configureRuntimeConfig } from '@utils/urlUtils';
+import {
+  getUUID,
+  getUserSource,
+  getDataFile,
+  getAppLanguageFromDataURL,
+  getAppTypeFromDataURL,
+  configureRuntimeConfig,
+} from '@utils/urlUtils';
 import { Survey } from '@survey/survey';
 import { Assessment } from '@assessment/assessment';
 import { UnityBridge } from '@utils/unityBridge';
 import { BaseQuiz } from './baseQuiz';
 import { fetchAppData, getDataURL, setDataBaseUrl } from '@utils/jsonUtils';
 import { resolveAssetPath, setAssetBaseUrl } from '@utils/assetUtils';
-import { registerServiceWorkerUpdates } from '@curiouslearning/sw';
+import { Workbox } from 'workbox-window';
 import CacheModel from '@components/cacheModel';
 import { UIController } from '@ui/uiController';
 import { AnalyticsEventsType, AnalyticsIntegration } from '@analytics/analytics-integration';
 import { AnalyticsConfig } from '@analytics/base-analytics-integration';
 import { AndroidInterface } from '@curiouslearning/core';
-import { getLocation, getCommonAnalyticsEventsProperties, setCommonAnalyticsEventsProperties, setLocationProperty } from '@utils/AnalyticsUtils';
+import { environment } from './environment';
+import {
+  getLocation,
+  getCommonAnalyticsEventsProperties,
+  setCommonAnalyticsEventsProperties,
+  setLocationProperty,
+} from '@utils/AnalyticsUtils';
 import { ASSET_PATHS } from '@configs/assetsPaths';
 import { AssessmentUI } from '@ui/assessment-ui';
 import { LegacyAssessmentUIAdapter } from '@ui/legacy';
@@ -28,7 +41,13 @@ export type AssessmentUIMode = 'legacy' | 'new-ui';
 /** Feature flag key that enables the drag-and-drop assessment UI at runtime. */
 export const FEATURE_DRAG_DROP_UI = 'drag-drop-assessment-ui';
 
-const appVersion: string = 'v1.1.4';
+/** Feature flag key gating AndroidInterface summary/session logging in standalone mode. */
+export const FEATURE_ANDROID_SUMMARY_STANDALONE = 'mr-75';
+
+/**
+ * TODO: use CICD to bump this, on release. it bump package.json's version and import that here.
+ */
+const appVersion: string = 'v1.1.5';
 
 /**
  * Content version from the data file in format v0.1
@@ -154,10 +173,19 @@ export class App {
         userID: config.userId ?? getUUID(),
         platform: config.platform ?? 'standalone',
       });
-      featureFlagsService.init({ user: { userID: config.userId ?? getUUID(), custom: { platform: config.platform ?? 'standalone' } } });
+      featureFlagsService.init({
+        user: { userID: config.userId ?? getUUID(), custom: { platform: config.platform ?? 'standalone' } },
+      });
       await featureFlagsService.initialize();
     } catch (error) {
       console.warn('Feature flags initialization failed. Continuing with defaults.', error);
+    }
+
+    // MR-75: in standalone mode, AndroidInterface logging additionally requires this flag.
+    // ANDs with (never overrides) an explicit host-config enableAndroidSummary: false.
+    if ((config.platform ?? 'standalone') === 'standalone') {
+      this.enableAndroidSummary =
+        this.enableAndroidSummary && featureFlagsService.isFeatureEnabled(FEATURE_ANDROID_SUMMARY_STANDALONE);
     }
 
     // Resolve mode once — this single value drives both the template and the controller.
@@ -231,9 +259,9 @@ export class App {
 
   private static createNoopUnityBridge() {
     return {
-      SendMessage: (_message: string) => { },
-      SendLoaded: () => { },
-      SendClose: () => { },
+      SendMessage: (_message: string) => {},
+      SendLoaded: () => {},
+      SendClose: () => {},
     };
   }
 
@@ -292,16 +320,12 @@ export class App {
         for (const question of questions) {
           if (question.promptAudio) {
             this.cacheModel.addItemToAudioVisualResources(
-              resolveAssetPath(
-                ASSET_PATHS.AUDIO.itemAudio(this.dataURL, question.promptAudio.toLowerCase().trim())
-              )
+              resolveAssetPath(ASSET_PATHS.AUDIO.itemAudio(this.dataURL, question.promptAudio.toLowerCase().trim()))
             );
           }
         }
 
-        this.cacheModel.addItemToAudioVisualResources(
-          resolveAssetPath(ASSET_PATHS.AUDIO.feedbackAudio(this.dataURL))
-        );
+        this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.feedbackAudio(this.dataURL)));
 
         this.game = new Survey(this.dataURL, this.unityBridge);
       } else if (appType == 'assessment') {
@@ -325,9 +349,15 @@ export class App {
       this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.dingSfx));
 
       //caching SFX(s) for drag and drop
-      this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.DRAG_SOUND_EFFECTS.DRAG_START_POP));
-      this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.DRAG_SOUND_EFFECTS.HAPPY_TRUMPET_PLUS_SPARKLE));
-      this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.DRAG_SOUND_EFFECTS.RETURN_BOING));
+      this.cacheModel.addItemToAudioVisualResources(
+        resolveAssetPath(ASSET_PATHS.AUDIO.DRAG_SOUND_EFFECTS.DRAG_START_POP)
+      );
+      this.cacheModel.addItemToAudioVisualResources(
+        resolveAssetPath(ASSET_PATHS.AUDIO.DRAG_SOUND_EFFECTS.HAPPY_TRUMPET_PLUS_SPARKLE)
+      );
+      this.cacheModel.addItemToAudioVisualResources(
+        resolveAssetPath(ASSET_PATHS.AUDIO.DRAG_SOUND_EFFECTS.RETURN_BOING)
+      );
 
       this.game.unityBridge = this.unityBridge;
 
@@ -346,13 +376,13 @@ export class App {
           time_spent: endTime - startTime,
         });
 
-        if (appType === Assessment.TYPE) {
+        if (appType === Assessment.TYPE && this.enableAndroidSummary) {
           const { cr_user_id, language } = getCommonAnalyticsEventsProperties();
           const androidInterface = new AndroidInterface({
             cr_user_id,
             app_id: appType,
             // appVersion travels as top-level metadata, not inside data.
-            metadata: { app_version: appVersion },
+            metadata: { app_version: appVersion, environment },
             debug: false,
             log: false,
           });
@@ -371,7 +401,14 @@ export class App {
   }
 
   async setCommonProperties() {
-    setCommonAnalyticsEventsProperties(getUUID(), getAppLanguageFromDataURL(this.dataURL), getAppTypeFromDataURL(this.dataURL), getUserSource(), contentVersion, appVersion);
+    setCommonAnalyticsEventsProperties(
+      getUUID(),
+      getAppLanguageFromDataURL(this.dataURL),
+      getAppTypeFromDataURL(this.dataURL),
+      getUserSource(),
+      contentVersion,
+      appVersion
+    );
   }
 
   async logInitialAnalyticsEvents() {
@@ -386,19 +423,16 @@ export class App {
     console.log('Registering service worker...');
 
     if ('serviceWorker' in navigator) {
-      const registration = await registerServiceWorkerUpdates({
-        swUrl: './sw.js',
-        channelName: 'as-message-channel',
-        mode: 'confirm', // package default; see MR-169 spec §5.3 for the UX-copy tradeoff
-      }).catch((err) => {
-        console.log('Service worker registration failed: ' + err);
-        return undefined;
-      });
+      let wb = new Workbox('./sw.js', {});
 
-      if (registration) {
-        console.log('Service worker registered!');
-        this.handleServiceWorkerRegistation(registration);
-      }
+      wb.register()
+        .then((registration) => {
+          console.log('Service worker registered!');
+          this.handleServiceWorkerRegistation(registration);
+        })
+        .catch((err) => {
+          console.log('Service worker registration failed: ' + err);
+        });
 
       navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
 
@@ -412,10 +446,13 @@ export class App {
           const progressValue = parseInt(event.data.data.progress);
           if (progressValue >= 100) {
             this.assessmentUI.setLoadingProgress(100);
-            setTimeout(() => {
-              this.assessmentUI.setLoadingVisible(false);
-              this.assessmentUI.setContentLoaded(true);
-            }, skipLoadingScreen ? 0 : 1500);
+            setTimeout(
+              () => {
+                this.assessmentUI.setLoadingVisible(false);
+                this.assessmentUI.setContentLoaded(true);
+              },
+              skipLoadingScreen ? 0 : 1500
+            );
           } else if (progressValue >= 10) {
             this.assessmentUI.setLoadingProgress(progressValue);
           }
@@ -478,10 +515,13 @@ export class App {
         });
       } else {
         this.assessmentUI.setLoadingProgress(100);
-        setTimeout(() => {
-          this.assessmentUI.setLoadingVisible(false);
-          this.assessmentUI.setContentLoaded(true);
-        }, skipLoadingScreen ? 0 : 1500);
+        setTimeout(
+          () => {
+            this.assessmentUI.setLoadingVisible(false);
+            this.assessmentUI.setContentLoaded(true);
+          },
+          skipLoadingScreen ? 0 : 1500
+        );
       }
 
       broadcastChannel.onmessage = (event) => {
@@ -546,9 +586,7 @@ export class App {
   }
 
   public createAssessmentUI(): AssessmentUI {
-    return this.assessmentUIMode === 'new-ui'
-      ? new DragDropAssessmentUI(this.uiRoot)
-      : new LegacyAssessmentUIAdapter();
+    return this.assessmentUIMode === 'new-ui' ? new DragDropAssessmentUI(this.uiRoot) : new LegacyAssessmentUIAdapter();
   }
 
   public notifyLoaded(): void {
@@ -575,7 +613,7 @@ export class App {
       const androidInterface = new AndroidInterface({
         cr_user_id,
         app_id: 'assessment',
-        metadata: { app_version: appVersion },
+        metadata: { app_version: appVersion, environment },
       });
       androidInterface.logSummaryData?.(summaryData);
     }
@@ -618,11 +656,10 @@ function handleServiceWorkerMessage(event): void {
     let progressValue = parseInt(event.data.data.progress);
     handleLoadingMessage(event, progressValue);
   }
-  // 'UpdateFound' branch removed — registerServiceWorkerUpdates now owns the SW
-  // update-notification signal end-to-end via its own BroadcastChannel listener
-  // and built-in confirm()/reload (mode: 'confirm'). handleUpdateFoundMessage()
-  // is still used directly by the independent content-version-check reload path
-  // below (see registerServiceWorker), which is unchanged by this migration.
+  if (event.data.msg == 'UpdateFound') {
+    console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>.,update Found');
+    handleUpdateFoundMessage();
+  }
 }
 
 function handleLoadingMessage(event, progressValue): void {
