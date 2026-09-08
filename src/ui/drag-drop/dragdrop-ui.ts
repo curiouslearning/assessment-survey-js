@@ -51,6 +51,11 @@ export class DragDropAssessmentUI implements AssessmentUI {
   private devModeBucketControlsEnabled = false;
   private externalBucketControlsHandler: ((container: HTMLElement, clickCallback: () => void) => void) | null = null;
 
+  // Spelling assessments answer by tapping a plain rectangular box instead of
+  // dragging a ladybug onto the chest (see FM-979: longer spelled words don't
+  // fit inside the ladybug's ~105px width).
+  private isSpellingAssessment = false;
+
   private callbacks: AssessmentUICallbacks | null = null;
   private dragController: DragEventController | null = null;
   private dropUnsubscribe: (() => void) | null = null;
@@ -101,34 +106,46 @@ export class DragDropAssessmentUI implements AssessmentUI {
   configure(callbacks: AssessmentUICallbacks): void {
     this.callbacks = callbacks;
 
-    // Apply drag behaviour to each answer button (class 'answerButton' required by DragEventController).
-    this.answerButtons.forEach((button) => new DraggableButton(button));
+    if (this.isSpellingAssessment) {
+      // Click-to-select: tapping a box answers immediately, no drag/drop wiring.
+      this.answerButtons.forEach((button, index) => {
+        button.addEventListener('click', () => {
+          if (!this.buttonsActive || !this.callbacks) return;
+          this.buttonsActive = false;
+          const elapsedMs = Date.now() - this.qStart;
+          this.callbacks.onAnswer({ answerIndex: index, elapsedMs });
+        });
+      });
+    } else {
+      // Apply drag behaviour to each answer button (class 'answerButton' required by DragEventController).
+      this.answerButtons.forEach((button) => new DraggableButton(button));
 
-    // Apply drop behaviour to the chest div (class 'chestdiv' required by DragEventController).
-    const chestDiv = this.root.querySelector<HTMLElement>('.chestdiv');
-    if (chestDiv) {
-      new DropAreaTarget(chestDiv);
-    }
-
-    // Attach pointer-event listeners to the game container so DragEventController
-    // can locate both the draggable buttons and the chest drop zone.
-    this.dragController = new DragEventController(this.gameContainer);
-    this.dragController.attach();
-
-    // Map dropped element → 0-based answerIndex → onAnswer callback.
-    this.dropUnsubscribe = appEventBus.subscribe(
-      appEventBus.EVENTS.DROP_ELEMENT_INTERACTION,
-      ({ selectedAnswer }: { selectedAnswer: iDraggableHTMLElement }) => {
-        if (!this.buttonsActive || !this.callbacks) return;
-        this.buttonsActive = false;
-        this.dragController?.setLocked(true);
-        // Button IDs are 'answerButton1'…'answerButton6' (1-based); convert to 0-based.
-        const buttonNum = parseInt(selectedAnswer.id.replace('answerButton', ''), 10);
-        if (isNaN(buttonNum)) return;
-        const elapsedMs = Date.now() - this.qStart;
-        this.callbacks.onAnswer({ answerIndex: buttonNum - 1, elapsedMs });
+      // Apply drop behaviour to the chest div (class 'chestdiv' required by DragEventController).
+      const chestDiv = this.root.querySelector<HTMLElement>('.chestdiv');
+      if (chestDiv) {
+        new DropAreaTarget(chestDiv);
       }
-    );
+
+      // Attach pointer-event listeners to the game container so DragEventController
+      // can locate both the draggable buttons and the chest drop zone.
+      this.dragController = new DragEventController(this.gameContainer);
+      this.dragController.attach();
+
+      // Map dropped element → 0-based answerIndex → onAnswer callback.
+      this.dropUnsubscribe = appEventBus.subscribe(
+        appEventBus.EVENTS.DROP_ELEMENT_INTERACTION,
+        ({ selectedAnswer }: { selectedAnswer: iDraggableHTMLElement }) => {
+          if (!this.buttonsActive || !this.callbacks) return;
+          this.buttonsActive = false;
+          this.dragController?.setLocked(true);
+          // Button IDs are 'answerButton1'…'answerButton6' (1-based); convert to 0-based.
+          const buttonNum = parseInt(selectedAnswer.id.replace('answerButton', ''), 10);
+          if (isNaN(buttonNum)) return;
+          const elapsedMs = Date.now() - this.qStart;
+          this.callbacks.onAnswer({ answerIndex: buttonNum - 1, elapsedMs });
+        }
+      );
+    }
 
     this.landingClickHandler = () => {
       if (this.contentLoaded && this.gameReady) {
@@ -414,6 +431,16 @@ export class DragDropAssessmentUI implements AssessmentUI {
   // ─────────────────────────────────────────────────────────────────────────────
   // AssessmentUI — dev-mode hooks
   // ─────────────────────────────────────────────────────────────────────────────
+
+  setAssessmentType(assessmentType: string): void {
+    this.isSpellingAssessment = assessmentType === 'spelling';
+    if (this.isSpellingAssessment) {
+      this.answersContainer.classList.add('as-spelling-mode');
+      // Wider 2-per-row layout (matches the legacy UI's answer grid) — the
+      // ladybug's narrower 4-across row doesn't leave room for longer words.
+      this.answersContainer.style.gridTemplateColumns = 'repeat(2, minmax(0, 200px))';
+    }
+  }
 
   setCorrectLabelVisibility(visible: boolean): void {
     this.devModeCorrectLabelVisibility = visible;

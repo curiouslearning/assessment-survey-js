@@ -49,6 +49,10 @@ export interface AssessmentUI {
     handler: (container: HTMLElement, clickCallback: () => void) => void
   ): void;
 
+  // --- content metadata (optional) ---
+  /** Lets a UI implementation adapt its answer interaction to the loaded content's assessmentType (e.g. "spelling"). */
+  setAssessmentType?(assessmentType: string): void;
+
   // --- lifecycle ---
   dispose?(): void;
 }
