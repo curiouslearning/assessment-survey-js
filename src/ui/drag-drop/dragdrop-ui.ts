@@ -3,10 +3,10 @@ import { AudioController } from '@components/audioController';
 import { resolveAssetPath } from '@utils/assetUtils';
 import { ASSET_PATHS } from '@configs/assetsPaths';
 import { AssessmentUI, AssessmentUICallbacks } from '../assessment-ui';
-import { DragEventController, DraggableButton, DropAreaTarget, iDraggableHTMLElement } from './dom-events';
-import appEventBus from '@services/app-event-bus';
 import { DragDropAudioController } from '@services/drag-drop-audio-controller';
 import { isRTL, setFontSizeRTL, setFontSizeLTR } from '@utils/languageUtils';
+import { TapToAnswerController } from '../tap-to-answer-controller';
+import { DragToAnswerController } from './drag-to-answer-controller';
 /**
  * Drag-and-drop assessment UI.
  *
@@ -41,7 +41,6 @@ export class DragDropAssessmentUI implements AssessmentUI {
   private gameReady = true;
   private skipStartScreen = false;
   private animationSpeedMultiplier = 1;
-  private buttonsActive = false;
 
   // --- star progress state ---
   private shownStarsCount = 0;
@@ -57,8 +56,8 @@ export class DragDropAssessmentUI implements AssessmentUI {
   private isSpellingAssessment = false;
 
   private callbacks: AssessmentUICallbacks | null = null;
-  private dragController: DragEventController | null = null;
-  private dropUnsubscribe: (() => void) | null = null;
+  private tapController: TapToAnswerController | null = null;
+  private dragAnswerController: DragToAnswerController | null = null;
   private landingClickHandler: (() => void) | null = null;
 
   private dragDropAudioControllerInstance: DragDropAudioController | null;
@@ -108,43 +107,18 @@ export class DragDropAssessmentUI implements AssessmentUI {
 
     if (this.isSpellingAssessment) {
       // Click-to-select: tapping a box answers immediately, no drag/drop wiring.
-      this.answerButtons.forEach((button, index) => {
-        button.addEventListener('click', () => {
-          if (!this.buttonsActive || !this.callbacks) return;
-          this.buttonsActive = false;
-          const elapsedMs = Date.now() - this.qStart;
-          this.callbacks.onAnswer({ answerIndex: index, elapsedMs });
-        });
+      this.tapController = new TapToAnswerController(this.answerButtons, {
+        onAnswer: (answerIndex, elapsedMs) => this.callbacks?.onAnswer({ answerIndex, elapsedMs }),
+        getElapsedMs: () => Date.now() - this.qStart,
       });
+      this.tapController.attach();
     } else {
-      // Apply drag behaviour to each answer button (class 'answerButton' required by DragEventController).
-      this.answerButtons.forEach((button) => new DraggableButton(button));
-
-      // Apply drop behaviour to the chest div (class 'chestdiv' required by DragEventController).
       const chestDiv = this.root.querySelector<HTMLElement>('.chestdiv');
-      if (chestDiv) {
-        new DropAreaTarget(chestDiv);
-      }
-
-      // Attach pointer-event listeners to the game container so DragEventController
-      // can locate both the draggable buttons and the chest drop zone.
-      this.dragController = new DragEventController(this.gameContainer);
-      this.dragController.attach();
-
-      // Map dropped element → 0-based answerIndex → onAnswer callback.
-      this.dropUnsubscribe = appEventBus.subscribe(
-        appEventBus.EVENTS.DROP_ELEMENT_INTERACTION,
-        ({ selectedAnswer }: { selectedAnswer: iDraggableHTMLElement }) => {
-          if (!this.buttonsActive || !this.callbacks) return;
-          this.buttonsActive = false;
-          this.dragController?.setLocked(true);
-          // Button IDs are 'answerButton1'…'answerButton6' (1-based); convert to 0-based.
-          const buttonNum = parseInt(selectedAnswer.id.replace('answerButton', ''), 10);
-          if (isNaN(buttonNum)) return;
-          const elapsedMs = Date.now() - this.qStart;
-          this.callbacks.onAnswer({ answerIndex: buttonNum - 1, elapsedMs });
-        }
-      );
+      this.dragAnswerController = new DragToAnswerController(this.gameContainer, this.answerButtons, chestDiv, {
+        onAnswer: (answerIndex, elapsedMs) => this.callbacks?.onAnswer({ answerIndex, elapsedMs }),
+        getElapsedMs: () => Date.now() - this.qStart,
+      });
+      this.dragAnswerController.attach();
     }
 
     this.landingClickHandler = () => {
@@ -227,7 +201,8 @@ export class DragDropAssessmentUI implements AssessmentUI {
     if (!question) return;
     this.nextQuestion = question;
     this.shown = false;
-    this.buttonsActive = false;
+    this.tapController?.setActive(false);
+    this.dragAnswerController?.setActive(false);
 
     this.answersContainer.style.visibility = 'hidden';
     this.answerButtons.forEach((b) => (b.style.visibility = 'hidden'));
@@ -363,8 +338,8 @@ export class DragDropAssessmentUI implements AssessmentUI {
                   return !b || b.style.visibility === 'visible';
                 });
                 if (allVisible) {
-                  this.buttonsActive = true;
-                  this.dragController?.setLocked(false);
+                  this.tapController?.setActive(true);
+                  this.dragAnswerController?.setActive(true);
                 }
               },
               { once: true }
@@ -392,7 +367,8 @@ export class DragDropAssessmentUI implements AssessmentUI {
   // ─────────────────────────────────────────────────────────────────────────────
 
   showFeedback(visible: boolean, isCorrect: boolean): void {
-    this.buttonsActive = false;
+    this.tapController?.setActive(false);
+    this.dragAnswerController?.setActive(false);
     if (visible) {
       this.feedbackContainer.classList.remove('hidden');
       this.feedbackContainer.classList.add('visible');
@@ -461,10 +437,10 @@ export class DragDropAssessmentUI implements AssessmentUI {
   }
 
   dispose(): void {
-    this.dragController?.detach();
-    this.dragController = null;
-    this.dropUnsubscribe?.();
-    this.dropUnsubscribe = null;
+    this.tapController?.dispose();
+    this.tapController = null;
+    this.dragAnswerController?.dispose();
+    this.dragAnswerController = null;
 
     this.dragDropAudioControllerInstance?.disposeSubscriptions();
     this.dragDropAudioControllerInstance = null;
