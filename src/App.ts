@@ -342,6 +342,8 @@ export class App {
 
         this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.feedbackAudio(this.dataURL)));
 
+        this.assessmentUI.setAssessmentType?.(assessmentType);
+
         const assessmentUI = this.assessmentUI;
         this.game = new Assessment(this.dataURL, this.unityBridge, assessmentUI);
       }
