@@ -32,15 +32,18 @@ export class DraggableQuestionViewWrapperSection extends TemplateSection<HTMLDiv
 
         chestWrapper.appendChild(chestDiv);
 
+        // Starts hidden (same token as feedbackWrap) — Sentence Reading (FM-999 spike) fades
+        // it in/out in the same slot as the feedback box; every other assessment type keeps
+        // it permanently display:none (see DragDropAssessmentUI.prepareQuestion).
         const questionContainer = createElement('div', {
             id: 'qWrap',
-            className: this.context.classNames.questionContainer,
+            className: joinClassNames(this.context.classNames.questionContainer, this.context.classNames.feedbackHidden),
         });
 
         const answerContainer = createElement('div', {
             id: 'aWrap',
             className: this.context.classNames.answerContainer,
-            style: 'grid-template-columns: repeat(4, minmax(0, 1fr)); min-height: unset; margin-top: 0;',
+            style: 'grid-template-columns: repeat(4, minmax(0, 1fr)); min-height: unset; margin-top:25px;',
         });
 
         for (let index = 1; index <= 6; index += 1) {
@@ -66,15 +69,16 @@ export class DraggableQuestionViewWrapperSection extends TemplateSection<HTMLDiv
             text: this.context.text.feedbackText,
         });
 
-        // Feedback overlays the audio button — placed inside nextQuestionInput so
-        // it can be absolutely positioned on top of #pbutton.
+        // Sentence prompt (Sentence Reading) and feedback both overlay the audio button —
+        // placed inside nextQuestionInput so they can be absolutely positioned on top of
+        // #pbutton and crossfade in the same slot instead of shifting layout.
+        nextQuestionInput.appendChild(questionContainer);
         nextQuestionInput.appendChild(feedbackContainer);
         controlsContainer.appendChild(nextQuestionInput);
 
-        // Layout order: audio button (+ feedback overlay) → question → options (single row) → treasure chest
+        // Layout order: audio button (+ question/feedback overlay) → options (single row) → treasure chest
         appendChildren(questionViewWrapper, [
             controlsContainer,
-            questionContainer,
             answerContainer,
             chestWrapper,
         ]);

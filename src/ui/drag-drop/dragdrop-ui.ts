@@ -55,6 +55,10 @@ export class DragDropAssessmentUI implements AssessmentUI {
   // fit inside the ladybug's ~105px width).
   private isSpellingAssessment = false;
 
+  // Sentence Reading (FM-999 spike) needs its sentence prompt visible as text; every other
+  // assessment type relies on audio-only prompts and keeps qWrap hidden (display: none).
+  private isSentenceReadingAssessment = false;
+
   private callbacks: AssessmentUICallbacks | null = null;
   private tapController: TapToAnswerController | null = null;
   private dragAnswerController: DragToAnswerController | null = null;
@@ -105,8 +109,10 @@ export class DragDropAssessmentUI implements AssessmentUI {
   configure(callbacks: AssessmentUICallbacks): void {
     this.callbacks = callbacks;
 
-    if (this.isSpellingAssessment) {
+    if (this.isSpellingAssessment || this.isSentenceReadingAssessment) {
       // Click-to-select: tapping a box answers immediately, no drag/drop wiring.
+      // Sentence Reading (FM-999 spike) reuses this same tap controller as Spelling —
+      // there's no chest/drag metaphor needed for "pick the matching image".
       this.tapController = new TapToAnswerController(this.answerButtons, {
         onAnswer: (answerIndex, elapsedMs) => this.callbacks?.onAnswer({ answerIndex, elapsedMs }),
         getElapsedMs: () => Date.now() - this.qStart,
@@ -209,6 +215,16 @@ export class DragDropAssessmentUI implements AssessmentUI {
     this.questionsContainer.innerHTML = '';
     this.questionsContainer.style.display = 'none';
 
+    if (this.isSentenceReadingAssessment) {
+      // Sentence Reading has no audio prompt - the sentence itself is the whole prompt, so
+      // there's no play/replay button. Show the sentence and the 4 image options immediately,
+      // and after each answer the next sentence loads the same way (see FM-999 spike).
+      this.playButton.innerHTML = '';
+      this.revealQuestion();
+      this.showAnswerTargets();
+      return;
+    }
+
     if (this.devModeBucketControlsEnabled && this.externalBucketControlsHandler) {
       this.externalBucketControlsHandler(this.playButton, () => {
         this.revealQuestion();
@@ -246,6 +262,19 @@ export class DragDropAssessmentUI implements AssessmentUI {
     if ('promptImg' in question) {
       const img = AudioController.GetImage((question as any).promptImg);
       this.questionsContainer.appendChild(img);
+    }
+
+    if (this.isSentenceReadingAssessment) {
+      // Plain text in a centered flex box - no trailing <BR> needed like the audio-prompt layout.
+      this.questionsContainer.textContent = question.promptText;
+      this.questionsContainer.style.display = '';
+      // Crossfade in over the feedback box's slot (showFeedback hides it back out on answer).
+      this.questionsContainer.classList.remove('hidden');
+      this.questionsContainer.classList.add('visible');
+      this.answerButtons.forEach((b) => (b.style.visibility = 'hidden'));
+      // Sentence Reading has no audio - prepareQuestion already reveals the sentence and
+      // calls showAnswerTargets directly, so there's no play/replay button to wire up here.
+      return;
     }
 
     this.questionsContainer.innerHTML += question.promptText + '<BR>';
@@ -370,6 +399,12 @@ export class DragDropAssessmentUI implements AssessmentUI {
     this.tapController?.setActive(false);
     this.dragAnswerController?.setActive(false);
     if (visible) {
+      // Sentence Reading shares the feedback slot with its sentence prompt box - swap them
+      // out so only one is visible at a time (see FM-999 spike).
+      if (this.isSentenceReadingAssessment) {
+        this.questionsContainer.classList.remove('visible');
+        this.questionsContainer.classList.add('hidden');
+      }
       this.feedbackContainer.classList.remove('hidden');
       this.feedbackContainer.classList.add('visible');
       this.feedbackContainer.style.color = isCorrect ? 'rgb(109, 204, 122)' : 'red';
@@ -410,11 +445,21 @@ export class DragDropAssessmentUI implements AssessmentUI {
 
   setAssessmentType(assessmentType: string): void {
     this.isSpellingAssessment = assessmentType === 'spelling';
+    this.isSentenceReadingAssessment = assessmentType === 'sentence-reading';
     if (this.isSpellingAssessment) {
       this.answersContainer.classList.add('as-spelling-mode');
       // Wider 2-per-row layout (matches the legacy UI's answer grid) — the
       // ladybug's narrower 4-across row doesn't leave room for longer words.
       this.answersContainer.style.gridTemplateColumns = 'repeat(2, minmax(0, 200px))';
+    }
+    if (this.isSentenceReadingAssessment) {
+      // Plain, uniformly-sized boxes holding an image (no ladybug drag target) — see FM-999 spike.
+      this.answersContainer.classList.add('as-sentence-reading-mode');
+      // 2x2 grid instead of the default 4-across row (overrides the inline style set at
+      // DOM-creation time in draggable-question-view-wrapper-section.ts).
+      this.answersContainer.style.gridTemplateColumns = 'repeat(2, minmax(0, 150px))';
+      // Styles qWrap as a feedback-like box sharing the feedback slot (see revealQuestion/showFeedback).
+      this.questionsContainer.classList.add('as-sentence-reading-mode');
     }
   }
 

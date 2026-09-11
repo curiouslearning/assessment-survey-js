@@ -84,11 +84,14 @@ export class AudioController {
     console.log(newAudio.src);
   }
 
-  public static PreloadBucket(newBucket: bucket, dataURL) {
+  public static PreloadBucket(newBucket: bucket, dataURL, assessmentType?: string) {
     AudioController.getInstance().dataURL = dataURL;
     const feedbackSoundPath = resolveAssetPath(ASSET_PATHS.AUDIO.feedbackAudio(AudioController.getInstance().dataURL));
     AudioController.getInstance().correctAudio.src = feedbackSoundPath;
     AudioController.getInstance().feedbackAudio.src = feedbackSoundPath;
+    // Sentence Reading (FM-999 spike) has no audio prompt - itemName is the sentence text
+    // itself, not an audio key, so preloading it as "audio" would just 404 every time.
+    if (assessmentType === 'sentence-reading') return;
     for (var itemIndex in newBucket.items) {
       var item = newBucket.items[itemIndex];
       AudioController.FilterAndAddAudioToAllAudios(item.itemName.toLowerCase());
