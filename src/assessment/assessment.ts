@@ -488,6 +488,11 @@ export class Assessment extends BaseQuiz {
   };
 
   private generateFoils = (targetItem: any): any[] => {
+    // FM-996: when the item carries authored foils, use them exactly — no random distractors.
+    if (targetItem.foils?.length) {
+      return targetItem.foils.map((foil: string) => ({ itemName: foil, itemText: foil }));
+    }
+
     let foil1, foil2, foil3;
 
     if (this.bucketGenMode === BucketGenMode.RandomBST) {
