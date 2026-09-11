@@ -183,6 +183,60 @@ describe('Assessment Class', () => {
     expect(assessment.questionNumber).toBe(1);
   });
 
+  it('uses authored foils exactly when the target item has them (FM-996)', () => {
+    // Single-item bucket whose item carries authored foils (as spelling items do).
+    assessment.currentBucket = {
+      bucketID: 1,
+      bucketName: 'b1',
+      items: [{ itemName: 'makaranta', itemText: 'makaranta', foils: ['maƙaranta', 'mekaranta', 'mkaaranta'] }],
+      usedItems: [],
+      numTried: 0,
+      numCorrect: 0,
+      numConsecutiveWrong: 0,
+      tested: false,
+      passed: false,
+      score: 0,
+    } as any;
+    assessment['bucketGenMode'] = BucketGenMode.RandomBST;
+
+    const q = assessment.buildNewQuestion();
+
+    // Exactly the target + its 3 authored foils — no random distractors.
+    expect(q?.answers).toHaveLength(4);
+    expect(q?.correct).toBe('makaranta');
+    expect(q?.answers.map((a: any) => a.answerText).sort()).toEqual(
+      ['makaranta', 'maƙaranta', 'mekaranta', 'mkaaranta'].sort()
+    );
+  });
+
+  it('falls back to random foil generation when the item has no authored foils (FM-996)', () => {
+    // Foil-less items (letter-sounds / sight-words) must behave exactly as before.
+    assessment.currentBucket = {
+      bucketID: 1,
+      bucketName: 'b1',
+      items: [
+        { itemName: 'a', itemText: 'a' },
+        { itemName: 'b', itemText: 'b' },
+        { itemName: 'c', itemText: 'c' },
+        { itemName: 'd', itemText: 'd' },
+      ],
+      usedItems: [],
+      numTried: 0,
+      numCorrect: 0,
+      numConsecutiveWrong: 0,
+      tested: false,
+      passed: false,
+      score: 0,
+    } as any;
+    assessment['bucketGenMode'] = BucketGenMode.RandomBST;
+
+    const q = assessment.buildNewQuestion();
+
+    // 4 options, all drawn from the bucket's own items (random generation), none authored.
+    expect(q?.answers).toHaveLength(4);
+    expect(q?.answers.map((a: any) => a.answerName).sort()).toEqual(['a', 'b', 'c', 'd']);
+  });
+
   it('should report whether questions are left based on current bucket state', () => {
     assessment.currentBucket = { ...mockBuckets[0], passed: false, numCorrect: 0, numConsecutiveWrong: 0, numTried: 0 } as any;
     expect(assessment.HasQuestionsLeft()).toBe(true);
