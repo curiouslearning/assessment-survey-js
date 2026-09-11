@@ -1,0 +1,34 @@
+{
+  "quizName": "English Sentence Reading (Dummy Spike)",
+  "appType": "assessment",
+  "assessmentType": "sentence-reading",
+  "feedbackText": "Gwanin sha’awa!",
+  "contentVersion": "v0.1",
+  "buckets": [
+    {
+      "bucketID": 1,
+      "bucketName": "SentenceReading-b-1",
+      "usedItems": [],
+      "items": [
+        {
+          "itemName": "The boy is eating a red apple.",
+          "itemText": "https://upload.wikimedia.org/wikipedia/commons/1/15/Red_Apple.jpg",
+          "foils": [
+            "https://upload.wikimedia.org/wikipedia/commons/4/44/Bananas_white_background_DS.jpg",
+            "https://upload.wikimedia.org/wikipedia/commons/c/c4/Orange-Fruit-Pieces.jpg",
+            "https://upload.wikimedia.org/wikipedia/commons/b/bb/Table_grapes_on_white.jpg"
+          ]
+        },
+        {
+          "itemName": "The girl is drinking mango juice.",
+          "itemText": "https://upload.wikimedia.org/wikipedia/commons/1/11/Mango_and_cross_section.jpg",
+          "foils": [
+            "https://upload.wikimedia.org/wikipedia/commons/c/cb/Pineapple_and_cross_section.jpg",
+            "https://upload.wikimedia.org/wikipedia/commons/a/ae/Watermelon_cross_BNC.jpg",
+            "https://upload.wikimedia.org/wikipedia/commons/1/15/Red_Apple.jpg"
+          ]
+        }
+      ]
+    }
+  ]
+}

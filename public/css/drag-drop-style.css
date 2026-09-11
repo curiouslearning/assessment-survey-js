@@ -62,8 +62,8 @@ body.assessment-survey-standalone {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 80%;
-  height: 120px;
+  width: 90%;
+  height: 80px;
   margin: 0;
   z-index: 10;
 }
@@ -408,6 +408,56 @@ button {
   max-width: 95%;
   white-space: normal;
   overflow-wrap: break-word;
+}
+
+/* Sentence Reading assessments (assessmentType: "sentence-reading"): plain, equally-sized
+   boxes holding a single image answer option — no ladybug drag target, no text sizing.
+   A fixed width/height (rather than max-width/max-height) keeps all 4 options the same
+   size regardless of each image's own aspect ratio. The border + shadow keep adjacent
+   options visually distinct even where the grid gap is small on narrow screens. */
+.as-sentence-reading-mode .answerButton {
+  width: 150px;
+  height: 150px;
+  max-width: 150px;
+  max-height: 150px;
+  padding: 0;
+  background-color: #ffffff;
+  background-image: none;
+  box-sizing: border-box;
+  border: 2px solid rgba(50, 50, 50, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.as-sentence-reading-mode .answerButton img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Sentence Reading's sentence prompt shares the feedback box's slot: both are absolutely
+   positioned inside nextQuestionInput (see draggable-question-view-wrapper-section.ts) and
+   crossfade via the shared .hidden/.visible transition classes, so tapping an answer hides
+   the sentence and reveals feedback in the exact same place, then the next sentence takes
+   over once feedback fades back out. */
+.questionContainer.as-sentence-reading-mode {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  margin: 0;
+  z-index: 8;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background-color: beige;
+  border: 2px solid #323232;
+  padding: 10px 8px;
+  min-height: 80px;
+  font-size: 1.3rem;
+  line-height: 1.3;
 }
 
 /* Large ✦ stars — 8 positions on the inner ring around the ladybug */
