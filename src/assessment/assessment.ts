@@ -51,12 +51,14 @@ export class Assessment extends BaseQuiz {
   private MAX_STARS_COUNT_IN_LINEAR_MODE = 20;
 
   public readonly ui: AssessmentUI;
+  private readonly assessmentType?: string;
 
-  constructor(dataURL: string, unityBridge: any, ui: AssessmentUI) {
+  constructor(dataURL: string, unityBridge: any, ui: AssessmentUI, assessmentType?: string) {
     super();
     this.dataURL = dataURL;
     this.unityBridge = unityBridge;
     this.ui = ui;
+    this.assessmentType = assessmentType;
     this.questionNumber = 0;
     this.bucketArray = [];
     this.buckets = [];
@@ -488,6 +490,15 @@ export class Assessment extends BaseQuiz {
   };
 
   private generateFoils = (targetItem: any): any[] => {
+    // Sentence Reading items author their own distractor images (see FM-999 spike) rather than
+    // relying on other bucket items, so use targetItem.foils directly instead of random selection.
+    if (this.assessmentType === 'sentence-reading' && Array.isArray(targetItem.foils)) {
+      return targetItem.foils.map((foilImage: string, index: number) => ({
+        itemName: `${targetItem.itemName}-foil-${index + 1}`,
+        itemText: foilImage,
+      }));
+    }
+
     // FM-996: when the item carries authored foils, use them exactly — no random distractors.
     if (targetItem.foils?.length) {
       return targetItem.foils.map((foil: string) => ({ itemName: foil, itemText: foil }));
@@ -530,18 +541,21 @@ export class Assessment extends BaseQuiz {
   };
 
   private createQuestion = (targetItem: any, answerOptions: any[]): any => {
+    const isSentenceReading = this.assessmentType === 'sentence-reading';
     return {
       qName: `question-${this.questionNumber}-${targetItem.itemName}`,
       qNumber: this.questionNumber,
       qTarget: targetItem.itemName,
-      promptText: '',
+      // Sentence Reading (FM-999 spike) shows the sentence as the prompt text instead of an image/audio prompt.
+      promptText: isSentenceReading ? targetItem.itemName : '',
       bucket: this.currentBucket.bucketID,
       promptAudio: targetItem.itemName,
       correct: targetItem.itemText,
-      answers: answerOptions.map((option) => ({
-        answerName: option.itemName,
-        answerText: option.itemText,
-      })),
+      answers: answerOptions.map((option) =>
+        isSentenceReading
+          ? { answerName: option.itemName, answerImg: option.itemText }
+          : { answerName: option.itemName, answerText: option.itemText }
+      ),
     };
   };
 
@@ -560,14 +574,14 @@ export class Assessment extends BaseQuiz {
       this.logBucketCompletedEvent(this.currentBucket, passed);
     }
     console.log('new  bucket is ' + newBucket.bucketID);
-    AudioController.PreloadBucket(newBucket, this.app.GetDataURL());
+    AudioController.PreloadBucket(newBucket, this.app.GetDataURL(), this.assessmentType);
     this.initBucket(newBucket);
   };
 
   public tryMoveBucketLinearArrayBased = (passed: boolean) => {
     const newBucket = this.buckets[this.currentLinearBucketIndex];
     console.log('New Bucket: ' + newBucket.bucketID);
-    AudioController.PreloadBucket(newBucket, this.app.GetDataURL());
+    AudioController.PreloadBucket(newBucket, this.app.GetDataURL(), this.assessmentType);
     this.initBucket(newBucket);
   };
 

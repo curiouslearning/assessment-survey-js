@@ -17,6 +17,7 @@ import { fetchAppData, getDataURL, setDataBaseUrl } from '@utils/jsonUtils';
 import { resolveAssetPath, setAssetBaseUrl } from '@utils/assetUtils';
 import { Workbox } from 'workbox-window';
 import CacheModel from '@components/cacheModel';
+import { AudioController } from '@components/audioController';
 import { UIController } from '@ui/uiController';
 import { AnalyticsEventsType, AnalyticsIntegration } from '@analytics/analytics-integration';
 import { AnalyticsConfig } from '@analytics/base-analytics-integration';
@@ -333,6 +334,16 @@ export class App {
 
         for (let i = 0; i < buckets.length; i++) {
           for (let j = 0; j < buckets[i].items.length; j++) {
+            // Sentence Reading (FM-999 spike) answers are image URLs rather than words, and
+            // itemName is the sentence prompt text itself - there's no per-item audio to
+            // preload, so skip straight to the image preload below (matches Survey's handling).
+            if (assessmentType === 'sentence-reading') {
+              const item = buckets[i].items[j];
+              AudioController.AddImageToAllImages(item.itemText);
+              (item.foils ?? []).forEach((foilImage: string) => AudioController.AddImageToAllImages(foilImage));
+              continue;
+            }
+
             const audioItemURL = resolveAssetPath(
               ASSET_PATHS.AUDIO.itemAudio(this.dataURL, buckets[i].items[j].itemName.toLowerCase().trim() + '.mp3')
             );
@@ -345,7 +356,7 @@ export class App {
         this.assessmentUI.setAssessmentType?.(assessmentType);
 
         const assessmentUI = this.assessmentUI;
-        this.game = new Assessment(this.dataURL, this.unityBridge, assessmentUI);
+        this.game = new Assessment(this.dataURL, this.unityBridge, assessmentUI, assessmentType);
       }
 
       this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.dingSfx));
