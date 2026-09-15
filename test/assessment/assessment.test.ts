@@ -171,7 +171,7 @@ describe('Assessment Class', () => {
     assessment.tryMoveBucket(false);
 
     expect(assessment.currentBucket.bucketID).toBe(2);
-    expect(AudioController.PreloadBucket).toHaveBeenCalledWith(mockBuckets[1], 'test-data-url');
+    expect(AudioController.PreloadBucket).toHaveBeenCalledWith(mockBuckets[1], 'test-data-url', undefined);
   });
 
   it('should build a new question with four answer options', async () => {
