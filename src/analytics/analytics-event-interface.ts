@@ -22,6 +22,9 @@ export interface CommonEventProperties {
 
     /** The version of the content (e.g., dataset or curriculum version). */
     contentVersion: string;
+
+    /** The assessment type generating the event (e.g., "spelling", "reading"), when known. */
+    assessmentType?: string;
 }
 
 /**
