@@ -13,6 +13,7 @@ import { randFrom, shuffleArray } from '@utils/mathUtils';
 import { AudioController } from '@components/audioController';
 import { AnalyticsEventsType, AnalyticsIntegration } from '@analytics/analytics-integration';
 import { FirestoreIntegration } from '@analytics/firestore-integration';
+import { AssessmentType } from './assessment-types';
 import { calculateScore, getBasalBucketID, getCeilingBucketID, getCommonAnalyticsEventsProperties } from '@utils/AnalyticsUtils';
 import { getNextAssessment, getRequiredScore } from '@utils/urlUtils';
 import appEventBus from '@services/app-event-bus';
@@ -772,7 +773,7 @@ export class Assessment extends BaseQuiz {
       })
     });
 
-    if (this.commonProperties?.assessmentType === 'spelling') {
+    if (this.commonProperties?.assessmentType === AssessmentType.Spelling) {
       this.firestoreIntegration?.writeCompletionRecord({
         clUserId: this.commonProperties?.cr_user_id,
         assessmentType: this.commonProperties.assessmentType,
