@@ -25,10 +25,17 @@ describe('Array Utility Functions', () => {
     it('should shuffle the array', () => {
       const array = [1, 2, 3, 4, 5];
       const originalArray = [...array]; // Copy to compare after shuffle
+
+      // Deterministic shuffle: a real shuffle has a 1/5! = 1/120 chance of returning
+      // the original order, which made `.not.toEqual` flaky in CI. Pinning Math.random
+      // forces a known, non-identity permutation ([2,3,4,5,1] for this input).
+      const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0);
       shuffleArray(array);
+      randomSpy.mockRestore();
+
       expect(array).toHaveLength(originalArray.length); // Ensure no elements are added/removed
       expect(array).toEqual(expect.arrayContaining(originalArray)); // Check that all elements are still present
-      expect(array).not.toEqual(originalArray); // High probability the order is different
+      expect(array).not.toEqual(originalArray); // Order changed (deterministic now)
     });
 
     it('should handle an empty array', () => {

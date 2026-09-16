@@ -7,6 +7,7 @@ import { DragDropAudioController } from '@services/drag-drop-audio-controller';
 import { isRTL, setFontSizeRTL, setFontSizeLTR } from '@utils/languageUtils';
 import { TapToAnswerController } from '../tap-to-answer-controller';
 import { DragToAnswerController } from './drag-to-answer-controller';
+import { AssessmentType } from '@assessment/assessment-types';
 /**
  * Drag-and-drop assessment UI.
  *
@@ -409,7 +410,7 @@ export class DragDropAssessmentUI implements AssessmentUI {
   // ─────────────────────────────────────────────────────────────────────────────
 
   setAssessmentType(assessmentType: string): void {
-    this.isSpellingAssessment = assessmentType === 'spelling';
+    this.isSpellingAssessment = assessmentType === AssessmentType.Spelling;
     if (this.isSpellingAssessment) {
       this.answersContainer.classList.add('as-spelling-mode');
       // Wider 2-per-row layout (matches the legacy UI's answer grid) — the
