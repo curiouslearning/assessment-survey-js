@@ -20,6 +20,7 @@ import CacheModel from '@components/cacheModel';
 import { UIController } from '@ui/uiController';
 import { AnalyticsEventsType, AnalyticsIntegration } from '@analytics/analytics-integration';
 import { AnalyticsConfig } from '@analytics/base-analytics-integration';
+import { FirestoreIntegration } from '@analytics/firestore-integration';
 import { AndroidInterface } from '@curiouslearning/core';
 import { environment } from './environment';
 import {
@@ -163,6 +164,7 @@ export class App {
       try {
         await AnalyticsIntegration.initializeAnalytics(config.analyticsConfig);
         this.analyticsIntegration = AnalyticsIntegration.getInstance();
+        FirestoreIntegration.initializeFirestore(config.analyticsConfig);
       } catch (error) {
         console.warn('Analytics initialization failed. Continuing without analytics.', error);
       }
@@ -365,7 +367,7 @@ export class App {
 
       contentVersion = data['contentVersion'];
 
-      this.setCommonProperties();
+      this.setCommonProperties(assessmentType);
       this.logInitialAnalyticsEvents();
 
       this.game.Run(this);
@@ -402,14 +404,15 @@ export class App {
     });
   }
 
-  async setCommonProperties() {
+  async setCommonProperties(assessmentType?: string) {
     setCommonAnalyticsEventsProperties(
       getUUID(),
       getAppLanguageFromDataURL(this.dataURL),
       getAppTypeFromDataURL(this.dataURL),
       getUserSource(),
       contentVersion,
-      appVersion
+      appVersion,
+      assessmentType
     );
   }
 

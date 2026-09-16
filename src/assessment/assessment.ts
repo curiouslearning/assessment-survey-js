@@ -12,6 +12,7 @@ import { TreeNode, sortedArrayToIDsBST } from '@components/tNode';
 import { randFrom, shuffleArray } from '@utils/mathUtils';
 import { AudioController } from '@components/audioController';
 import { AnalyticsEventsType, AnalyticsIntegration } from '@analytics/analytics-integration';
+import { FirestoreIntegration } from '@analytics/firestore-integration';
 import { calculateScore, getBasalBucketID, getCeilingBucketID, getCommonAnalyticsEventsProperties } from '@utils/AnalyticsUtils';
 import { getNextAssessment, getRequiredScore } from '@utils/urlUtils';
 import appEventBus from '@services/app-event-bus';
@@ -32,6 +33,7 @@ export class Assessment extends BaseQuiz {
 
   public unityBridge;
   public analyticsIntegration: AnalyticsIntegration | null;
+  public firestoreIntegration: FirestoreIntegration | null;
   public currentNode: TreeNode;
   public currentQuestion: qData;
   public bucketArray: number[];
@@ -76,6 +78,11 @@ export class Assessment extends BaseQuiz {
       this.analyticsIntegration = AnalyticsIntegration.getInstance();
     } catch (_error) {
       this.analyticsIntegration = null;
+    }
+    try {
+      this.firestoreIntegration = FirestoreIntegration.getInstance();
+    } catch (_error) {
+      this.firestoreIntegration = null;
     }
   }
 
@@ -764,6 +771,18 @@ export class Assessment extends BaseQuiz {
         requiredScore: integerRequiredScore
       })
     });
+
+    if (this.commonProperties?.assessmentType === 'spelling') {
+      this.firestoreIntegration?.writeCompletionRecord({
+        clUserId: this.commonProperties?.cr_user_id,
+        assessmentType: this.commonProperties.assessmentType,
+        lang: this.commonProperties?.language,
+        score,
+        maxScore,
+        basalBucket: basalBucketID,
+        ceilingBucket: ceilingBucketID,
+      });
+    }
 
     this.score = score;
     this.max_score = maxScore;
