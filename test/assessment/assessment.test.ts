@@ -120,7 +120,11 @@ describe('Assessment Class', () => {
     `;
 
     (fetchAssessmentBuckets as jest.Mock).mockResolvedValue(mockBuckets);
-    assessment = new Assessment('test-data-url', { SendLoaded: jest.fn(), SendClose: jest.fn() }, new LegacyAssessmentUIAdapter());
+    assessment = new Assessment(
+      'test-data-url',
+      { SendLoaded: jest.fn(), SendClose: jest.fn() },
+      new LegacyAssessmentUIAdapter()
+    );
     assessment['app'] = { GetDataURL: () => 'test-data-url', unityBridge: { SendClose: jest.fn() } } as any;
   });
 
@@ -245,11 +249,181 @@ describe('Assessment Class', () => {
     expect(q?.answers.map((a: any) => a.answerName).sort()).toEqual(['a', 'b', 'c', 'd']);
   });
 
+  // FM-997: Regression coverage for existing (random-foil) assessment types — letter-sounds /
+  // sight-words style buckets whose items carry NO `foils`. FM-996 added an early-return guard
+  // at the top of generateFoils that is meant to be inert for these items; these tests lock in
+  // that (a) the guard never fires for foil-less items in either bucket-gen mode, (b) foils are
+  // still drawn only from the bucket's own items, and (c) the exact selection is reproducible
+  // under a fixed RNG seed. If any of that changes, foil generation for existing types changed.
+  describe('existing (random-foil) assessment types — regression (FM-997)', () => {
+    // A realistic "existing type" bucket: foil-less items, deliberately larger than 4 so foil
+    // selection is a genuine choice rather than forced to consume the whole bucket.
+    const makeFoilLessBucket = () =>
+      ({
+        bucketID: 1,
+        bucketName: 'existing-type',
+        items: [
+          { itemName: 'a', itemText: 'a' },
+          { itemName: 'b', itemText: 'b' },
+          { itemName: 'c', itemText: 'c' },
+          { itemName: 'd', itemText: 'd' },
+          { itemName: 'e', itemText: 'e' },
+          { itemName: 'f', itemText: 'f' },
+        ],
+        usedItems: [],
+        numTried: 0,
+        numCorrect: 0,
+        numConsecutiveWrong: 0,
+        tested: false,
+        passed: false,
+        score: 0,
+      }) as any;
+
+    // Deterministic PRNG. randFrom/shuffleArray call Math.random() directly and take no seed
+    // (see src/utils/mathUtils.ts), so we stub Math.random with a pure, platform-independent
+    // generator to make "identical foil generation" byte-reproducible across machines.
+    const mulberry32 = (seed: number) => () => {
+      seed = (seed + 0x6d2b79f5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+
+    // Invariants that MUST hold for every existing-type question: exactly the target + 3 foils,
+    // all distinct, the target present, and every option a genuine bucket item (i.e. no authored
+    // foil leaked in via the FM-996 path).
+    const assertRandomFoilsOnly = (q: any, bucketItemNames: string[]) => {
+      const names = q.answers.map((a: any) => a.answerName);
+      expect(q.answers).toHaveLength(4);
+      expect(new Set(names).size).toBe(4);
+      expect(names).toContain(q.qTarget);
+      names.forEach((n: string) => expect(bucketItemNames).toContain(n));
+    };
+
+    it('RandomBST: draws all foils from the bucket itself — no authored foils leak in', () => {
+      const bucket = makeFoilLessBucket();
+      assessment.currentBucket = bucket;
+      assessment['bucketGenMode'] = BucketGenMode.RandomBST;
+
+      const q = assessment.buildNewQuestion();
+
+      assertRandomFoilsOnly(
+        q,
+        bucket.items.map((i: any) => i.itemName)
+      );
+    });
+
+    it('LinearArrayBased: draws all foils from the bucket itself — no authored foils leak in', () => {
+      const bucket = makeFoilLessBucket();
+      assessment.buckets = [bucket];
+      assessment.currentBucket = bucket;
+      assessment.currentLinearBucketIndex = 0;
+      assessment.currentLinearTargetIndex = 0;
+      assessment['bucketGenMode'] = BucketGenMode.LinearArrayBased;
+
+      const q = assessment.buildNewQuestion();
+
+      expect(q?.qTarget).toBe('a'); // linear mode targets items in authored order
+      assertRandomFoilsOnly(
+        q,
+        bucket.items.map((i: any) => i.itemName)
+      );
+    });
+
+    it('treats an empty `foils: []` as "no authored foils" and falls through to random generation', () => {
+      // Guards the `targetItem.foils?.length` semantics: an empty array is falsy-length, so it
+      // must NOT be treated as authored foils.
+      const bucket = makeFoilLessBucket();
+      bucket.items = bucket.items.map((i: any) => ({ ...i, foils: [] }));
+      assessment.currentBucket = bucket;
+      assessment['bucketGenMode'] = BucketGenMode.RandomBST;
+
+      const q = assessment.buildNewQuestion();
+
+      assertRandomFoilsOnly(
+        q,
+        bucket.items.map((i: any) => i.itemName)
+      );
+    });
+
+    it('treats a missing `foils` field as "no authored foils" and falls through to random generation', () => {
+      const bucket = makeFoilLessBucket();
+      expect(bucket.items.every((i: any) => i.foils === undefined)).toBe(true);
+      assessment.currentBucket = bucket;
+      assessment['bucketGenMode'] = BucketGenMode.RandomBST;
+
+      const q = assessment.buildNewQuestion();
+
+      assertRandomFoilsOnly(
+        q,
+        bucket.items.map((i: any) => i.itemName)
+      );
+    });
+
+    describe('seeded (deterministic) foil generation — golden output', () => {
+      let randomSpy: jest.SpyInstance;
+
+      afterEach(() => {
+        randomSpy?.mockRestore();
+      });
+
+      it('RandomBST: produces a stable answer set and order for a fixed RNG seed', () => {
+        randomSpy = jest.spyOn(Math, 'random').mockImplementation(mulberry32(12345));
+        const bucket = makeFoilLessBucket();
+        assessment.currentBucket = bucket;
+        assessment['bucketGenMode'] = BucketGenMode.RandomBST;
+
+        const q = assessment.buildNewQuestion();
+        const names = q?.answers.map((a: any) => a.answerName);
+
+        // Golden: exact target + foils + shuffle order for seed 12345. Any change to the
+        // foil-selection call sequence (an extra Math.random(), a reorder) breaks this.
+        expect(names).toEqual(['e', 'f', 'b', 'c']);
+        assertRandomFoilsOnly(
+          q,
+          bucket.items.map((i: any) => i.itemName)
+        );
+      });
+
+      it('LinearArrayBased: produces a stable answer set and order for a fixed RNG seed', () => {
+        randomSpy = jest.spyOn(Math, 'random').mockImplementation(mulberry32(12345));
+        const bucket = makeFoilLessBucket();
+        assessment.buckets = [bucket];
+        assessment.currentBucket = bucket;
+        assessment.currentLinearBucketIndex = 0;
+        assessment.currentLinearTargetIndex = 0;
+        assessment['bucketGenMode'] = BucketGenMode.LinearArrayBased;
+
+        const q = assessment.buildNewQuestion();
+        const names = q?.answers.map((a: any) => a.answerName);
+
+        expect(q?.qTarget).toBe('a');
+        expect(names).toEqual(['b', 'a', 'f', 'c']);
+        assertRandomFoilsOnly(
+          q,
+          bucket.items.map((i: any) => i.itemName)
+        );
+      });
+    });
+  });
+
   it('should report whether questions are left based on current bucket state', () => {
-    assessment.currentBucket = { ...mockBuckets[0], passed: false, numCorrect: 0, numConsecutiveWrong: 0, numTried: 0 } as any;
+    assessment.currentBucket = {
+      ...mockBuckets[0],
+      passed: false,
+      numCorrect: 0,
+      numConsecutiveWrong: 0,
+      numTried: 0,
+    } as any;
     expect(assessment.HasQuestionsLeft()).toBe(true);
 
-    assessment.currentBucket = { ...mockBuckets[0], passed: true, numCorrect: 4, numConsecutiveWrong: 0, numTried: 5 } as any;
+    assessment.currentBucket = {
+      ...mockBuckets[0],
+      passed: true,
+      numCorrect: 4,
+      numConsecutiveWrong: 0,
+      numTried: 5,
+    } as any;
     expect(assessment.HasQuestionsLeft()).toBe(false);
   });
 
