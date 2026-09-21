@@ -374,7 +374,7 @@ export class App {
 
       contentVersion = data['contentVersion'];
 
-      this.setCommonProperties();
+      this.setCommonProperties(assessmentType);
       this.logInitialAnalyticsEvents();
 
       this.game.Run(this);
@@ -411,14 +411,15 @@ export class App {
     });
   }
 
-  async setCommonProperties() {
+  async setCommonProperties(assessmentType?: string) {
     setCommonAnalyticsEventsProperties(
       getUUID(),
       getAppLanguageFromDataURL(this.dataURL),
       getAppTypeFromDataURL(this.dataURL),
       getUserSource(),
       contentVersion,
-      appVersion
+      appVersion,
+      assessmentType
     );
   }
 

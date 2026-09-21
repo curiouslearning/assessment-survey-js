@@ -418,4 +418,54 @@ describe('Assessment Class', () => {
     } as any;
     expect(assessment.HasQuestionsLeft()).toBe(false);
   });
+
+  describe('Firebase Analytics event parity (FM-986)', () => {
+    // TapToAnswerController and DragToAnswerController (src/ui/tap-to-answer-controller.ts,
+    // src/ui/drag-drop/drag-to-answer-controller.ts) both call the identical
+    // AssessmentUI.onAnswer({ answerIndex, elapsedMs }) contract, which Assessment always
+    // routes through this single, UI-agnostic handleAnswerButtonPress entry point — so an
+    // event emitted here is by construction identical regardless of which interaction
+    // (tap, for Spelling, or drag, for every other assessment type) produced it.
+    it('given any answer interaction, when handleAnswerButtonPress runs, then it emits a complete ANSWERED event with the same structure used by every assessment type', () => {
+      assessment.currentBucket = { ...mockBuckets[0] } as any;
+      assessment.currentQuestion = {
+        qNumber: 3,
+        qTarget: 'Alpha',
+        promptText: 'prompt',
+        bucket: 1,
+        answers: [{ answerName: 'Alpha' }, { answerName: 'Beta' }],
+        correct: 'Alpha',
+      } as any;
+
+      assessment.handleAnswerButtonPress(1, 750);
+
+      expect(assessment.analyticsIntegration!.track).toHaveBeenCalledWith('answered', {
+        type: 'answered',
+        dt: 750,
+        question_number: 3,
+        target: 'Alpha',
+        question: 'prompt',
+        selected_answer: 'Alpha',
+        iscorrect: true,
+        options: 'Alpha,Beta,',
+        bucket: 1,
+      });
+    });
+
+    it('given a bucket is completed under RandomBST (the mode every live assessment type, including Spelling, uses), when the bucket transition happens, then it emits a complete BUCKET_COMPLETED event unchanged in shape', () => {
+      assessment.currentBucket = { ...mockBuckets[0], numTried: 5, numCorrect: 4 } as any;
+      assessment.currentNode = { value: mockBuckets[1] } as any;
+      assessment['bucketGenMode'] = BucketGenMode.RandomBST;
+
+      assessment.tryMoveBucket(true);
+
+      expect(assessment.analyticsIntegration!.track).toHaveBeenCalledWith('bucketCompleted', {
+        type: 'bucketCompleted',
+        bucketNumber: 1,
+        numberTriedInBucket: 5,
+        numberCorrectInBucket: 4,
+        passedBucket: true,
+      });
+    });
+  });
 });
