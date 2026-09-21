@@ -56,14 +56,6 @@ jest.mock('../../src/analytics/analytics-integration', () => ({
   },
 }));
 
-jest.mock('../../src/analytics/firestore-integration', () => ({
-  FirestoreIntegration: {
-    getInstance: jest.fn(() => ({
-      writeCompletionRecord: jest.fn(),
-    })),
-  },
-}));
-
 jest.mock('firebase/app', () => ({
   initializeApp: jest.fn(),
 }));
@@ -474,61 +466,6 @@ describe('Assessment Class', () => {
         numberCorrectInBucket: 4,
         passedBucket: true,
       });
-    });
-  });
-
-  describe('Firestore completion recording (FM-986)', () => {
-    const completionBuckets = [
-      { bucketID: 1, tested: true, passed: true, numCorrect: 5, numTried: 5, numConsecutiveWrong: 0, score: 100, items: [{}, {}], usedItems: [] },
-    ] as any;
-
-    beforeEach(() => {
-      assessment['app'].notifyAssessmentCompleted = jest.fn();
-    });
-
-    it('given the session assessmentType is "spelling", when LogCompletedEvent runs, then writeCompletionRecord is called exactly once with the completion data', () => {
-      assessment.commonProperties = {
-        cr_user_id: 'user-1',
-        language: 'hausa',
-        app: 'ftm',
-        assessmentType: 'spelling',
-      } as any;
-
-      assessment['LogCompletedEvent'](completionBuckets, 1, 1);
-
-      expect(assessment.firestoreIntegration!.writeCompletionRecord).toHaveBeenCalledTimes(1);
-      expect(assessment.firestoreIntegration!.writeCompletionRecord).toHaveBeenCalledWith(
-        expect.objectContaining({
-          clUserId: 'user-1',
-          assessmentType: 'spelling',
-          lang: 'hausa',
-        })
-      );
-    });
-
-    it.each([undefined, 'reading'])(
-      'given the session assessmentType is %p (not spelling), when LogCompletedEvent runs, then writeCompletionRecord is NOT called',
-      (assessmentType) => {
-        assessment.commonProperties = { cr_user_id: 'user-1', language: 'english', app: 'ftm', assessmentType } as any;
-
-        assessment['LogCompletedEvent'](completionBuckets, 1, 1);
-
-        expect(assessment.firestoreIntegration!.writeCompletionRecord).not.toHaveBeenCalled();
-      }
-    );
-
-    it('given firestoreIntegration is null (not initialized), when LogCompletedEvent runs for a spelling session, then no error is thrown and the Firebase COMPLETED event still fires', () => {
-      assessment.firestoreIntegration = null;
-      assessment.commonProperties = {
-        cr_user_id: 'user-1',
-        language: 'hausa',
-        app: 'ftm',
-        assessmentType: 'spelling',
-      } as any;
-
-      expect(() => assessment['LogCompletedEvent'](completionBuckets, 1, 1)).not.toThrow();
-
-      expect(assessment.analyticsIntegration!.track).toHaveBeenCalledWith('completed', expect.any(Object));
     });
   });
 });

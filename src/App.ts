@@ -21,7 +21,6 @@ import CacheModel from '@components/cacheModel';
 import { UIController } from '@ui/uiController';
 import { AnalyticsEventsType, AnalyticsIntegration } from '@analytics/analytics-integration';
 import { AnalyticsConfig } from '@analytics/base-analytics-integration';
-import { FirestoreIntegration } from '@analytics/firestore-integration';
 import { AndroidInterface } from '@curiouslearning/core';
 import { environment } from './environment';
 import {
@@ -165,7 +164,6 @@ export class App {
       try {
         await AnalyticsIntegration.initializeAnalytics(config.analyticsConfig);
         this.analyticsIntegration = AnalyticsIntegration.getInstance();
-        FirestoreIntegration.initializeFirestore(config.analyticsConfig);
       } catch (error) {
         console.warn('Analytics initialization failed. Continuing without analytics.', error);
       }
