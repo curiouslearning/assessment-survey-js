@@ -31,5 +31,6 @@
 
 ## Notes
 
-- Ambiguities that could have warranted [NEEDS CLARIFICATION] markers (Firestore completion-record scope: Spelling-only vs. all assessment types; whether new fields are needed on Firebase events to distinguish Spelling) were resolved as documented, reasonable defaults in the spec's Assumptions section rather than left open, since FM-986's literal wording ("Spelling assessment events", "completion events to Firestore") and the existing codebase's event-structure parity requirement each point to one clear default. Confirm these assumptions during `/speckit-plan` or with the ticket reporter if requirements shift.
-- All checklist items pass on first pass; no spec revisions were required.
+- Ambiguity that could have warranted a [NEEDS CLARIFICATION] marker (whether new fields are needed on Firebase events to distinguish Spelling) was resolved as a documented, reasonable default in the spec's Assumptions section rather than left open, since the existing codebase's event-structure parity requirement points to one clear default. Confirm this assumption during `/speckit-plan` or with the ticket reporter if requirements shift.
+- FM-986's title also mentions "completion events to Firestore," but its formal acceptance criteria only cover Firebase Analytics → BigQuery reporting. An earlier draft of this spec scoped a direct-from-JS Firestore write as a separate user story; it was removed after review, since completion data already reaches Firestore via the pre-existing `AndroidInterface` → native host bridge (see spec.md's Note). This spec is now scoped strictly to the ticket's formal AC.
+- All checklist items pass on first pass; no spec revisions were required beyond the Firestore-scope descoping above.
