@@ -243,6 +243,7 @@ export class Assessment extends BaseQuiz {
     this.prepareNextQuestion();
     if (this.isInDevMode) {
       this.hideDevModeButton();
+      this.hideDevModeSettings();
     }
 
     this.start();

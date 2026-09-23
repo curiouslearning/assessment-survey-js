@@ -96,6 +96,8 @@ describe('Dev-mode bucket controls walkthrough (FM-992)', () => {
       <select id="devModeBucketGenSelect"><option value="0"></option><option value="1"></option></select>
       <input id="devModeBucketControlsShownCheckbox" type="checkbox">
       <div id="devModeBucketInfoContainer"></div>
+      <div id="devModeModalToggleButtonContainer"></div>
+      <div id="devModeSettingsModal"></div>
     `;
     buckets = makeBuckets();
     (fetchAssessmentBuckets as jest.Mock).mockResolvedValue(buckets);
@@ -148,6 +150,20 @@ describe('Dev-mode bucket controls walkthrough (FM-992)', () => {
       // Each question is auto-revealed since the play-button slot holds the item buttons.
       expect(ui.revealQuestion).toHaveBeenCalledTimes(presented.length);
       expect(bstSpy).not.toHaveBeenCalled();
+    });
+
+    it('closes the dev settings modal on start so bucket mode cannot change mid-question', async () => {
+      // Regression (PR #332 review): an open modal used to stay open after start, letting the tester
+      // tick bucket controls mid-question and desync the active question from the reset buckets.
+      const modal = document.getElementById('devModeSettingsModal') as HTMLElement;
+      const assessment = await createAssessment('spelling');
+      assessment.toggleDevModeModal();
+      expect(modal.style.display).toBe('block');
+
+      assessment.startAssessment();
+
+      expect(modal.style.display).toBe('none');
+      expect((document.getElementById('devModeModalToggleButtonContainer') as HTMLElement).style.display).toBe('none');
     });
 
     it('turns bucket controls off if the tester switches back to binary search', async () => {
