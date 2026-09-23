@@ -97,4 +97,14 @@ describe('BaseQuiz', () => {
     mockQuiz.hideDevModeButton();
     expect(container.style.display).toBe('none');
   });
+
+  test('should close the dev mode settings modal when hideDevModeSettings is called', () => {
+    const modal = document.getElementById('devModeSettingsModal') as HTMLElement;
+    mockQuiz.toggleDevModeModal();
+    expect(modal.style.display).toBe('block');
+
+    mockQuiz.hideDevModeSettings();
+
+    expect(modal.style.display).toBe('none');
+  });
 });
