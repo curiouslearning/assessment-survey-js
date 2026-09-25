@@ -15,6 +15,7 @@ import { UnityBridge } from '@utils/unityBridge';
 import { BaseQuiz } from './baseQuiz';
 import { fetchAppData, getDataURL, setDataBaseUrl } from '@utils/jsonUtils';
 import { resolveAssetPath, setAssetBaseUrl } from '@utils/assetUtils';
+import { validateAssessmentConfig } from '@utils/configValidation';
 import { Workbox } from 'workbox-window';
 import CacheModel from '@components/cacheModel';
 import { UIController } from '@ui/uiController';
@@ -307,6 +308,14 @@ export class App {
       console.log('App data loaded!');
       console.log(data);
 
+      // FM-981: validate the config before building anything, so a malformed/missing
+      // config fails with a clear message instead of a cryptic downstream throw.
+      const { errors: configErrors, warnings: configWarnings } = validateAssessmentConfig(data);
+      configWarnings.forEach((w) => console.warn(`[assessment-survey] ${w}`));
+      if (configErrors.length > 0) {
+        throw new Error(`Invalid assessment configuration for "${this.dataURL}":\n- ${configErrors.join('\n- ')}`);
+      }
+
       this.cacheModel.setContentFilePath(getDataURL(this.dataURL));
 
       UIController.SetFeedbackText?.(data['feedbackText']);
@@ -342,8 +351,10 @@ export class App {
 
         this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.feedbackAudio(this.dataURL)));
 
+        this.assessmentUI.setAssessmentType?.(assessmentType);
+
         const assessmentUI = this.assessmentUI;
-        this.game = new Assessment(this.dataURL, this.unityBridge, assessmentUI);
+        this.game = new Assessment(this.dataURL, this.unityBridge, assessmentUI, assessmentType);
       }
 
       this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.dingSfx));
@@ -363,7 +374,7 @@ export class App {
 
       contentVersion = data['contentVersion'];
 
-      this.setCommonProperties();
+      this.setCommonProperties(assessmentType);
       this.logInitialAnalyticsEvents();
 
       this.game.Run(this);
@@ -400,14 +411,15 @@ export class App {
     });
   }
 
-  async setCommonProperties() {
+  async setCommonProperties(assessmentType?: string) {
     setCommonAnalyticsEventsProperties(
       getUUID(),
       getAppLanguageFromDataURL(this.dataURL),
       getAppTypeFromDataURL(this.dataURL),
       getUserSource(),
       contentVersion,
-      appVersion
+      appVersion,
+      assessmentType
     );
   }
 

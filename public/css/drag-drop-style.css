@@ -395,6 +395,21 @@ button {
   }
 }
 
+/* Spelling assessments (assessmentType: "spelling"): plain clickable rectangles
+   instead of the ladybug drag target. Longer spelled words (see the FM-979 spike)
+   don't fit inside the ladybug's ~105px width, and dragging text adds an
+   unnecessary step for a "pick the correct spelling" task. */
+.as-spelling-mode .answerButton {
+  padding: 15px 5px;
+  color: rgb(60, 67, 162);
+  background-color: #ffee6b;
+  background-image: none;
+  text-shadow: 0px 2px 6px rgba(80, 90, 220, 0.7);
+  max-width: 95%;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
 /* Large ✦ stars — 8 positions on the inner ring around the ladybug */
 .as-ui-mode-new .answerButton.dragging::before {
   content: '\2726';

@@ -15,6 +15,7 @@ import { AnalyticsEventsType, AnalyticsIntegration } from '@analytics/analytics-
 import { calculateScore, getBasalBucketID, getCeilingBucketID, getCommonAnalyticsEventsProperties } from '@utils/AnalyticsUtils';
 import { getNextAssessment, getRequiredScore } from '@utils/urlUtils';
 import appEventBus from '@services/app-event-bus';
+import { AssessmentType } from './assessment-types';
 
 enum searchStage {
   BinarySearch,
@@ -51,12 +52,14 @@ export class Assessment extends BaseQuiz {
   private MAX_STARS_COUNT_IN_LINEAR_MODE = 20;
 
   public readonly ui: AssessmentUI;
+  public readonly assessmentType?: string;
 
-  constructor(dataURL: string, unityBridge: any, ui: AssessmentUI) {
+  constructor(dataURL: string, unityBridge: any, ui: AssessmentUI, assessmentType?: string) {
     super();
     this.dataURL = dataURL;
     this.unityBridge = unityBridge;
     this.ui = ui;
+    this.assessmentType = assessmentType;
     this.questionNumber = 0;
     this.bucketArray = [];
     this.buckets = [];
@@ -99,6 +102,13 @@ export class Assessment extends BaseQuiz {
 
   public handleBucketGenModeChange(event: Event): void {
     this.bucketGenMode = parseInt(this.devModeBucketGenSelect.value) as BucketGenMode;
+    if (this.isSpellingDevWalkthrough && this.bucketGenMode === BucketGenMode.RandomBST) {
+      // The Spelling walkthrough requires sequential mode; choosing binary search ends it.
+      this.isBucketControlsEnabled = false;
+      if (this.devModeBucketControlsShownCheckbox) {
+        this.devModeBucketControlsShownCheckbox.checked = false;
+      }
+    }
     this.buildBuckets(this.bucketGenMode).then(() => {
       // Finished building buckets
     });
@@ -121,7 +131,26 @@ export class Assessment extends BaseQuiz {
     this.updateBucketInfo();
   }
 
+  /**
+   * FM-992: on Spelling, dev-mode bucket controls are a QA walkthrough of every item in authored
+   * order — binary search is off, answering advances to the next item and auto-reveals it.
+   * Letter Sounds / Sight Words keep the original manual bucket-controls behavior.
+   */
+  private get isSpellingDevWalkthrough(): boolean {
+    return this.isInDevMode && this.isBucketControlsEnabled && this.assessmentType === AssessmentType.Spelling;
+  }
+
   public handleBucketControlsShownChange(): void {
+    if (this.isSpellingDevWalkthrough && this.bucketGenMode !== BucketGenMode.LinearArrayBased) {
+      // Force sequential mode so the binary search never runs while the walkthrough is active.
+      this.bucketGenMode = BucketGenMode.LinearArrayBased;
+      if (this.devModeBucketGenSelect) {
+        this.devModeBucketGenSelect.value = String(BucketGenMode.LinearArrayBased);
+      }
+      this.buildBuckets(this.bucketGenMode);
+      this.updateBucketInfo();
+    }
+
     // Bucket controls are only meaningful in LinearArrayBased mode.
     // Enabling them in RandomBST mode would leave the play button empty (no audio button,
     // no item buttons) because generateDevModeBucketControlsInContainer only generates
@@ -165,7 +194,7 @@ export class Assessment extends BaseQuiz {
           this.currentLinearBucketIndex--;
           this.currentLinearTargetIndex = 0;
           this.tryMoveBucket(false);
-          this.ui.prepareQuestion(this.buildNewQuestion());
+          this.prepareNextQuestion();
           this.updateBucketInfo();
         }
         if (this.currentLinearBucketIndex == 0) {
@@ -182,8 +211,11 @@ export class Assessment extends BaseQuiz {
           this.currentLinearBucketIndex++;
           this.currentLinearTargetIndex = 0;
           this.tryMoveBucket(false);
-          this.ui.prepareQuestion(this.buildNewQuestion());
+          this.prepareNextQuestion();
           this.updateBucketInfo();
+        }
+        if (this.currentLinearBucketIndex == this.buckets.length - 1) {
+          nextButton.disabled = true;
         }
       });
 
@@ -208,9 +240,10 @@ export class Assessment extends BaseQuiz {
 
   public startAssessment = () => {
     this.commonProperties = getCommonAnalyticsEventsProperties();
-    this.ui.prepareQuestion(this.buildNewQuestion());
+    this.prepareNextQuestion();
     if (this.isInDevMode) {
       this.hideDevModeButton();
+      this.hideDevModeSettings();
     }
 
     this.start();
@@ -394,7 +427,8 @@ export class Assessment extends BaseQuiz {
         this.ui.changeStarImageAfterAnimation();
       }
       if (this.HasQuestionsLeft()) {
-        if (this.bucketGenMode === BucketGenMode.LinearArrayBased && !this.isBucketControlsEnabled) {
+        const shouldAdvanceLinear = !this.isBucketControlsEnabled || this.isSpellingDevWalkthrough;
+        if (this.bucketGenMode === BucketGenMode.LinearArrayBased && shouldAdvanceLinear) {
           if (this.currentLinearTargetIndex < this.buckets[this.currentLinearBucketIndex].items.length) {
             this.currentLinearTargetIndex++;
             // We need to reset the used items array when we move to the next question in linear mode
@@ -417,7 +451,7 @@ export class Assessment extends BaseQuiz {
           }
         }
 
-        this.ui.prepareQuestion(this.buildNewQuestion());
+        this.prepareNextQuestion();
       } else {
         console.log('No questions left');
         this.onEnd();
@@ -441,6 +475,18 @@ export class Assessment extends BaseQuiz {
       }
     });
   };
+  /**
+   * Builds the next question and hands it to the UI. In the Spelling dev walkthrough the question
+   * is also revealed straight away, since the play-button slot holds the item buttons instead.
+   */
+  private prepareNextQuestion = () => {
+    const newQ = this.buildNewQuestion();
+    this.ui.prepareQuestion(newQ);
+    if (newQ && this.isSpellingDevWalkthrough && this.bucketGenMode === BucketGenMode.LinearArrayBased) {
+      this.ui.revealQuestion();
+    }
+  };
+
   public buildNewQuestion = () => {
     if (this.isLinearArrayExhausted()) {
       return null;
@@ -488,6 +534,11 @@ export class Assessment extends BaseQuiz {
   };
 
   private generateFoils = (targetItem: any): any[] => {
+    // FM-996: when the item carries authored foils, use them exactly — no random distractors.
+    if (targetItem.foils?.length) {
+      return targetItem.foils.map((foil: string) => ({ itemName: foil, itemText: foil }));
+    }
+
     let foil1, foil2, foil3;
 
     if (this.bucketGenMode === BucketGenMode.RandomBST) {
@@ -583,15 +634,8 @@ export class Assessment extends BaseQuiz {
   };
 
   private hasLinearQuestionsLeft = (): boolean => {
-    if (
-      this.currentLinearBucketIndex >= this.buckets.length &&
-      this.currentLinearTargetIndex >= this.buckets[this.currentLinearBucketIndex].items.length
-    ) {
-      // No more questions left
-      return false;
-    } else {
-      return true;
-    }
+    // Past the last bucket there is nothing left (and no bucket to index into).
+    return this.currentLinearBucketIndex < this.buckets.length;
   };
 
   private handlePassedBucket = (): boolean => {

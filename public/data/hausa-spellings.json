@@ -1,0 +1,979 @@
+{
+  "quizName": "Hausa spelling",
+  "appType": "assessment",
+  "assessmentType": "spelling",
+  "feedbackText": "Gwanin sha’awa!",
+  "contentVersion": "v0.1",
+  "buckets": [
+    {
+      "bucketID": 1,
+      "bucketName": "Hausaspell-b-1",
+      "usedItems": [],
+      "items": [
+        {
+          "itemName": "uwa",
+          "itemText": "uwa",
+          "foils": [
+            "iwa",
+            "uva",
+            "uaw"
+          ]
+        },
+        {
+          "itemName": "uba",
+          "itemText": "uba",
+          "foils": [
+            "iba",
+            "uab",
+            "uda"
+          ]
+        },
+        {
+          "itemName": "gida",
+          "itemText": "gida",
+          "foils": [
+            "geda",
+            "gila",
+            "gdia"
+          ]
+        },
+        {
+          "itemName": "ruwa",
+          "itemText": "ruwa",
+          "foils": [
+            "rowa",
+            "ruba",
+            "rwua"
+          ]
+        },
+        {
+          "itemName": "yaro",
+          "itemText": "yaro",
+          "foils": [
+            "yaor",
+            "yaru",
+            "yako"
+          ]
+        },
+        {
+          "itemName": "ɗaki",
+          "itemText": "ɗaki",
+          "foils": [
+            "deki",
+            "dkai",
+            "dagi"
+          ]
+        },
+        {
+          "itemName": "kaza",
+          "itemText": "kaza",
+          "foils": [
+            "keza",
+            "kafa",
+            "kzaa"
+          ]
+        },
+        {
+          "itemName": "duk",
+          "itemText": "duk",
+          "foils": [
+            "dun",
+            "dik",
+            "udk"
+          ]
+        },
+        {
+          "itemName": "ku",
+          "itemText": "ku",
+          "foils": [
+            "uk",
+            "gu",
+            "fu"
+          ]
+        },
+        {
+          "itemName": "wuri",
+          "itemText": "wuri",
+          "foils": [
+            "wori",
+            "wuir",
+            "wuli"
+          ]
+        }
+      ]
+    },
+    {
+      "bucketID": 2,
+      "bucketName": "Hausaspell-b-2",
+      "usedItems": [],
+      "items": [
+        {
+          "itemName": "mata",
+          "itemText": "mata",
+          "foils": [
+            "meta",
+            "mafa",
+            "mtaa"
+          ]
+        },
+        {
+          "itemName": "rafi",
+          "itemText": "rafi",
+          "foils": [
+            "refi",
+            "rafo",
+            "rfai"
+          ]
+        },
+        {
+          "itemName": "kare",
+          "itemText": "kare",
+          "foils": [
+            "kaer",
+            "kere",
+            "kate"
+          ]
+        },
+        {
+          "itemName": "wuta",
+          "itemText": "wuta",
+          "foils": [
+            "wota",
+            "wtua",
+            "wufa"
+          ]
+        },
+        {
+          "itemName": "dare",
+          "itemText": "dare",
+          "foils": [
+            "dere",
+            "date",
+            "daer"
+          ]
+        },
+        {
+          "itemName": "hula",
+          "itemText": "hula",
+          "foils": [
+            "hola",
+            "huda",
+            "hlua"
+          ]
+        },
+        {
+          "itemName": "nuna",
+          "itemText": "nuna",
+          "foils": [
+            "nnua",
+            "nona",
+            "nufa"
+          ]
+        },
+        {
+          "itemName": "faifai",
+          "itemText": "faifai",
+          "foils": [
+            "feifai",
+            "faifia",
+            "faufai"
+          ]
+        },
+        {
+          "itemName": "mai",
+          "itemText": "mai",
+          "foils": [
+            "mei",
+            "mau",
+            "ami"
+          ]
+        },
+        {
+          "itemName": "sai",
+          "itemText": "sai",
+          "foils": [
+            "sei",
+            "sau",
+            "asi"
+          ]
+        }
+      ]
+    },
+    {
+      "bucketID": 3,
+      "bucketName": "Hausaspell-b-3",
+      "usedItems": [],
+      "items": [
+        {
+          "itemName": "littafi",
+          "itemText": "littafi",
+          "foils": [
+            "littfai",
+            "littafo",
+            "littefi"
+          ]
+        },
+        {
+          "itemName": "tuwo",
+          "itemText": "tuwo",
+          "foils": [
+            "towo",
+            "twuo",
+            "tuwa"
+          ]
+        },
+        {
+          "itemName": "miya",
+          "itemText": "miya",
+          "foils": [
+            "meya",
+            "mifa",
+            "myia"
+          ]
+        },
+        {
+          "itemName": "kasuwa",
+          "itemText": "kasuwa",
+          "foils": [
+            "kesuwa",
+            "kasowa",
+            "ksauwa"
+          ]
+        },
+        {
+          "itemName": "gona",
+          "itemText": "gona",
+          "foils": [
+            "goan",
+            "gena",
+            "gofa"
+          ]
+        },
+        {
+          "itemName": "kujera",
+          "itemText": "kujera",
+          "foils": [
+            "kojera",
+            "kjuera",
+            "kujara"
+          ]
+        },
+        {
+          "itemName": "malami",
+          "itemText": "malami",
+          "foils": [
+            "melami",
+            "malemi",
+            "mlaami"
+          ]
+        },
+        {
+          "itemName": "riba",
+          "itemText": "riba",
+          "foils": [
+            "reba",
+            "rifa",
+            "irba"
+          ]
+        },
+        {
+          "itemName": "titi",
+          "itemText": "titi",
+          "foils": [
+            "itti",
+            "teti",
+            "tito"
+          ]
+        },
+        {
+          "itemName": "ji",
+          "itemText": "ji",
+          "foils": [
+            "je",
+            "ij",
+            "gi"
+          ]
+        }
+      ]
+    },
+    {
+      "bucketID": 4,
+      "bucketName": "Hausaspell-b-4",
+      "usedItems": [],
+      "items": [
+        {
+          "itemName": "zomo",
+          "itemText": "zomo",
+          "foils": [
+            "zemo",
+            "zofo",
+            "zoom"
+          ]
+        },
+        {
+          "itemName": "don",
+          "itemText": "don",
+          "foils": [
+            "din",
+            "dof",
+            "odn"
+          ]
+        },
+        {
+          "itemName": "ce",
+          "itemText": "ce",
+          "foils": [
+            "ec",
+            "ca",
+            "fe"
+          ]
+        },
+        {
+          "itemName": "me",
+          "itemText": "me",
+          "foils": [
+            "mo",
+            "em",
+            "fe"
+          ]
+        },
+        {
+          "itemName": "teku",
+          "itemText": "teku",
+          "foils": [
+            "toku",
+            "seku",
+            "etku"
+          ]
+        },
+        {
+          "itemName": "akwai",
+          "itemText": "akwai",
+          "foils": [
+            "ekwai",
+            "akwei",
+            "kawai"
+          ]
+        },
+        {
+          "itemName": "kaya",
+          "itemText": "kaya",
+          "foils": [
+            "kaay",
+            "keya",
+            "kaba"
+          ]
+        },
+        {
+          "itemName": "hanya",
+          "itemText": "hanya",
+          "foils": [
+            "henya",
+            "hnaya",
+            "hanyo"
+          ]
+        },
+        {
+          "itemName": "doki",
+          "itemText": "doki",
+          "foils": [
+            "diki",
+            "dogi",
+            "dkoi"
+          ]
+        },
+        {
+          "itemName": "gaisuwa",
+          "itemText": "gaisuwa",
+          "foils": [
+            "geisuwa",
+            "gaisowa",
+            "giasuwa"
+          ]
+        }
+      ]
+    },
+    {
+      "bucketID": 5,
+      "bucketName": "Hausaspell-b-5",
+      "usedItems": [],
+      "items": [
+        {
+          "itemName": "shi",
+          "itemText": "shi",
+          "foils": [
+            "his",
+            "she",
+            "shu"
+          ]
+        },
+        {
+          "itemName": "sha",
+          "itemText": "sha",
+          "foils": [
+            "she",
+            "hsa",
+            "cha"
+          ]
+        },
+        {
+          "itemName": "shanu",
+          "itemText": "shanu",
+          "foils": [
+            "shenu",
+            "shano",
+            "shnau"
+          ]
+        },
+        {
+          "itemName": "shayi",
+          "itemText": "shayi",
+          "foils": [
+            "sheyi",
+            "shayu",
+            "shyai"
+          ]
+        },
+        {
+          "itemName": "shuka",
+          "itemText": "shuka",
+          "foils": [
+            "shkua",
+            "shoka",
+            "shuke"
+          ]
+        },
+        {
+          "itemName": "fi",
+          "itemText": "fi",
+          "foils": [
+            "fe",
+            "if",
+            "fu"
+          ]
+        },
+        {
+          "itemName": "yi",
+          "itemText": "yi",
+          "foils": [
+            "ye",
+            "yu",
+            "iy"
+          ]
+        },
+        {
+          "itemName": "wai",
+          "itemText": "wai",
+          "foils": [
+            "wei",
+            "wau",
+            "awi"
+          ]
+        },
+        {
+          "itemName": "suna",
+          "itemText": "suna",
+          "foils": [
+            "usna",
+            "sena",
+            "sufa"
+          ]
+        },
+        {
+          "itemName": "shirya",
+          "itemText": "shirya",
+          "foils": [
+            "sherya",
+            "shriya",
+            "shirye"
+          ]
+        }
+      ]
+    },
+    {
+      "bucketID": 6,
+      "bucketName": "Hausaspell-b-6",
+      "usedItems": [],
+      "items": [
+        {
+          "itemName": "tsoro",
+          "itemText": "tsoro",
+          "foils": [
+            "tsero",
+            "tsoso",
+            "tsroo"
+          ]
+        },
+        {
+          "itemName": "tsada",
+          "itemText": "tsada",
+          "foils": [
+            "tsida",
+            "tsafa",
+            "tsdaa"
+          ]
+        },
+        {
+          "itemName": "labari",
+          "itemText": "labari",
+          "foils": [
+            "albari",
+            "lebari",
+            "labiri"
+          ]
+        },
+        {
+          "itemName": "tsuntsu",
+          "itemText": "tsuntsu",
+          "foils": [
+            "tsentsu",
+            "tsutnsu",
+            "tsuntso"
+          ]
+        },
+        {
+          "itemName": "tsofo",
+          "itemText": "tsofo",
+          "foils": [
+            "tsefo",
+            "tsofu",
+            "tsfoo"
+          ]
+        },
+        {
+          "itemName": "tsere",
+          "itemText": "tsere",
+          "foils": [
+            "tsare",
+            "tseri",
+            "tsree"
+          ]
+        },
+        {
+          "itemName": "tsawa",
+          "itemText": "tsawa",
+          "foils": [
+            "tswaa",
+            "tsewa",
+            "tsaba"
+          ]
+        },
+        {
+          "itemName": "tsakiya",
+          "itemText": "tsakiya",
+          "foils": [
+            "tsekiya",
+            "tskaiya",
+            "tsakiyo"
+          ]
+        },
+        {
+          "itemName": "tsohuwa",
+          "itemText": "tsohuwa",
+          "foils": [
+            "tsehuwa",
+            "tsohuwo",
+            "tsouhwa"
+          ]
+        },
+        {
+          "itemName": "tsari",
+          "itemText": "tsari",
+          "foils": [
+            "tseri",
+            "tsaro",
+            "tsrai"
+          ]
+        }
+      ]
+    },
+    {
+      "bucketID": 7,
+      "bucketName": "Hausaspell-b-7",
+      "usedItems": [],
+      "items": [
+        {
+          "itemName": "kyawun",
+          "itemText": "kyawun",
+          "foils": [
+            "kyawnu",
+            "kyewun",
+            "kyawon"
+          ]
+        },
+        {
+          "itemName": "gyara",
+          "itemText": "gyara",
+          "foils": [
+            "gyera",
+            "gyraa",
+            "gyaro"
+          ]
+        },
+        {
+          "itemName": "kyauta",
+          "itemText": "kyauta",
+          "foils": [
+            "kyeuta",
+            "kyauto",
+            "kyuata"
+          ]
+        },
+        {
+          "itemName": "gyada",
+          "itemText": "gyada",
+          "foils": [
+            "gyeda",
+            "gyado",
+            "gydaa"
+          ]
+        },
+        {
+          "itemName": "kwana",
+          "itemText": "kwana",
+          "foils": [
+            "kwnaa",
+            "kwena",
+            "kwanu"
+          ]
+        },
+        {
+          "itemName": "kwace",
+          "itemText": "kwace",
+          "foils": [
+            "kwece",
+            "kwcae",
+            "kwaco"
+          ]
+        },
+        {
+          "itemName": "gwani",
+          "itemText": "gwani",
+          "foils": [
+            "gweni",
+            "gwano",
+            "gwnai"
+          ]
+        },
+        {
+          "itemName": "kobo",
+          "itemText": "kobo",
+          "foils": [
+            "kwebo",
+            "kwabu",
+            "kwbao"
+          ]
+        },
+        {
+          "itemName": "gwada",
+          "itemText": "gwada",
+          "foils": [
+            "gwdaa",
+            "gweda",
+            "gwado"
+          ]
+        },
+        {
+          "itemName": "kwallo",
+          "itemText": "kwallo",
+          "foils": [
+            "kwello",
+            "kwlalo",
+            "kwallu"
+          ]
+        }
+      ]
+    },
+    {
+      "bucketID": 8,
+      "bucketName": "Hausaspell-b-8",
+      "usedItems": [],
+      "items": [
+        {
+          "itemName": "ɓoye",
+          "itemText": "ɓoye",
+          "foils": [
+            "boye",
+            "ɓeye",
+            "ɓoey"
+          ]
+        },
+        {
+          "itemName": "ɗiba",
+          "itemText": "ɗiba",
+          "foils": [
+            "diba",
+            "ɗaba",
+            "ɗbia"
+          ]
+        },
+        {
+          "itemName": "ɗauki",
+          "itemText": "ɗauki",
+          "foils": [
+            "ɗuaki",
+            "dauki",
+            "ɗeuki"
+          ]
+        },
+        {
+          "itemName": "ɗa",
+          "itemText": "ɗa",
+          "foils": [
+            "da",
+            "aɗ",
+            "ɗe"
+          ]
+        },
+        {
+          "itemName": "kuɗi",
+          "itemText": "kuɗi",
+          "foils": [
+            "kudi",
+            "kaɗi",
+            "ukɗi"
+          ]
+        },
+        {
+          "itemName": "ɓera",
+          "itemText": "ɓera",
+          "foils": [
+            "bera",
+            "ɓara",
+            "ɓrea"
+          ]
+        },
+        {
+          "itemName": "ɓarawo",
+          "itemText": "ɓarawo",
+          "foils": [
+            "ɓraawo",
+            "barawo",
+            "ɓorawo"
+          ]
+        },
+        {
+          "itemName": "ɓangare",
+          "itemText": "ɓangare",
+          "foils": [
+            "bangare",
+            "ɓnagare",
+            "ɓengare"
+          ]
+        },
+        {
+          "itemName": "ɗabi'a",
+          "itemText": "ɗabi'a",
+          "foils": [
+            "dabi'a",
+            "ɗobi'a",
+            "ɗbai'a"
+          ]
+        },
+        {
+          "itemName": "ɓata",
+          "itemText": "ɓata",
+          "foils": [
+            "bata",
+            "ɓota",
+            "ɓtaa"
+          ]
+        }
+      ]
+    },
+    {
+      "bucketID": 9,
+      "bucketName": "Hausaspell-b-9",
+      "usedItems": [],
+      "items": [
+        {
+          "itemName": "ƙofa",
+          "itemText": "ƙofa",
+          "foils": [
+            "ƙoaf",
+            "kofa",
+            "ƙefa"
+          ]
+        },
+        {
+          "itemName": "ƙwai",
+          "itemText": "ƙwai",
+          "foils": [
+            "kwai",
+            "ƙwia",
+            "ƙwei"
+          ]
+        },
+        {
+          "itemName": "ƙyaure",
+          "itemText": "ƙyaure",
+          "foils": [
+            "kyaure",
+            "ƙyeure",
+            "ƙyuare"
+          ]
+        },
+        {
+          "itemName": "ƙauye",
+          "itemText": "ƙauye",
+          "foils": [
+            "kauye",
+            "ƙeuye",
+            "ƙuaye"
+          ]
+        },
+        {
+          "itemName": "ƙishirwa",
+          "itemText": "ƙishirwa",
+          "foils": [
+            "ƙsihirwa",
+            "kishirwa",
+            "ƙashirwa"
+          ]
+        },
+        {
+          "itemName": "ƙasa",
+          "itemText": "ƙasa",
+          "foils": [
+            "kasa",
+            "ƙsaa",
+            "ƙesa"
+          ]
+        },
+        {
+          "itemName": "ƙarfe",
+          "itemText": "ƙarfe",
+          "foils": [
+            "karfe",
+            "ƙerfe",
+            "ƙrafe"
+          ]
+        },
+        {
+          "itemName": "ƙauna",
+          "itemText": "ƙauna",
+          "foils": [
+            "kauna",
+            "ƙeuna",
+            "ƙuana"
+          ]
+        },
+        {
+          "itemName": "ƙwarai",
+          "itemText": "ƙwarai",
+          "foils": [
+            "ƙwraai",
+            "kwarai",
+            "ƙwerai"
+          ]
+        },
+        {
+          "itemName": "ƙarami",
+          "itemText": "ƙarami",
+          "foils": [
+            "karami",
+            "ƙraami",
+            "ƙerami"
+          ]
+        }
+      ]
+    },
+    {
+      "bucketID": 10,
+      "bucketName": "Hausaspell-b-10",
+      "usedItems": [],
+      "items": [
+        {
+          "itemName": "karatu",
+          "itemText": "karatu",
+          "foils": [
+            "ƙaratu",
+            "keratu",
+            "kraatu"
+          ]
+        },
+        {
+          "itemName": "mutane",
+          "itemText": "mutane",
+          "foils": [
+            "muutane",
+            "motane",
+            "mtuane"
+          ]
+        },
+        {
+          "itemName": "dawakai",
+          "itemText": "dawakai",
+          "foils": [
+            "dwaakai",
+            "ɗawakai",
+            "dewakai"
+          ]
+        },
+        {
+          "itemName": "tafiya",
+          "itemText": "tafiya",
+          "foils": [
+            "taafiya",
+            "tfaiya",
+            "tefiya"
+          ]
+        },
+        {
+          "itemName": "magana",
+          "itemText": "magana",
+          "foils": [
+            "megana",
+            "magaana",
+            "mgaana"
+          ]
+        },
+        {
+          "itemName": "makaranta",
+          "itemText": "makaranta",
+          "foils": [
+            "maƙaranta",
+            "mekaranta",
+            "mkaaranta"
+          ]
+        },
+        {
+          "itemName": "manomi",
+          "itemText": "manomi",
+          "foils": [
+            "mnaomi",
+            "menomi",
+            "manemi"
+          ]
+        },
+        {
+          "itemName": "jarrabawa",
+          "itemText": "jarrabawa",
+          "foils": [
+            "jarraɓawa",
+            "jarrabaaw",
+            "jerrabawa"
+          ]
+        },
+        {
+          "itemName": "asibiti",
+          "itemText": "asibiti",
+          "foils": [
+            "asiɓiti",
+            "esibiti",
+            "aisbiti"
+          ]
+        },
+        {
+          "itemName": "lokaci",
+          "itemText": "lokaci",
+          "foils": [
+            "loƙaci",
+            "lekaci",
+            "lkoaci"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -39,6 +39,7 @@ export class AnalyticsIntegration extends BaseAnalyticsIntegration {
             userSource: commonProperties.user_source,
             appVersion: commonProperties.app_version,
             contentVersion: commonProperties.content_version,
+            assessmentType: commonProperties.assessmentType,
         };
     }
 
