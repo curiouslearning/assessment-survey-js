@@ -1,22 +1,18 @@
 {
-  "quizName": "hausa letter sounds",
+  "quizName": "Hausa letter sounds",
   "appType": "assessment",
   "assessmentType": "letter-sounds",
   "feedbackText": "Gwanin sha’awa!",
-  "contentVersion": "v0.2",
+  "contentVersion": "v0.3",
   "buckets": [
     {
       "bucketID": 1,
-      "bucketName": "hausalet-b-1",
+      "bucketName": "Hausalet-b-1",
       "usedItems": [],
       "items": [
         {
           "itemName": "h",
           "itemText": "h"
-        },
-        {
-          "itemName": "S",
-          "itemText": "S"
         },
         {
           "itemName": "z",
@@ -27,10 +23,6 @@
           "itemText": "o"
         },
         {
-          "itemName": "k",
-          "itemText": "k"
-        },
-        {
           "itemName": "N",
           "itemText": "N"
         },
@@ -49,12 +41,20 @@
         {
           "itemName": "s",
           "itemText": "s"
+        },
+        {
+          "itemName": "w",
+          "itemText": "w"
+        },
+        {
+          "itemName": "M",
+          "itemText": "M"
         }
       ]
     },
     {
       "bucketID": 2,
-      "bucketName": "hausalet-b-2",
+      "bucketName": "Hausalet-b-2",
       "usedItems": [],
       "items": [
         {
@@ -76,10 +76,6 @@
         {
           "itemName": "s",
           "itemText": "s"
-        },
-        {
-          "itemName": "Y",
-          "itemText": "Y"
         },
         {
           "itemName": "Z",
@@ -96,12 +92,16 @@
         {
           "itemName": "G",
           "itemText": "G"
+        },
+        {
+          "itemName": "i",
+          "itemText": "i"
         }
       ]
     },
     {
       "bucketID": 3,
-      "bucketName": "hausalet-b-3",
+      "bucketName": "Hausalet-b-3",
       "usedItems": [],
       "items": [
         {
@@ -125,10 +125,6 @@
           "itemText": "D"
         },
         {
-          "itemName": "w",
-          "itemText": "w"
-        },
-        {
           "itemName": "O",
           "itemText": "O"
         },
@@ -143,12 +139,16 @@
         {
           "itemName": "R",
           "itemText": "R"
+        },
+        {
+          "itemName": "b",
+          "itemText": "b"
         }
       ]
     },
     {
       "bucketID": 4,
-      "bucketName": "hausalet-b-4",
+      "bucketName": "Hausalet-b-4",
       "usedItems": [],
       "items": [
         {
@@ -166,10 +166,6 @@
         {
           "itemName": "R",
           "itemText": "R"
-        },
-        {
-          "itemName": "B",
-          "itemText": "B"
         },
         {
           "itemName": "b",
@@ -190,12 +186,16 @@
         {
           "itemName": "i",
           "itemText": "i"
+        },
+        {
+          "itemName": "D",
+          "itemText": "D"
         }
       ]
     },
     {
       "bucketID": 5,
-      "bucketName": "hausalet-b-5",
+      "bucketName": "Hausalet-b-5",
       "usedItems": [],
       "items": [
         {
@@ -242,7 +242,7 @@
     },
     {
       "bucketID": 6,
-      "bucketName": "hausalet-b-6",
+      "bucketName": "Hausalet-b-6",
       "usedItems": [],
       "items": [
         {
@@ -262,14 +262,6 @@
           "itemText": "u"
         },
         {
-          "itemName": "T",
-          "itemText": "T"
-        },
-        {
-          "itemName": "f",
-          "itemText": "f"
-        },
-        {
           "itemName": "F",
           "itemText": "F"
         },
@@ -284,12 +276,20 @@
         {
           "itemName": "a",
           "itemText": "a"
+        },
+        {
+          "itemName": "c",
+          "itemText": "c"
+        },
+        {
+          "itemName": "e",
+          "itemText": "e"
         }
       ]
     },
     {
       "bucketID": 7,
-      "bucketName": "hausalet-b-7",
+      "bucketName": "Hausalet-b-7",
       "usedItems": [],
       "items": [
         {
@@ -336,7 +336,7 @@
     },
     {
       "bucketID": 8,
-      "bucketName": "hausalet-b-8",
+      "bucketName": "Hausalet-b-8",
       "usedItems": [],
       "items": [
         {
@@ -376,8 +376,8 @@
           "itemText": "ɓ"
         },
         {
-          "itemName": "e",
-          "itemText": "e"
+          "itemName": "f",
+          "itemText": "f"
         }
       ]
     }
