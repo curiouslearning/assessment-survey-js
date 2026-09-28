@@ -177,6 +177,14 @@ export abstract class BaseQuiz extends PubSub {
     }
   }
 
+  // Dev settings are pre-game only: once the toggle button is hidden the modal could not be
+  // closed, and changing bucket mode mid-question would desync the active question.
+  public hideDevModeSettings() {
+    if (this.devModeSettingsModal) {
+      this.devModeSettingsModal.style.display = 'none';
+    }
+  }
+
   public abstract handleBucketGenModeChange(event: Event): void;
   public abstract handleCorrectLabelShownChange(): void;
   public abstract handleBucketInfoShownChange(): void;

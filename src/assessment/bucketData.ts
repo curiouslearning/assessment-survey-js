@@ -18,4 +18,5 @@ export type bucketItem = {
   itemText: string;
   itemAudio?: string;
   itemImg?: string;
+  foils?: string[]; //authored (non-random) wrong answers, e.g. spelling distractors; omitted when foils are generated
 };

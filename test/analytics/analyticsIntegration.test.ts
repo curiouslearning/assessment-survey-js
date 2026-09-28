@@ -62,6 +62,44 @@ describe('AnalyticsIntegration', () => {
     });
   });
 
+  it('given the common properties carry an assessmentType, when an event is tracked, then assessmentType is merged into the payload for every event type, not just Spelling-specific ones (FM-986)', async () => {
+    jest.spyOn(BaseAnalyticsIntegration.prototype, 'initialize').mockImplementation(mockInitialize);
+    jest.spyOn(AnalyticsUtils, 'getCommonAnalyticsEventsProperties').mockReturnValue({
+      cr_user_id: 'user-1',
+      language: 'hausa',
+      app: 'ftm',
+      user_source: 'referral',
+      lat_lang: '10,20',
+      content_version: 'v1',
+      app_version: 'v2',
+      assessmentType: 'spelling',
+    });
+
+    const trackCustomEventSpy = jest
+      .spyOn(BaseAnalyticsIntegration.prototype as any, 'trackCustomEvent')
+      .mockImplementation(() => {});
+
+    await AnalyticsIntegration.initializeAnalytics();
+    const instance = AnalyticsIntegration.getInstance();
+
+    instance.track(AnalyticsEventsType.ANSWERED, {
+      type: 'answered',
+      dt: 500,
+      question_number: 1,
+      target: 'makaranta',
+      question: '',
+      selected_answer: 'makaranta',
+      iscorrect: true,
+      options: 'makaranta,maƙaranta,',
+      bucket: '1',
+    });
+
+    expect(trackCustomEventSpy).toHaveBeenCalledWith(
+      'answered',
+      expect.objectContaining({ assessmentType: 'spelling' })
+    );
+  });
+
   it('sends data to a third party when endpoint exists', async () => {
     jest.spyOn(BaseAnalyticsIntegration.prototype, 'initialize').mockImplementation(mockInitialize);
     await AnalyticsIntegration.initializeAnalytics();

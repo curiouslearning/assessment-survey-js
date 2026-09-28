@@ -7,6 +7,7 @@ let user_source: string;
 let lat_lang: string;
 let content_version: string;
 let app_version: string;
+let assessmentType: string | undefined;
 
 export function setCommonAnalyticsEventsProperties(
     _cr_user_id: string,
@@ -15,6 +16,7 @@ export function setCommonAnalyticsEventsProperties(
     _user_source: string,
     _content_version: string,
     _app_version: string,
+    _assessmentType?: string,
 
 ) {
 
@@ -24,12 +26,24 @@ export function setCommonAnalyticsEventsProperties(
     user_source = _user_source;
     content_version = _content_version;
     app_version = _app_version;
+    assessmentType = _assessmentType;
 
 }
 export function setLocationProperty(_lat_lang: string) {
     lat_lang = _lat_lang;
 }
-export function getCommonAnalyticsEventsProperties() {
+export interface CommonAnalyticsEventProperties {
+    cr_user_id: string;
+    language: string;
+    app: string;
+    user_source: string;
+    lat_lang: string;
+    content_version: string;
+    app_version: string;
+    assessmentType?: string;
+}
+
+export function getCommonAnalyticsEventsProperties(): CommonAnalyticsEventProperties {
     return {
         cr_user_id,
         language,
@@ -38,6 +52,7 @@ export function getCommonAnalyticsEventsProperties() {
         lat_lang,
         content_version,
         app_version,
+        assessmentType,
     };
 }
 export function getBasalBucketID(buckets: bucket[]): number {
