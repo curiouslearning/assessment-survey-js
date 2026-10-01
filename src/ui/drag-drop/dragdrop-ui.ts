@@ -8,6 +8,11 @@ import { isRTL, setFontSizeRTL, setFontSizeLTR } from '@utils/languageUtils';
 import { TapToAnswerController } from '../tap-to-answer-controller';
 import { DragToAnswerController } from './drag-to-answer-controller';
 import { AssessmentType } from '@assessment/assessment-types';
+
+// Average glyph width as a fraction of font-size for BalooBhai2 (rounded up from
+// ~0.58 for safety) — used to estimate how wide a word renders at a given size.
+const AVERAGE_CHAR_WIDTH_RATIO = 0.6;
+
 /**
  * Drag-and-drop assessment UI.
  *
@@ -413,9 +418,10 @@ export class DragDropAssessmentUI implements AssessmentUI {
     this.isSpellingAssessment = assessmentType === AssessmentType.Spelling;
     if (this.isSpellingAssessment) {
       this.answersContainer.classList.add('as-spelling-mode');
-      // Wider 2-per-row layout (matches the legacy UI's answer grid) — the
-      // ladybug's narrower 4-across row doesn't leave room for longer words.
-      this.answersContainer.style.gridTemplateColumns = 'repeat(2, minmax(0, 200px))';
+      // Drop the template's inline 4-across ladybug row so the stylesheet's wider
+      // 2-per-row grid applies (and can be resized by media queries) — the
+      // ladybug row doesn't leave room for longer words.
+      this.answersContainer.style.gridTemplateColumns = '';
     }
   }
 
@@ -469,12 +475,37 @@ export class DragDropAssessmentUI implements AssessmentUI {
 
     const words = plainText.split(/\s+/);
     const maxWordLen = Math.max(...words.map((w) => w.length));
+
+    if (this.isSpellingAssessment) {
+      this.applySpellingTextFit(button, maxWordLen);
+      return;
+    }
+
     const textIsInRTL = isRTL(plainText);
 
     if (textIsInRTL) {
       button.style.fontSize = setFontSizeRTL(maxWordLen);
     } else {
       button.style.fontSize = setFontSizeLTR(maxWordLen);
+    }
+  }
+
+  /**
+   * Spelling boxes are much wider than the ladybug and grow on tablets (see the
+   * spelling media query in drag-drop-style.css), so the fixed ladybug breakpoints
+   * above don't apply. Keep the stylesheet's font-size and only shrink it when the
+   * longest word wouldn't fit on one line — a spelling word must never wrap mid-word.
+   */
+  private applySpellingTextFit(button: HTMLElement, maxWordLen: number): void {
+    const computedButtonStyle = getComputedStyle(button);
+    const defaultFontSize = parseFloat(computedButtonStyle.fontSize);
+    const textAreaWidth =
+      button.clientWidth - parseFloat(computedButtonStyle.paddingLeft) - parseFloat(computedButtonStyle.paddingRight);
+    if (!defaultFontSize || textAreaWidth <= 0) return;
+
+    const fontSizeToFitWord = textAreaWidth / (maxWordLen * AVERAGE_CHAR_WIDTH_RATIO);
+    if (fontSizeToFitWord < defaultFontSize) {
+      button.style.fontSize = `${Math.floor(fontSizeToFitWord)}px`;
     }
   }
 }

@@ -152,9 +152,7 @@ body.assessment-survey-standalone {
   min-height: 100vh;
   height: 100%;
   overflow: hidden;
-  background: linear-gradient(180deg,
-      rgba(80, 90, 220, 1) 0%,
-      rgba(247, 247, 161, 1) 100%);
+  background: linear-gradient(180deg, rgba(80, 90, 220, 1) 0%, rgba(247, 247, 161, 1) 100%);
   background-size: 100% 100%;
   bottom: 0;
   position: relative;
@@ -175,7 +173,7 @@ body.assessment-survey-standalone {
 }
 
 .bodyWrapper.as-host-theme-ftm-dim {
-  background: rgba(0, 0, 0, 0.70);
+  background: rgba(0, 0, 0, 0.7);
 }
 
 .questionContainer img {
@@ -296,7 +294,9 @@ button {
   color: rgb(255, 255, 255);
   background-color: transparent;
   background-image: url('../img/ladybug_close.svg'), url('../img/ladybug_open.svg');
-  background-size: 82%, 0 0;
+  background-size:
+    82%,
+    0 0;
   background-repeat: no-repeat, no-repeat;
   background-position: center, center;
   transition: none;
@@ -311,7 +311,9 @@ button {
 }
 
 .as-ui-mode-new .answerButton.dragging {
-  background-size: 0 0, 82%;
+  background-size:
+    0 0,
+    82%;
 }
 
 /* Sparkle ✦ glitter — continuous twinkle around the ladybug edges while dragging.
@@ -319,79 +321,81 @@ button {
    Each star has a fixed position (text-shadow offset); only its colour cycles
    between gold/white and transparent, so stars pop in/out at the same spot. */
 @keyframes sparkle-glitter-a {
-  0%, 100% {
+  0%,
+  100% {
     text-shadow:
-       0px -50px 0 #FFD700,
+      0px -50px 0 #ffd700,
       36px -36px 0 transparent,
-      52px   0px 0 #FFFFFF,
-      38px  42px 0 transparent,
-       0px  52px 0 #FFEE58,
-     -40px  38px 0 transparent,
-     -52px  -5px 0 #FFF176,
-     -35px -40px 0 transparent;
+      52px 0px 0 #ffffff,
+      38px 42px 0 transparent,
+      0px 52px 0 #ffee58,
+      -40px 38px 0 transparent,
+      -52px -5px 0 #fff176,
+      -35px -40px 0 transparent;
   }
   25% {
     text-shadow:
-       0px -50px 0 transparent,
-      36px -36px 0 #FFD700,
-      52px   0px 0 transparent,
-      38px  42px 0 #FFFFFF,
-       0px  52px 0 transparent,
-     -40px  38px 0 #FFEE58,
-     -52px  -5px 0 transparent,
-     -35px -40px 0 #FFF9C4;
+      0px -50px 0 transparent,
+      36px -36px 0 #ffd700,
+      52px 0px 0 transparent,
+      38px 42px 0 #ffffff,
+      0px 52px 0 transparent,
+      -40px 38px 0 #ffee58,
+      -52px -5px 0 transparent,
+      -35px -40px 0 #fff9c4;
   }
   50% {
     text-shadow:
-       0px -50px 0 #FFEE58,
+      0px -50px 0 #ffee58,
       36px -36px 0 transparent,
-      52px   0px 0 #FFD700,
-      38px  42px 0 transparent,
-       0px  52px 0 #FFFFFF,
-     -40px  38px 0 transparent,
-     -52px  -5px 0 #FFF176,
-     -35px -40px 0 transparent;
+      52px 0px 0 #ffd700,
+      38px 42px 0 transparent,
+      0px 52px 0 #ffffff,
+      -40px 38px 0 transparent,
+      -52px -5px 0 #fff176,
+      -35px -40px 0 transparent;
   }
   75% {
     text-shadow:
-       0px -50px 0 transparent,
-      36px -36px 0 #FFF176,
-      52px   0px 0 transparent,
-      38px  42px 0 #FFD700,
-       0px  52px 0 transparent,
-     -40px  38px 0 #FFFFFF,
-     -52px  -5px 0 transparent,
-     -35px -40px 0 #FFEE58;
+      0px -50px 0 transparent,
+      36px -36px 0 #fff176,
+      52px 0px 0 transparent,
+      38px 42px 0 #ffd700,
+      0px 52px 0 transparent,
+      -40px 38px 0 #ffffff,
+      -52px -5px 0 transparent,
+      -35px -40px 0 #ffee58;
   }
 }
 
 @keyframes sparkle-glitter-b {
-  0%, 100% {
+  0%,
+  100% {
     text-shadow:
       48px -48px 0 transparent,
-      60px -12px 0 #FFD700,
-      45px  52px 0 transparent,
-     -45px  54px 0 #FFF9C4,
-     -60px   8px 0 transparent,
-     -50px -50px 0 #FFEE58;
+      60px -12px 0 #ffd700,
+      45px 52px 0 transparent,
+      -45px 54px 0 #fff9c4,
+      -60px 8px 0 transparent,
+      -50px -50px 0 #ffee58;
   }
   33% {
     text-shadow:
-      48px -48px 0 #FFFFFF,
+      48px -48px 0 #ffffff,
       60px -12px 0 transparent,
-      45px  52px 0 #FFD700,
-     -45px  54px 0 transparent,
-     -60px   8px 0 #FFF176,
-     -50px -50px 0 transparent;
+      45px 52px 0 #ffd700,
+      -45px 54px 0 transparent,
+      -60px 8px 0 #fff176,
+      -50px -50px 0 transparent;
   }
   66% {
     text-shadow:
       48px -48px 0 transparent,
-      60px -12px 0 #FFEE58,
-      45px  52px 0 transparent,
-     -45px  54px 0 #FFFFFF,
-     -60px   8px 0 transparent,
-     -50px -50px 0 #FFD700;
+      60px -12px 0 #ffee58,
+      45px 52px 0 transparent,
+      -45px 54px 0 #ffffff,
+      -60px 8px 0 transparent,
+      -50px -50px 0 #ffd700;
   }
 }
 
@@ -408,6 +412,25 @@ button {
   max-width: 95%;
   white-space: normal;
   overflow-wrap: break-word;
+}
+
+/* Tablets: the mobile-sized spelling boxes look cramped on a ~768px-wide screen.
+   Capped at 1080px because wider viewports pin .bodyWrapper to 380/500px (see above),
+   and min-height keeps landscape phones on the mobile sizing. Font-size here is the
+   upper bound — applySpellingTextFit() in dragdrop-ui.ts shrinks it for long words. */
+@media (min-width: 600px) and (max-width: 1080px) and (min-height: 600px) {
+  .as-ui-mode-new .answerContainer.as-spelling-mode {
+    grid-template-columns: repeat(2, minmax(0, 300px));
+    column-gap: 28px !important;
+    row-gap: 28px;
+  }
+
+  .as-spelling-mode .answerButton {
+    min-height: 80px;
+    padding: 18px 12px;
+    border-radius: 8px;
+    font-size: 2.25rem;
+  }
 }
 
 /* Large ✦ stars — 8 positions on the inner ring around the ladybug */
