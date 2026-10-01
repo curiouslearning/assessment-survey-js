@@ -417,19 +417,21 @@ button {
 /* Tablets: the mobile-sized spelling boxes look cramped on a ~768px-wide screen.
    Capped at 1080px because wider viewports pin .bodyWrapper to 380/500px (see above),
    and min-height keeps landscape phones on the mobile sizing. Font-size here is the
-   upper bound — applySpellingTextFit() in dragdrop-ui.ts shrinks it for long words. */
+   upper bound — applySpellingTextFit() in dragdrop-ui.ts shrinks it for long words.
+   Sizes scale with the viewport via clamp(): the minimums are the ~768px tablet sizes,
+   and they grow up to the maximums on large tablets (e.g. iPad Pro 13 at 1032px). */
 @media (min-width: 600px) and (max-width: 1080px) and (min-height: 600px) {
   .as-ui-mode-new .answerContainer.as-spelling-mode {
-    grid-template-columns: repeat(2, minmax(0, 300px));
-    column-gap: 28px !important;
-    row-gap: 28px;
+    grid-template-columns: repeat(2, minmax(0, clamp(300px, 39vw, 420px)));
+    column-gap: clamp(28px, 3.65vw, 40px) !important;
+    row-gap: clamp(28px, 3.65vw, 40px);
   }
 
   .as-spelling-mode .answerButton {
-    min-height: 80px;
+    min-height: clamp(80px, 10.4vw, 120px);
     padding: 18px 12px;
     border-radius: 8px;
-    font-size: 2.25rem;
+    font-size: clamp(2.25rem, 4.7vw, 3rem);
   }
 }
 
