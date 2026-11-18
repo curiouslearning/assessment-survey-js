@@ -295,6 +295,73 @@ describe('App Class', () => {
     expect(sessionInstance.metadata).toEqual({ app_version: expect.any(String), environment });
   });
 
+  describe('Feature: standalone assessment closes the CR app screen on completion (CLT-175)', () => {
+    const assessmentData = {
+      appType: 'assessment',
+      feedbackText: 'Feedback text',
+      buckets: [
+        {
+          bucketID: 1,
+          items: [{ itemName: 'Alpha', itemText: 'Alpha' }],
+          usedItems: [],
+          numTried: 0,
+          numCorrect: 0,
+          numConsecutiveWrong: 0,
+          tested: false,
+          passed: false,
+          score: 0,
+        },
+      ],
+      contentVersion: 'v1.0.0',
+      quizName: 'Test Quiz',
+    };
+    const closeWebView = jest.fn();
+
+    beforeEach(() => {
+      (fetchAppData as jest.Mock).mockResolvedValue(assessmentData);
+      Object.defineProperty(window, 'Android', { configurable: true, writable: true, value: { closeWebView } });
+      closeWebView.mockClear();
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+      delete (window as unknown as { Android?: unknown }).Android;
+    });
+
+    test('Given the standalone page in the CR app, When the assessment ends, Then closeWebView is called after the end screen delay', () => {
+      const standaloneApp = new App({ closeHostOnComplete: true });
+
+      standaloneApp.closeHostAfterCompletion('assessment');
+      expect(closeWebView).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(3000);
+
+      expect(closeWebView).toHaveBeenCalledTimes(1);
+    });
+
+    test('Given an embedded player (closeHostOnComplete off), When the assessment ends, Then the screen is NOT closed', () => {
+      const embeddedApp = new App({ platform: 'ftm' });
+
+      embeddedApp.closeHostAfterCompletion('assessment');
+      jest.advanceTimersByTime(10000);
+
+      expect(closeWebView).not.toHaveBeenCalled();
+    });
+
+    test('Given the standalone page, When the game publishes ENDED, Then the screen closes after the delay', async () => {
+      const standaloneApp = new App({ closeHostOnComplete: true });
+      jest.spyOn(standaloneApp, 'registerServiceWorker').mockResolvedValue();
+      jest.useRealTimers();
+      await standaloneApp.spinUp({ closeHostOnComplete: true });
+      jest.useFakeTimers();
+
+      standaloneApp.game.publish('ENDED', standaloneApp.game);
+      jest.advanceTimersByTime(3000);
+
+      expect(closeWebView).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('AndroidInterface construction in standalone mode is gated by mr-75', () => {
     const assessmentAppData = {
       appType: 'assessment',

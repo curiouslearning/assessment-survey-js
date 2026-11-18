@@ -36,6 +36,7 @@ import { DragDropAssessmentUI } from '@ui/drag-drop';
 import { featureFlagsService } from '@curiouslearning/features';
 import { mountAssessmentSurveyFragment } from '@ui/dom-template';
 import type { AssessmentSurveyTemplateConfig } from '@ui/dom-template';
+import { getAndroidCloseBridge, HOST_CLOSE_DELAY_MS, shouldCloseHostOnCompletion } from '@utils/hostCloseUtils';
 
 export type AssessmentUIMode = 'legacy' | 'new-ui';
 
@@ -80,6 +81,11 @@ export interface AppStartupConfig {
   analyticsConfig?: AnalyticsConfig;
   assessmentUIMode?: AssessmentUIMode;
   platform?: string;
+  /**
+   * CLT-175: close the CR container screen (window.Android.closeWebView) once an assessment ends.
+   * Set by startStandaloneApp only; embedded hosts (e.g. Feed The Monster) leave it off.
+   */
+  closeHostOnComplete?: boolean;
   templateConfig?: Omit<AssessmentSurveyTemplateConfig, 'assessmentUIMode'>;
 }
 
@@ -117,6 +123,7 @@ export class App {
   public enableAndroidSummary: boolean;
   public enableParentPostMessage: boolean;
   public hostIntegrationAdapters: HostIntegrationAdapters;
+  public closeHostOnComplete: boolean;
   public assessmentUIMode: AssessmentUIMode;
   private readonly configuredUIMode: AssessmentUIMode | undefined;
   private assessmentUI: AssessmentUI;
@@ -293,6 +300,7 @@ export class App {
   }
 
   private applyHostIntegrationConfig(config: AppStartupConfig): void {
+    this.closeHostOnComplete = config.closeHostOnComplete ?? this.closeHostOnComplete ?? false;
     this.enableUnityBridge = config.enableUnityBridge ?? this.enableUnityBridge ?? true;
     this.enableAndroidSummary = config.enableAndroidSummary ?? this.enableAndroidSummary ?? true;
     this.enableParentPostMessage = config.enableParentPostMessage ?? this.enableParentPostMessage ?? true;
@@ -407,6 +415,9 @@ export class App {
             event_type: 'activity_completed',
           });
         }
+
+        // CLT-175: results were handed to the container above; now return to the CR app home screen.
+        this.closeHostAfterCompletion(appType);
       });
     });
   }
@@ -611,6 +622,24 @@ export class App {
     this.hostIntegrationAdapters?.onLoaded?.();
   }
 
+  /**
+   * CLT-175: in the standalone assessment inside the CR app, close the screen after the end screen
+   * has been shown for HOST_CLOSE_DELAY_MS. No-op for embedded players, surveys and plain browsers.
+   */
+  public closeHostAfterCompletion(appType: string): void {
+    const bridge = getAndroidCloseBridge(window as unknown as { Android?: unknown });
+    if (!shouldCloseHostOnCompletion({ closeHostOnComplete: this.closeHostOnComplete, appType, bridge })) {
+      return;
+    }
+    setTimeout(() => {
+      try {
+        bridge?.closeWebView?.();
+      } catch (error) {
+        console.warn('Could not close the assessment screen.', error);
+      }
+    }, HOST_CLOSE_DELAY_MS);
+  }
+
   public notifyClose(): void {
     if (this.enableUnityBridge) {
       this.unityBridge.SendClose();
@@ -713,7 +742,7 @@ export function createApp(config: AppStartupConfig = {}): App {
 
 export function startStandaloneApp(config: AppStartupConfig = {}): App {
   console.log(config);
-  const resolvedConfig: AppStartupConfig = { platform: 'standalone', ...config };
+  const resolvedConfig: AppStartupConfig = { platform: 'standalone', closeHostOnComplete: true, ...config };
   const app = new App(resolvedConfig);
   app.spinUp(resolvedConfig);
   return app;
