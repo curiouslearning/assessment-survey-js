@@ -3,7 +3,7 @@
   "appType": "assessment",
   "assessmentType": "letter-sounds",
   "feedbackText": "Gwanin sha’awa!",
-  "contentVersion": "v0.3",
+  "contentVersion": "v0.4",
   "buckets": [
     {
       "bucketID": 1,
@@ -270,12 +270,12 @@
           "itemText": "ƙ"
         },
         {
-          "itemName": "l",
-          "itemText": "l"
+          "itemName": "L",
+          "itemText": "L"
         },
         {
-          "itemName": "a",
-          "itemText": "a"
+          "itemName": "A",
+          "itemText": "A"
         },
         {
           "itemName": "c",
@@ -301,12 +301,12 @@
           "itemText": "ƙ"
         },
         {
-          "itemName": "l",
-          "itemText": "l"
+          "itemName": "L",
+          "itemText": "L"
         },
         {
-          "itemName": "a",
-          "itemText": "a"
+          "itemName": "A",
+          "itemText": "A"
         },
         {
           "itemName": "r",
