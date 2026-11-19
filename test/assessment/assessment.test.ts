@@ -468,4 +468,51 @@ describe('Assessment Class', () => {
       });
     });
   });
+
+  describe('Feature: completed analytics gates closing the standalone screen (CLT-175)', () => {
+    const endBuckets = () => [{ ...mockBuckets[0], passed: true, tested: true, numTried: 4, numCorrect: 4 }] as any;
+
+    beforeEach(() => {
+      assessment['app'] = { notifyAssessmentCompleted: jest.fn() } as any;
+    });
+
+    it('given analytics can confirm delivery, when the completed event is logged, then completion settles only after the confirmation', async () => {
+      // Given
+      let confirm: (result: 'confirmed') => void = () => undefined;
+      const trackWithDeliveryConfirmation = jest.fn(
+        () => new Promise<'confirmed'>((resolve) => {
+          confirm = resolve;
+        })
+      );
+      (assessment.analyticsIntegration as any).trackWithDeliveryConfirmation = trackWithDeliveryConfirmation;
+      const settled = jest.fn();
+
+      // When
+      assessment['LogCompletedEvent'](endBuckets(), 0, 0);
+      assessment.whenCompletionAnalyticsSettled().then(settled);
+      await Promise.resolve();
+
+      // Then
+      expect(trackWithDeliveryConfirmation).toHaveBeenCalledWith(
+        'completed',
+        expect.objectContaining({ type: 'completed', maxScore: 100 }),
+        5000
+      );
+      expect(assessment.analyticsIntegration!.track).not.toHaveBeenCalledWith('completed', expect.anything());
+      expect(settled).not.toHaveBeenCalled();
+      confirm('confirmed');
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(settled).toHaveBeenCalledTimes(1);
+    });
+
+    it('given analytics cannot confirm delivery, when the completed event is logged, then it is tracked as before and completion settles immediately', async () => {
+      assessment['LogCompletedEvent'](endBuckets(), 0, 0);
+
+      expect(assessment.analyticsIntegration!.track).toHaveBeenCalledWith(
+        'completed',
+        expect.objectContaining({ type: 'completed' })
+      );
+      await expect(assessment.whenCompletionAnalyticsSettled()).resolves.toBeUndefined();
+    });
+  });
 });

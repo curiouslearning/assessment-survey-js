@@ -16,6 +16,10 @@ import { calculateScore, getBasalBucketID, getCeilingBucketID, getCommonAnalytic
 import { getNextAssessment, getRequiredScore } from '@utils/urlUtils';
 import appEventBus from '@services/app-event-bus';
 import { AssessmentType } from './assessment-types';
+import type { CommonEventProperties, Completed } from '@analytics/analytics-event-interface';
+import { COMPLETED_ANALYTICS_MAX_WAIT_MS } from '@utils/hostCloseUtils';
+
+type CompletedEventData = Partial<CommonEventProperties> & Omit<Completed, keyof CommonEventProperties>;
 
 enum searchStage {
   BinarySearch,
@@ -33,6 +37,7 @@ export class Assessment extends BaseQuiz {
 
   public unityBridge;
   public analyticsIntegration: AnalyticsIntegration | null;
+  private completedAnalyticsDelivery: Promise<void> = Promise.resolve();
   public currentNode: TreeNode;
   public currentQuestion: qData;
   public bucketArray: number[];
@@ -749,6 +754,28 @@ export class Assessment extends BaseQuiz {
     });
   }
 
+  /**
+   * CLT-175: tracks the `completed` event and keeps a promise that settles once it has been handed
+   * off for sending (or after COMPLETED_ANALYTICS_MAX_WAIT_MS), so the standalone page can close
+   * the CR app screen only after the completion has been reported.
+   */
+  private trackCompletedEvent(data: CompletedEventData): void {
+    const integration = this.analyticsIntegration;
+    if (integration && typeof integration.trackWithDeliveryConfirmation === 'function') {
+      this.completedAnalyticsDelivery = integration
+        .trackWithDeliveryConfirmation(AnalyticsEventsType.COMPLETED, data, COMPLETED_ANALYTICS_MAX_WAIT_MS)
+        .then((result) => {
+          console.log(`[CLT-175] completed analytics ${result}`);
+        });
+      return;
+    }
+    integration?.track?.(AnalyticsEventsType.COMPLETED, data);
+  }
+
+  public override whenCompletionAnalyticsSettled(): Promise<void> {
+    return this.completedAnalyticsDelivery;
+  }
+
   public override onEnd(): void {
     this.LogCompletedEvent(this.buckets, this.basalBucket, this.ceilingBucket);
     // Route through AssessmentUI instead of the base class UIController.ShowEnd()
@@ -792,7 +819,7 @@ export class Assessment extends BaseQuiz {
     this.app.notifyAssessmentCompleted(score);
 
     const maxScore = buckets.length * 100;
-    this.analyticsIntegration?.track?.(AnalyticsEventsType.COMPLETED, {
+    const completedEventData: CompletedEventData = {
       type: 'completed',
       score: score,
       maxScore,
@@ -802,7 +829,8 @@ export class Assessment extends BaseQuiz {
         nextAssessment: nextAssessment,
         requiredScore: integerRequiredScore
       })
-    });
+    };
+    this.trackCompletedEvent(completedEventData);
 
     this.score = score;
     this.max_score = maxScore;
