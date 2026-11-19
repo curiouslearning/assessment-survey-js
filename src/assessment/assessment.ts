@@ -765,7 +765,7 @@ export class Assessment extends BaseQuiz {
       this.completedAnalyticsDelivery = integration
         .trackWithDeliveryConfirmation(AnalyticsEventsType.COMPLETED, data, COMPLETED_ANALYTICS_MAX_WAIT_MS)
         .then((result) => {
-          console.log(`[CLT-175] completed analytics ${result}`);
+          console.log(`Assessment completed analytics ${result}`);
         });
       return;
     }

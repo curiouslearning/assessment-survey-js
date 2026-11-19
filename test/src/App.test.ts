@@ -295,7 +295,7 @@ describe('App Class', () => {
     expect(sessionInstance.metadata).toEqual({ app_version: expect.any(String), environment });
   });
 
-  describe('Feature: standalone assessment closes the CR app screen on completion (CLT-175)', () => {
+  describe('Feature: standalone assessment closes the CR app screen on completion', () => {
     const assessmentData = {
       appType: 'assessment',
       feedbackText: 'Feedback text',

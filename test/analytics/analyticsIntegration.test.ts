@@ -161,7 +161,7 @@ describe('AnalyticsIntegration', () => {
     (window as any).location = originalLocation;
   });
 
-  describe('Feature: completed event delivery confirmation (CLT-175)', () => {
+  describe('Feature: completed event delivery confirmation for assessments', () => {
     const setUp = async () => {
       jest.spyOn(BaseAnalyticsIntegration.prototype, 'initialize').mockImplementation(mockInitialize);
       await AnalyticsIntegration.initializeAnalytics();

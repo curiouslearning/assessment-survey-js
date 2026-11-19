@@ -469,7 +469,7 @@ describe('Assessment Class', () => {
     });
   });
 
-  describe('Feature: completed analytics gates closing the standalone screen (CLT-175)', () => {
+  describe('Feature: completed analytics gates closing the standalone screen', () => {
     const endBuckets = () => [{ ...mockBuckets[0], passed: true, tested: true, numTried: 4, numCorrect: 4 }] as any;
 
     beforeEach(() => {
