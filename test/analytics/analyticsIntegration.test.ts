@@ -14,7 +14,9 @@ describe('AnalyticsIntegration', () => {
   });
 
   it('initializes analytics once and returns the singleton', async () => {
-    const initializeSpy = jest.spyOn(BaseAnalyticsIntegration.prototype, 'initialize').mockImplementation(mockInitialize);
+    const initializeSpy = jest
+      .spyOn(BaseAnalyticsIntegration.prototype, 'initialize')
+      .mockImplementation(mockInitialize);
 
     await AnalyticsIntegration.initializeAnalytics();
     await AnalyticsIntegration.initializeAnalytics();
@@ -157,5 +159,46 @@ describe('AnalyticsIntegration', () => {
 
     expect(errorSpy).toHaveBeenCalledWith('No target party URL found!');
     (window as any).location = originalLocation;
+  });
+
+  describe('Feature: completed event delivery confirmation for assessments', () => {
+    const setUp = async () => {
+      jest.spyOn(BaseAnalyticsIntegration.prototype, 'initialize').mockImplementation(mockInitialize);
+      await AnalyticsIntegration.initializeAnalytics();
+      return AnalyticsIntegration.getInstance();
+    };
+    const completedData = { type: 'completed', score: 80, maxScore: 100, basalBucket: 2, ceilingBucket: 3 };
+
+    it('given gtag reports the hit as sent, when the completed event is tracked with confirmation, then it resolves "confirmed" and passes the gtag callback params', async () => {
+      // Given
+      const instance = await setUp();
+      const trackCustomEventSpy = jest
+        .spyOn(BaseAnalyticsIntegration.prototype as any, 'trackCustomEvent')
+        .mockImplementation((_name: unknown, params: unknown) => {
+          (params as { event_callback: () => void }).event_callback();
+        });
+
+      // When
+      const result = await instance.trackWithDeliveryConfirmation(AnalyticsEventsType.COMPLETED, completedData, 5000);
+
+      // Then
+      expect(result).toBe('confirmed');
+      expect(trackCustomEventSpy).toHaveBeenCalledWith(
+        'completed',
+        expect.objectContaining({ ...completedData, event_timeout: 5000, event_callback: expect.any(Function) })
+      );
+    });
+
+    it('given gtag never reports back, when the timeout passes, then it resolves "timed-out"', async () => {
+      const instance = await setUp();
+      jest.spyOn(BaseAnalyticsIntegration.prototype as any, 'trackCustomEvent').mockImplementation(() => {});
+      jest.useFakeTimers();
+
+      const pending = instance.trackWithDeliveryConfirmation(AnalyticsEventsType.COMPLETED, completedData, 5000);
+      jest.advanceTimersByTime(5000);
+
+      await expect(pending).resolves.toBe('timed-out');
+      jest.useRealTimers();
+    });
   });
 });

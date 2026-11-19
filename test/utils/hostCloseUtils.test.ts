@@ -1,6 +1,6 @@
 import { getAndroidCloseBridge, shouldCloseHostOnCompletion } from '../../src/utils/hostCloseUtils';
 
-describe('Feature: close the CR app screen when a standalone assessment ends (CLT-175)', () => {
+describe('Feature: close the CR app screen when a standalone assessment ends', () => {
   const bridge = { closeWebView: jest.fn() };
 
   it('Given the standalone page in the CR app, When an assessment ends, Then the screen should close', () => {

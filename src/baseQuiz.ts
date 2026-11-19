@@ -210,6 +210,14 @@ export abstract class BaseQuiz extends PubSub {
     this.startTime = Date.now();
   }
 
+  /**
+   * CLT-175: resolves once this quiz's completion analytics has been handed off for sending (or
+   * given up on). Quizzes without a completion analytics event resolve immediately.
+   */
+  public whenCompletionAnalyticsSettled(): Promise<void> {
+    return Promise.resolve();
+  }
+
   public onEnd(): void {
     // sendFinished();
     UIController.ShowEnd(); // TODO: non-game logic code. Move to App.ts
