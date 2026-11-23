@@ -177,6 +177,14 @@ export abstract class BaseQuiz extends PubSub {
     }
   }
 
+  // Dev settings are pre-game only: once the toggle button is hidden the modal could not be
+  // closed, and changing bucket mode mid-question would desync the active question.
+  public hideDevModeSettings() {
+    if (this.devModeSettingsModal) {
+      this.devModeSettingsModal.style.display = 'none';
+    }
+  }
+
   public abstract handleBucketGenModeChange(event: Event): void;
   public abstract handleCorrectLabelShownChange(): void;
   public abstract handleBucketInfoShownChange(): void;
@@ -200,6 +208,14 @@ export abstract class BaseQuiz extends PubSub {
 
   start() {
     this.startTime = Date.now();
+  }
+
+  /**
+   * CLT-175: resolves once this quiz's completion analytics has been handed off for sending (or
+   * given up on). Quizzes without a completion analytics event resolve immediately.
+   */
+  public whenCompletionAnalyticsSettled(): Promise<void> {
+    return Promise.resolve();
   }
 
   public onEnd(): void {

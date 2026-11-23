@@ -295,6 +295,120 @@ describe('App Class', () => {
     expect(sessionInstance.metadata).toEqual({ app_version: expect.any(String), environment });
   });
 
+  describe('Feature: standalone assessment closes the CR app screen on completion', () => {
+    const assessmentData = {
+      appType: 'assessment',
+      feedbackText: 'Feedback text',
+      buckets: [
+        {
+          bucketID: 1,
+          items: [{ itemName: 'Alpha', itemText: 'Alpha' }],
+          usedItems: [],
+          numTried: 0,
+          numCorrect: 0,
+          numConsecutiveWrong: 0,
+          tested: false,
+          passed: false,
+          score: 0,
+        },
+      ],
+      contentVersion: 'v1.0.0',
+      quizName: 'Test Quiz',
+    };
+    const closeWebView = jest.fn();
+
+    beforeEach(() => {
+      (fetchAppData as jest.Mock).mockResolvedValue(assessmentData);
+      Object.defineProperty(window, 'Android', { configurable: true, writable: true, value: { closeWebView } });
+      closeWebView.mockClear();
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+      delete (window as unknown as { Android?: unknown }).Android;
+    });
+
+    test('Given the standalone page in the CR app, When the assessment ends, Then closeWebView is called after the end screen delay', async () => {
+      const standaloneApp = new App({ closeHostOnComplete: true });
+
+      standaloneApp.closeHostAfterCompletion('assessment');
+      await jest.advanceTimersByTimeAsync(2999);
+      expect(closeWebView).not.toHaveBeenCalled();
+      await jest.advanceTimersByTimeAsync(1);
+
+      expect(closeWebView).toHaveBeenCalledTimes(1);
+    });
+
+    test('Given an embedded player (closeHostOnComplete off), When the assessment ends, Then the screen is NOT closed', async () => {
+      const embeddedApp = new App({ platform: 'ftm' });
+
+      embeddedApp.closeHostAfterCompletion('assessment');
+      await jest.advanceTimersByTimeAsync(10000);
+
+      expect(closeWebView).not.toHaveBeenCalled();
+    });
+
+    test('Given the standalone page, When the game publishes ENDED, Then the screen closes after the delay', async () => {
+      const standaloneApp = new App({ closeHostOnComplete: true });
+      jest.spyOn(standaloneApp, 'registerServiceWorker').mockResolvedValue();
+      jest.useRealTimers();
+      await standaloneApp.spinUp({ closeHostOnComplete: true });
+      jest.useFakeTimers();
+
+      standaloneApp.game.publish('ENDED', standaloneApp.game);
+      await jest.advanceTimersByTimeAsync(3000);
+
+      expect(closeWebView).toHaveBeenCalledTimes(1);
+    });
+
+    test('Given the completed analytics event is not yet confirmed, When the end screen delay passes, Then the screen stays open until it is confirmed', async () => {
+      // Given
+      const standaloneApp = new App({ closeHostOnComplete: true });
+      let confirmCompletedAnalytics: () => void = () => undefined;
+      const completedAnalytics = new Promise<void>((resolve) => {
+        confirmCompletedAnalytics = resolve;
+      });
+      standaloneApp.game = { whenCompletionAnalyticsSettled: () => completedAnalytics } as unknown as App['game'];
+
+      // When
+      standaloneApp.closeHostAfterCompletion('assessment');
+      await jest.advanceTimersByTimeAsync(4000);
+
+      // Then
+      expect(closeWebView).not.toHaveBeenCalled();
+      confirmCompletedAnalytics();
+      await jest.advanceTimersByTimeAsync(0);
+      expect(closeWebView).toHaveBeenCalledTimes(1);
+    });
+
+    test('Given the completion is reported twice, When closeHostAfterCompletion runs again, Then the screen is closed only once', async () => {
+      const standaloneApp = new App({ closeHostOnComplete: true });
+
+      standaloneApp.closeHostAfterCompletion('assessment');
+      standaloneApp.closeHostAfterCompletion('assessment');
+      await jest.advanceTimersByTimeAsync(3000);
+
+      expect(closeWebView).toHaveBeenCalledTimes(1);
+    });
+
+    test('Given handing summary data to the CR app throws, When the game publishes ENDED, Then the screen still closes', async () => {
+      const standaloneApp = new App({ closeHostOnComplete: true });
+      jest.spyOn(standaloneApp, 'registerServiceWorker').mockResolvedValue();
+      jest.useRealTimers();
+      await standaloneApp.spinUp({ closeHostOnComplete: true });
+      jest.useFakeTimers();
+      jest.spyOn(standaloneApp, 'notifySummaryData').mockImplementation(() => {
+        throw new Error('bridge failure');
+      });
+
+      expect(() => standaloneApp.game.publish('ENDED', standaloneApp.game)).toThrow('bridge failure');
+      await jest.advanceTimersByTimeAsync(3000);
+
+      expect(closeWebView).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('AndroidInterface construction in standalone mode is gated by mr-75', () => {
     const assessmentAppData = {
       appType: 'assessment',

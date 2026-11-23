@@ -54,6 +54,22 @@ describe('AnalyticsUtils', () => {
     });
   });
 
+  it('given an assessmentType is provided, when common analytics properties are set, then it round-trips through getCommonAnalyticsEventsProperties without altering the other fields (FM-986)', () => {
+    setCommonAnalyticsEventsProperties('user-1', 'hausa', 'ftm', 'campaign', 'v1', 'v2', 'spelling');
+    setLocationProperty('11,22');
+
+    expect(getCommonAnalyticsEventsProperties()).toEqual({
+      cr_user_id: 'user-1',
+      language: 'hausa',
+      app: 'ftm',
+      user_source: 'campaign',
+      lat_lang: '11,22',
+      content_version: 'v1',
+      app_version: 'v2',
+      assessmentType: 'spelling',
+    });
+  });
+
   it('returns the basal and ceiling bucket ids', () => {
     expect(getBasalBucketID(buckets)).toBe(1);
     expect(getCeilingBucketID(buckets)).toBe(2);

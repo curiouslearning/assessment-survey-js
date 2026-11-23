@@ -3,10 +3,16 @@ import { AudioController } from '@components/audioController';
 import { resolveAssetPath } from '@utils/assetUtils';
 import { ASSET_PATHS } from '@configs/assetsPaths';
 import { AssessmentUI, AssessmentUICallbacks } from '../assessment-ui';
-import { DragEventController, DraggableButton, DropAreaTarget, iDraggableHTMLElement } from './dom-events';
-import appEventBus from '@services/app-event-bus';
 import { DragDropAudioController } from '@services/drag-drop-audio-controller';
 import { isRTL, setFontSizeRTL, setFontSizeLTR } from '@utils/languageUtils';
+import { TapToAnswerController } from '../tap-to-answer-controller';
+import { DragToAnswerController } from './drag-to-answer-controller';
+import { AssessmentType } from '@assessment/assessment-types';
+
+// Average glyph width as a fraction of font-size for BalooBhai2 (rounded up from
+// ~0.58 for safety) — used to estimate how wide a word renders at a given size.
+const AVERAGE_CHAR_WIDTH_RATIO = 0.6;
+
 /**
  * Drag-and-drop assessment UI.
  *
@@ -41,7 +47,6 @@ export class DragDropAssessmentUI implements AssessmentUI {
   private gameReady = true;
   private skipStartScreen = false;
   private animationSpeedMultiplier = 1;
-  private buttonsActive = false;
 
   // --- star progress state ---
   private shownStarsCount = 0;
@@ -51,9 +56,14 @@ export class DragDropAssessmentUI implements AssessmentUI {
   private devModeBucketControlsEnabled = false;
   private externalBucketControlsHandler: ((container: HTMLElement, clickCallback: () => void) => void) | null = null;
 
+  // Spelling assessments answer by tapping a plain rectangular box instead of
+  // dragging a ladybug onto the chest (see FM-979: longer spelled words don't
+  // fit inside the ladybug's ~105px width).
+  private isSpellingAssessment = false;
+
   private callbacks: AssessmentUICallbacks | null = null;
-  private dragController: DragEventController | null = null;
-  private dropUnsubscribe: (() => void) | null = null;
+  private tapController: TapToAnswerController | null = null;
+  private dragAnswerController: DragToAnswerController | null = null;
   private landingClickHandler: (() => void) | null = null;
 
   private dragDropAudioControllerInstance: DragDropAudioController | null;
@@ -101,34 +111,21 @@ export class DragDropAssessmentUI implements AssessmentUI {
   configure(callbacks: AssessmentUICallbacks): void {
     this.callbacks = callbacks;
 
-    // Apply drag behaviour to each answer button (class 'answerButton' required by DragEventController).
-    this.answerButtons.forEach((button) => new DraggableButton(button));
-
-    // Apply drop behaviour to the chest div (class 'chestdiv' required by DragEventController).
-    const chestDiv = this.root.querySelector<HTMLElement>('.chestdiv');
-    if (chestDiv) {
-      new DropAreaTarget(chestDiv);
+    if (this.isSpellingAssessment) {
+      // Click-to-select: tapping a box answers immediately, no drag/drop wiring.
+      this.tapController = new TapToAnswerController(this.answerButtons, {
+        onAnswer: (answerIndex, elapsedMs) => this.callbacks?.onAnswer({ answerIndex, elapsedMs }),
+        getElapsedMs: () => Date.now() - this.qStart,
+      });
+      this.tapController.attach();
+    } else {
+      const chestDiv = this.root.querySelector<HTMLElement>('.chestdiv');
+      this.dragAnswerController = new DragToAnswerController(this.gameContainer, this.answerButtons, chestDiv, {
+        onAnswer: (answerIndex, elapsedMs) => this.callbacks?.onAnswer({ answerIndex, elapsedMs }),
+        getElapsedMs: () => Date.now() - this.qStart,
+      });
+      this.dragAnswerController.attach();
     }
-
-    // Attach pointer-event listeners to the game container so DragEventController
-    // can locate both the draggable buttons and the chest drop zone.
-    this.dragController = new DragEventController(this.gameContainer);
-    this.dragController.attach();
-
-    // Map dropped element → 0-based answerIndex → onAnswer callback.
-    this.dropUnsubscribe = appEventBus.subscribe(
-      appEventBus.EVENTS.DROP_ELEMENT_INTERACTION,
-      ({ selectedAnswer }: { selectedAnswer: iDraggableHTMLElement }) => {
-        if (!this.buttonsActive || !this.callbacks) return;
-        this.buttonsActive = false;
-        this.dragController?.setLocked(true);
-        // Button IDs are 'answerButton1'…'answerButton6' (1-based); convert to 0-based.
-        const buttonNum = parseInt(selectedAnswer.id.replace('answerButton', ''), 10);
-        if (isNaN(buttonNum)) return;
-        const elapsedMs = Date.now() - this.qStart;
-        this.callbacks.onAnswer({ answerIndex: buttonNum - 1, elapsedMs });
-      }
-    );
 
     this.landingClickHandler = () => {
       if (this.contentLoaded && this.gameReady) {
@@ -210,7 +207,8 @@ export class DragDropAssessmentUI implements AssessmentUI {
     if (!question) return;
     this.nextQuestion = question;
     this.shown = false;
-    this.buttonsActive = false;
+    this.tapController?.setActive(false);
+    this.dragAnswerController?.setActive(false);
 
     this.answersContainer.style.visibility = 'hidden';
     this.answerButtons.forEach((b) => (b.style.visibility = 'hidden'));
@@ -346,8 +344,8 @@ export class DragDropAssessmentUI implements AssessmentUI {
                   return !b || b.style.visibility === 'visible';
                 });
                 if (allVisible) {
-                  this.buttonsActive = true;
-                  this.dragController?.setLocked(false);
+                  this.tapController?.setActive(true);
+                  this.dragAnswerController?.setActive(true);
                 }
               },
               { once: true }
@@ -375,7 +373,8 @@ export class DragDropAssessmentUI implements AssessmentUI {
   // ─────────────────────────────────────────────────────────────────────────────
 
   showFeedback(visible: boolean, isCorrect: boolean): void {
-    this.buttonsActive = false;
+    this.tapController?.setActive(false);
+    this.dragAnswerController?.setActive(false);
     if (visible) {
       this.feedbackContainer.classList.remove('hidden');
       this.feedbackContainer.classList.add('visible');
@@ -415,6 +414,17 @@ export class DragDropAssessmentUI implements AssessmentUI {
   // AssessmentUI — dev-mode hooks
   // ─────────────────────────────────────────────────────────────────────────────
 
+  setAssessmentType(assessmentType: string): void {
+    this.isSpellingAssessment = assessmentType === AssessmentType.Spelling;
+    if (this.isSpellingAssessment) {
+      this.answersContainer.classList.add('as-spelling-mode');
+      // Drop the template's inline 4-across ladybug row so the stylesheet's wider
+      // 2-per-row grid applies (and can be resized by media queries) — the
+      // ladybug row doesn't leave room for longer words.
+      this.answersContainer.style.gridTemplateColumns = '';
+    }
+  }
+
   setCorrectLabelVisibility(visible: boolean): void {
     this.devModeCorrectLabelVisibility = visible;
   }
@@ -434,10 +444,10 @@ export class DragDropAssessmentUI implements AssessmentUI {
   }
 
   dispose(): void {
-    this.dragController?.detach();
-    this.dragController = null;
-    this.dropUnsubscribe?.();
-    this.dropUnsubscribe = null;
+    this.tapController?.dispose();
+    this.tapController = null;
+    this.dragAnswerController?.dispose();
+    this.dragAnswerController = null;
 
     this.dragDropAudioControllerInstance?.disposeSubscriptions();
     this.dragDropAudioControllerInstance = null;
@@ -465,12 +475,37 @@ export class DragDropAssessmentUI implements AssessmentUI {
 
     const words = plainText.split(/\s+/);
     const maxWordLen = Math.max(...words.map((w) => w.length));
+
+    if (this.isSpellingAssessment) {
+      this.applySpellingTextFit(button, maxWordLen);
+      return;
+    }
+
     const textIsInRTL = isRTL(plainText);
 
     if (textIsInRTL) {
       button.style.fontSize = setFontSizeRTL(maxWordLen);
     } else {
       button.style.fontSize = setFontSizeLTR(maxWordLen);
+    }
+  }
+
+  /**
+   * Spelling boxes are much wider than the ladybug and grow on tablets (see the
+   * spelling media query in drag-drop-style.css), so the fixed ladybug breakpoints
+   * above don't apply. Keep the stylesheet's font-size and only shrink it when the
+   * longest word wouldn't fit on one line — a spelling word must never wrap mid-word.
+   */
+  private applySpellingTextFit(button: HTMLElement, maxWordLen: number): void {
+    const computedButtonStyle = getComputedStyle(button);
+    const defaultFontSize = parseFloat(computedButtonStyle.fontSize);
+    const textAreaWidth =
+      button.clientWidth - parseFloat(computedButtonStyle.paddingLeft) - parseFloat(computedButtonStyle.paddingRight);
+    if (!defaultFontSize || textAreaWidth <= 0) return;
+
+    const fontSizeToFitWord = textAreaWidth / (maxWordLen * AVERAGE_CHAR_WIDTH_RATIO);
+    if (fontSizeToFitWord < defaultFontSize) {
+      button.style.fontSize = `${Math.floor(fontSizeToFitWord)}px`;
     }
   }
 }

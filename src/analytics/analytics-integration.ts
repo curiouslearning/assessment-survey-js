@@ -13,6 +13,18 @@ export const enum AnalyticsEventsType {
     COMPLETED = 'completed'
 }
 
+/** Outcome of {@link AnalyticsIntegration.trackWithDeliveryConfirmation}. */
+export type AnalyticsDeliveryResult = 'confirmed' | 'timed-out';
+
+/**
+ * gtag-reserved parameters (not recorded as event params): gtag calls `event_callback` once the
+ * hit has been dispatched, or after `event_timeout` ms if it could not be.
+ */
+interface GtagDeliveryParams {
+    event_callback: () => void;
+    event_timeout: number;
+}
+
 type EventDataMap = {
     [AnalyticsEventsType.INITIALIZE]: Initialized;
     [AnalyticsEventsType.OPENED]: Opened;
@@ -39,6 +51,7 @@ export class AnalyticsIntegration extends BaseAnalyticsIntegration {
             userSource: commonProperties.user_source,
             appVersion: commonProperties.app_version,
             contentVersion: commonProperties.content_version,
+            assessmentType: commonProperties.assessmentType,
         };
     }
 
@@ -123,5 +136,37 @@ export class AnalyticsIntegration extends BaseAnalyticsIntegration {
         let data = { ...baseData, ...eventData } as EventDataMap[T];
 
         this.trackCustomEvent(eventType, data);
+    }
+
+    /**
+     * CLT-175: tracks an event like {@link track} and resolves once the analytics library confirms the
+     * hit was handed off for sending (`'confirmed'`), or after `timeoutMs` if it never reports back
+     * (offline, analytics script not loaded) (`'timed-out'`). The recorded event params are unchanged.
+     */
+    public trackWithDeliveryConfirmation<T extends AnalyticsEventsType>(
+        eventType: T,
+        eventData: Partial<CommonEventProperties> & Omit<EventDataMap[T], keyof CommonEventProperties>,
+        timeoutMs: number
+    ): Promise<AnalyticsDeliveryResult> {
+        return new Promise<AnalyticsDeliveryResult>((resolve) => {
+            let settled = false;
+            const settle = (result: AnalyticsDeliveryResult) => {
+                if (settled) {
+                    return;
+                }
+                settled = true;
+                clearTimeout(timer);
+                resolve(result);
+            };
+            const timer = setTimeout(() => settle('timed-out'), timeoutMs);
+
+            const deliveryParams: GtagDeliveryParams = {
+                event_callback: () => settle('confirmed'),
+                event_timeout: timeoutMs,
+            };
+            const data = { ...this.createBaseEventData(), ...eventData, ...deliveryParams };
+
+            this.trackCustomEvent(eventType, data);
+        });
     }
 }

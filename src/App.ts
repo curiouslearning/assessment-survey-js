@@ -15,6 +15,7 @@ import { UnityBridge } from '@utils/unityBridge';
 import { BaseQuiz } from './baseQuiz';
 import { fetchAppData, getDataURL, setDataBaseUrl } from '@utils/jsonUtils';
 import { resolveAssetPath, setAssetBaseUrl } from '@utils/assetUtils';
+import { validateAssessmentConfig } from '@utils/configValidation';
 import { Workbox } from 'workbox-window';
 import CacheModel from '@components/cacheModel';
 import { UIController } from '@ui/uiController';
@@ -35,6 +36,7 @@ import { DragDropAssessmentUI } from '@ui/drag-drop';
 import { featureFlagsService } from '@curiouslearning/features';
 import { mountAssessmentSurveyFragment } from '@ui/dom-template';
 import type { AssessmentSurveyTemplateConfig } from '@ui/dom-template';
+import { getAndroidCloseBridge, HOST_CLOSE_DELAY_MS, shouldCloseHostOnCompletion, waitFor } from '@utils/hostCloseUtils';
 
 export type AssessmentUIMode = 'legacy' | 'new-ui';
 
@@ -79,6 +81,11 @@ export interface AppStartupConfig {
   analyticsConfig?: AnalyticsConfig;
   assessmentUIMode?: AssessmentUIMode;
   platform?: string;
+  /**
+   * CLT-175: close the CR container screen (window.Android.closeWebView) once an assessment ends.
+   * Set by startStandaloneApp only; embedded hosts (e.g. Feed The Monster) leave it off.
+   */
+  closeHostOnComplete?: boolean;
   templateConfig?: Omit<AssessmentSurveyTemplateConfig, 'assessmentUIMode'>;
 }
 
@@ -116,6 +123,8 @@ export class App {
   public enableAndroidSummary: boolean;
   public enableParentPostMessage: boolean;
   public hostIntegrationAdapters: HostIntegrationAdapters;
+  public closeHostOnComplete: boolean;
+  private isClosingHost = false;
   public assessmentUIMode: AssessmentUIMode;
   private readonly configuredUIMode: AssessmentUIMode | undefined;
   private assessmentUI: AssessmentUI;
@@ -292,6 +301,7 @@ export class App {
   }
 
   private applyHostIntegrationConfig(config: AppStartupConfig): void {
+    this.closeHostOnComplete = config.closeHostOnComplete ?? this.closeHostOnComplete ?? false;
     this.enableUnityBridge = config.enableUnityBridge ?? this.enableUnityBridge ?? true;
     this.enableAndroidSummary = config.enableAndroidSummary ?? this.enableAndroidSummary ?? true;
     this.enableParentPostMessage = config.enableParentPostMessage ?? this.enableParentPostMessage ?? true;
@@ -306,6 +316,14 @@ export class App {
       console.log('Assessment/Survey ' + appVersion + ' initializing!');
       console.log('App data loaded!');
       console.log(data);
+
+      // FM-981: validate the config before building anything, so a malformed/missing
+      // config fails with a clear message instead of a cryptic downstream throw.
+      const { errors: configErrors, warnings: configWarnings } = validateAssessmentConfig(data);
+      configWarnings.forEach((w) => console.warn(`[assessment-survey] ${w}`));
+      if (configErrors.length > 0) {
+        throw new Error(`Invalid assessment configuration for "${this.dataURL}":\n- ${configErrors.join('\n- ')}`);
+      }
 
       this.cacheModel.setContentFilePath(getDataURL(this.dataURL));
 
@@ -342,8 +360,10 @@ export class App {
 
         this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.feedbackAudio(this.dataURL)));
 
+        this.assessmentUI.setAssessmentType?.(assessmentType);
+
         const assessmentUI = this.assessmentUI;
-        this.game = new Assessment(this.dataURL, this.unityBridge, assessmentUI);
+        this.game = new Assessment(this.dataURL, this.unityBridge, assessmentUI, assessmentType);
       }
 
       this.cacheModel.addItemToAudioVisualResources(resolveAssetPath(ASSET_PATHS.AUDIO.dingSfx));
@@ -363,51 +383,58 @@ export class App {
 
       contentVersion = data['contentVersion'];
 
-      this.setCommonProperties();
+      this.setCommonProperties(assessmentType);
       this.logInitialAnalyticsEvents();
 
       this.game.Run(this);
 
       this.game.subscribe('ENDED', (gameInstance: BaseQuiz) => {
-        const { score, startTime, endTime } = gameInstance;
-        this.notifySummaryData({
-          app_type: appType,
-          score,
-          time_spent: endTime - startTime,
-        });
-
-        if (appType === Assessment.TYPE && this.enableAndroidSummary) {
-          const { cr_user_id, language } = getCommonAnalyticsEventsProperties();
-          const androidInterface = new AndroidInterface({
-            cr_user_id,
-            app_id: appType,
-            // appVersion travels as top-level metadata, not inside data.
-            metadata: { app_version: appVersion, environment },
-            debug: false,
-            log: false,
-          });
-
-          androidInterface.logUserSessionsData?.({
-            type: assessmentType || appType,
-            lang: language,
+        try {
+          const { score, startTime, endTime } = gameInstance;
+          this.notifySummaryData({
+            app_type: appType,
             score,
-            max_score: gameInstance.max_score,
             time_spent: endTime - startTime,
-            event_type: 'activity_completed',
           });
+
+          if (appType === Assessment.TYPE && this.enableAndroidSummary) {
+            const { cr_user_id, language } = getCommonAnalyticsEventsProperties();
+            const androidInterface = new AndroidInterface({
+              cr_user_id,
+              app_id: appType,
+              // appVersion travels as top-level metadata, not inside data.
+              metadata: { app_version: appVersion, environment },
+              debug: false,
+              log: false,
+            });
+
+            androidInterface.logUserSessionsData?.({
+              type: assessmentType || appType,
+              lang: language,
+              score,
+              max_score: gameInstance.max_score,
+              time_spent: endTime - startTime,
+              event_type: 'activity_completed',
+            });
+          }
+        } finally {
+          // CLT-175: results were handed to the container above; now return to the CR app home screen.
+          // In `finally` so a failure handing data to the container never strands the learner.
+          this.closeHostAfterCompletion(appType);
         }
       });
     });
   }
 
-  async setCommonProperties() {
+  async setCommonProperties(assessmentType?: string) {
     setCommonAnalyticsEventsProperties(
       getUUID(),
       getAppLanguageFromDataURL(this.dataURL),
       getAppTypeFromDataURL(this.dataURL),
       getUserSource(),
       contentVersion,
-      appVersion
+      appVersion,
+      assessmentType
     );
   }
 
@@ -599,6 +626,35 @@ export class App {
     this.hostIntegrationAdapters?.onLoaded?.();
   }
 
+  /**
+   * CLT-175: in the standalone assessment inside the CR app, close the screen once the end screen
+   * has been shown for HOST_CLOSE_DELAY_MS and the `completed` analytics event has been handed off
+   * for sending (or COMPLETED_ANALYTICS_MAX_WAIT_MS passed). Runs at most once. No-op for embedded
+   * players, surveys and plain browsers.
+   */
+  public closeHostAfterCompletion(appType: string): void {
+    const bridge = getAndroidCloseBridge(window as unknown as { Android?: unknown });
+    if (!shouldCloseHostOnCompletion({ closeHostOnComplete: this.closeHostOnComplete, appType, bridge })) {
+      return;
+    }
+    if (this.isClosingHost) {
+      return;
+    }
+    this.isClosingHost = true;
+
+    // Close only once the end screen has been up for HOST_CLOSE_DELAY_MS AND the `completed`
+    // analytics event has been handed off for sending (bounded by COMPLETED_ANALYTICS_MAX_WAIT_MS).
+    const completionAnalyticsSettled = this.game?.whenCompletionAnalyticsSettled() ?? Promise.resolve();
+    Promise.all([waitFor(HOST_CLOSE_DELAY_MS), completionAnalyticsSettled.catch(() => undefined)]).then(() => {
+      console.log('[CLT-175] closing the assessment screen');
+      try {
+        bridge?.closeWebView?.();
+      } catch (error) {
+        console.warn('Could not close the assessment screen.', error);
+      }
+    });
+  }
+
   public notifyClose(): void {
     if (this.enableUnityBridge) {
       this.unityBridge.SendClose();
@@ -701,7 +757,7 @@ export function createApp(config: AppStartupConfig = {}): App {
 
 export function startStandaloneApp(config: AppStartupConfig = {}): App {
   console.log(config);
-  const resolvedConfig: AppStartupConfig = { platform: 'standalone', ...config };
+  const resolvedConfig: AppStartupConfig = { platform: 'standalone', closeHostOnComplete: true, ...config };
   const app = new App(resolvedConfig);
   app.spinUp(resolvedConfig);
   return app;
